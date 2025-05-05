@@ -1,5 +1,5 @@
 import { useCart } from '../../context/CartContext';
-import { formatPrice } from '../../utils/formatters';
+import { formatVND } from '../../utils/currencyFormatter';
 
 /**
  * Simple CartItem component for studying
@@ -28,7 +28,7 @@ function CartItem({ item }) {
       
       <div className="flex-1 ml-4">
         <h3 className="text-lg font-medium">{item.name}</h3>
-        <p className="text-gray-600 text-sm">{formatPrice(item.price)}</p>
+        <p className="text-gray-600 text-sm">{formatVND(item.price)}</p>
       </div>
       
       <div className="flex items-center">

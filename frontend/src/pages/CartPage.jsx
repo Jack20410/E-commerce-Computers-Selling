@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import CartItem from '../components/cart/CartItem';
-import { formatPrice } from '../utils/formatters';
+import { formatVND } from '../utils/currencyFormatter';
 
 const CartPage = () => {
   const { cart, clearCart } = useCart();
@@ -60,19 +60,19 @@ const CartPage = () => {
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <div className="flex justify-between mb-2">
                   <span>Subtotal</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatVND(total)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                  <span>{shipping === 0 ? 'Free' : formatVND(shipping)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span>Tax</span>
-                  <span>{formatPrice(tax)}</span>
+                  <span>{formatVND(tax)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t border-gray-200 pt-4 mt-2">
                   <span>Total</span>
-                  <span>{formatPrice(orderTotal)}</span>
+                  <span>{formatVND(orderTotal)}</span>
                 </div>
               </div>
               <button 

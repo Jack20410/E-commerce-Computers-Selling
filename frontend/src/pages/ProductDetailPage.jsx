@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../context/CartContext';
 import productService from '../services/productService';
-import { formatPrice } from '../utils/formatters';
+import { formatVND } from '../utils/currencyFormatter';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -83,7 +83,7 @@ const ProductDetailPage = () => {
           
           <div>
             <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-            <p className="text-xl text-gray-800 mb-4">{formatPrice(product.price)}</p>
+            <p className="text-xl text-gray-800 mb-4">{formatVND(product.price)}</p>
             <p className="text-gray-600 mb-6">
               {product.description}
             </p>
