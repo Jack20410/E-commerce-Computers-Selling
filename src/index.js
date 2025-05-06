@@ -7,6 +7,7 @@ const expressLayouts = require('express-ejs-layouts');
 const connectDB = require('./config/database');
 const productRoutes = require('./Routes/product.route');
 const authRoutes = require('./Routes/auth.route');
+const userRoutes = require('./Routes/user.route');
 
 // Initialize express app
 const app = express();
@@ -33,6 +34,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Routes
 app.use('/auth', authRoutes);
 app.use('/products', productRoutes);
+app.use('/users', userRoutes);
 
 // Root route
 app.get('/', (req, res) => {

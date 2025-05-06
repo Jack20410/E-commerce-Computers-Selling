@@ -4,15 +4,17 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Kiểm tra token và user khi component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     
-    if (token && savedUser) {
+    if (savedToken && savedUser) {
+      setToken(savedToken);
       setUser(JSON.parse(savedUser));
       setIsAuthenticated(true);
     }
@@ -22,6 +24,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     setUser(userData.user);
+    setToken(userData.token);
     setIsAuthenticated(true);
     // Lưu token và user vào localStorage
     localStorage.setItem('token', userData.token);
@@ -30,6 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     setIsAuthenticated(false);
     // Xóa token và user khỏi localStorage
     localStorage.removeItem('token');
@@ -43,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{ 
       user, 
+      token,
       isAuthenticated, 
       login, 
       logout 

@@ -60,6 +60,18 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isFirstLogin: {
+    type: Boolean,
+    default: true
+  },
+  lastPasswordChange: {
+    type: Date,
+    default: Date.now
+  },
+  passwordChangeRequired: {
+    type: Boolean,
+    default: false
+  },
   verificationToken: String,
   verificationTokenExpires: Date,
   resetPasswordToken: String,
@@ -95,6 +107,14 @@ userSchema.pre('save', function(next) {
 userSchema.pre('save', function(next) {
   if (this.isGuest && !this.guestId) {
     this.guestId = 'GUEST_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  }
+  next();
+});
+
+// Middleware để cập nhật lastPasswordChange khi mật khẩu thay đổi
+userSchema.pre('save', function(next) {
+  if (this.isModified('password')) {
+    this.lastPasswordChange = new Date();
   }
   next();
 });

@@ -33,6 +33,38 @@ const sendWelcomeEmail = async (user) => {
   }
 };
 
+const sendRecoveryEmail = async ({ email, fullName, tempPassword }) => {
+  try {
+    console.log(`
+      ==== MOCK RECOVERY EMAIL SENT ====
+      To: ${email}
+      Subject: Password Recovery - Your Temporary Password
+      
+      Dear ${fullName},
+      
+      We received a request to reset your password.
+      
+      Here is your temporary password: ${tempPassword}
+      
+      For security reasons, you will be required to change this password when you next log in.
+      If you did not request this password reset, please contact our support team immediately.
+      
+      Best regards,
+      The Store Team
+      ==== END OF MOCK EMAIL ====
+    `);
+    
+    // Simulate async process
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return true;
+  } catch (error) {
+    console.error('Error sending recovery email:', error.message);
+    return false;
+  }
+};
+
 module.exports = {
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendRecoveryEmail
 }; 

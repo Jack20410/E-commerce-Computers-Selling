@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ProfileProvider } from './context/ProfileContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
@@ -7,24 +8,35 @@ import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import NotFoundPage from './pages/NotFoundPage';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ProfilePage from './pages/ProfilePage';
+// import AppRoutes from './routes';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
-          <Navbar />
-          <main className="flex-grow w-full">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/products/:id" element={<ProductDetailPage />} />
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <ProfileProvider>
+          <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+            <Navbar />
+            <main className="flex-grow w-full">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/products" element={<ProductsPage />} />
+                <Route path="/products/:id" element={<ProductDetailPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </ProfileProvider>
       </AuthProvider>
     </Router>
   );

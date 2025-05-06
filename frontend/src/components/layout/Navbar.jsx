@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import Login from '../../pages/auth/Login';
-import Register from '../../pages/auth/Register';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -30,7 +26,6 @@ const Navbar = () => {
   return (
     <>
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-white/80 backdrop-blur-md'}`}>
-        {/* Desktop Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             {/* Logo and Main Navigation */}
@@ -127,18 +122,18 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setIsLoginOpen(true)}
+                  <Link
+                    to="/login"
                     className="text-gray-700 hover:text-blue-600 text-sm font-medium transition-colors"
                   >
                     Đăng nhập
-                  </button>
-                  <button
-                    onClick={() => setIsRegisterOpen(true)}
+                  </Link>
+                  <Link
+                    to="/register"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Đăng ký
-                  </button>
+                  </Link>
                 </div>
               )}
 
@@ -220,29 +215,23 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="flex flex-col space-y-2">
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setIsLoginOpen(true);
-                    }}
+                  <Link
+                    to="/login"
                     className="w-full text-center px-4 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg border border-gray-300"
                   >
                     Đăng nhập
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setIsRegisterOpen(true);
-                    }}
+                  </Link>
+                  <Link
+                    to="/register"
                     className="w-full text-center px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg"
                   >
                     Đăng ký
-                  </button>
+                  </Link>
                 </div>
               )}
 
               {/* Mobile Menu Items */}
-              <div className="space-y-1 pt-2 border-t border-gray-200">
+              <div className="space-y-1">
                 <Link
                   to="/"
                   className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
@@ -302,10 +291,6 @@ const Navbar = () => {
           </div>
         )}
       </nav>
-
-      {/* Auth Modals */}
-      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
-      <Register isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />
 
       {/* Spacer for fixed navbar */}
       <div className="h-16"></div>
