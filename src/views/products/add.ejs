@@ -1,0 +1,233 @@
+<%- contentFor('title') %>Add Product
+
+<%- contentFor('body') %>
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>Add New Product</h2>
+        <form action="/products" method="POST" enctype="multipart/form-data" id="productForm">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category*</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="pc">PC</option>
+                            <option value="laptop">Laptop</option>
+                            <option value="cpu">CPU</option>
+                            <option value="graphicsCard">Graphics Card</option>
+                            <option value="motherboard">Motherboard</option>
+                            <option value="memory">Memory</option>
+                            <option value="storage">Storage</option>
+                            <option value="monitor">Monitor</option>
+                            <option value="gears">Gears</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="brand" class="form-label">Brand*</label>
+                        <input type="text" class="form-control" id="brand" name="brand" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="model" class="form-label">Model*</label>
+                        <input type="text" class="form-control" id="model" name="model" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price*</label>
+                        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stock" class="form-label">Stock*</label>
+                        <input type="number" class="form-control" id="stock" name="stock" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description*</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Specific Specifications -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Specifications</h5>
+                </div>
+                <div class="card-body" id="specificationsContainer">
+                    <div class="alert alert-info">
+                        Please select a category to see specific fields.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Product Images</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="images" class="form-label">Upload Images (Max 5)*</label>
+                        <input type="file" class="form-control" id="images" name="images" multiple accept="image/*" required>
+                        <div id="imagePreview" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Product</button>
+        </form>
+    </div>
+</div>
+
+<%- contentFor('script') %>
+<script>
+const specificationFields = {
+    pc: [
+        { name: 'processor', label: 'Processor', type: 'text' },
+        { name: 'ram', label: 'RAM', type: 'text' },
+        { name: 'storage', label: 'Storage', type: 'text' },
+        { name: 'graphicsCard', label: 'Graphics Card', type: 'text' },
+        { name: 'motherboard', label: 'Motherboard', type: 'text' },
+        { name: 'powerSupply', label: 'Power Supply', type: 'text' },
+        { name: 'case', label: 'Case', type: 'text' },
+        { name: 'operatingSystem', label: 'Operating System', type: 'text', required: false }
+    ],
+    laptop: [
+        { name: 'processor', label: 'Processor', type: 'text' },
+        { name: 'ram', label: 'RAM', type: 'text' },
+        { name: 'storage', label: 'Storage', type: 'text' },
+        { name: 'displaySize', label: 'Display Size', type: 'text' },
+        { name: 'graphicsCard', label: 'Graphics Card', type: 'text' },
+        { name: 'batteryLife', label: 'Battery Life', type: 'text' },
+        { name: 'weight', label: 'Weight', type: 'text' },
+        { name: 'operatingSystem', label: 'Operating System', type: 'text', required: false }
+    ],
+    cpu: [
+        { name: 'socket', label: 'Socket', type: 'text' },
+        { name: 'cores', label: 'Cores', type: 'number' },
+        { name: 'threads', label: 'Threads', type: 'number' },
+        { name: 'baseSpeed', label: 'Base Speed', type: 'text' },
+        { name: 'boostSpeed', label: 'Boost Speed', type: 'text' },
+        { name: 'graphic', label: 'Graphic', type:'text' },
+        { name: 'tdp', label: 'TDP', type: 'text' }
+    ],
+    graphicsCard: [
+        { name: 'chipset', label: 'Chipset', type: 'text' },
+        { name: 'memory', label: 'Memory', type: 'text' },
+        { name: 'memoryType', label: 'Memory Type', type: 'text' },
+        { name: 'coreClock', label: 'Core Clock', type: 'text' },
+        { name: 'boostClock', label: 'Boost Clock', type: 'text' },
+        { name: 'powerConsumption', label: 'Power Consumption', type: 'text' },
+        { name: 'ports', label: 'Ports (comma-separated)', type: 'text' }
+    ],
+    motherboard: [
+        { name: 'socket', label: 'Socket', type: 'text' },
+        { name: 'chipset', label: 'Chipset', type: 'text' },
+        { name: 'formFactor', label: 'Form Factor', type: 'text' },
+        { name: 'memorySlots', label: 'Memory Slots', type: 'number' },
+        { name: 'maxMemory', label: 'Maximum Memory', type: 'text' },
+        { name: 'supportedMemoryType', label: 'Supported Memory Type', type: 'text' },
+        { name: 'pcieSlots', label: 'PCIe Slots (comma-separated)', type: 'text' },
+        { name: 'sataConnectors', label: 'SATA Connectors', type: 'number' }
+    ],
+    memory: [
+        { name: 'type', label: 'Type', type: 'text' },
+        { name: 'capacity', label: 'Capacity', type: 'text' },
+        { name: 'speed', label: 'Speed', type: 'text' },
+        { name: 'latency', label: 'Latency', type: 'text' },
+        { name: 'voltage', label: 'Voltage', type: 'text' }
+    ],
+    storage: [
+        { name: 'type', label: 'Type', type: 'text' },
+        { name: 'capacity', label: 'Capacity', type: 'text' },
+        { name: 'formFactor', label: 'Form Factor', type: 'text' },
+        { name: 'interface', label: 'Interface', type: 'text' },
+        { name: 'readSpeed', label: 'Read Speed', type: 'text' },
+        { name: 'writeSpeed', label: 'Write Speed', type: 'text' }
+    ],
+    monitor: [
+        { name: 'displaySize', label: 'Display Size', type: 'text' },
+        { name: 'resolution', label: 'Resolution', type: 'text' },
+        { name: 'panelType', label: 'Panel Type', type: 'text' },
+        { name: 'refreshRate', label: 'Refresh Rate', type: 'text' },
+        { name: 'responseTime', label: 'Response Time', type: 'text' },
+        { name: 'ports', label: 'Ports (comma-separated)', type: 'text' },
+        { name: 'hdrSupport', label: 'HDR Support', type: 'checkbox' }
+    ],
+    gears: [
+        { name: 'type', label: 'Type', type: 'text' },
+        { name: 'connectivity', label: 'Connectivity', type: 'text' },
+        { name: 'features', label: 'Features (comma-separated)', type: 'text' }
+    ]
+};
+
+// Handle category change
+document.getElementById('category').addEventListener('change', function() {
+    const container = document.getElementById('specificationsContainer');
+    const category = this.value;
+    
+    if (!category) {
+        container.innerHTML = '<div class="alert alert-info">Please select a category to see specific fields.</div>';
+        return;
+    }
+
+    const fields = specificationFields[category];
+    let html = '';
+
+    fields.forEach(field => {
+        html += `
+            <div class="mb-3">
+                <label for="${field.name}" class="form-label">${field.label}${field.required === false ? '' : '*'}</label>
+                <input type="${field.type}" 
+                       class="form-control" 
+                       id="${field.name}" 
+                       name="specifications[${field.name}]"
+                       ${field.required === false ? '' : 'required'}>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+});
+
+// Handle image preview
+document.getElementById('images').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    if (this.files.length > 5) {
+        alert('You can only upload up to 5 images');
+        this.value = '';
+        return;
+    }
+
+    Array.from(this.files).forEach(file => {
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'preview-image';
+                preview.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+});
+
+// Form submission
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    const images = document.getElementById('images').files;
+    if (images.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one image');
+        return;
+    }
+    if (images.length > 5) {
+        e.preventDefault();
+        alert('You can only upload up to 5 images');
+        return;
+    }
+});
+</script> 
