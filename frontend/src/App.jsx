@@ -6,6 +6,7 @@ import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import NotFoundPage from './pages/NotFoundPage';
+import CategoryProductsPage from './pages/CategoryProductsPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/:id" element={<ProductDetailPage />} />
+            <Route path="/products/category/:category" element={<CategoryProductsPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

@@ -211,12 +211,27 @@ exports.getProductsByCategory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const products = await Product.find({ category })
+    const products = await Product.find({ category: { $regex: `^${category}$`, $options: 'i' } })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await Product.countDocuments({ category });
+    const total = await Product.countDocuments({ category: { $regex: `^${category}$`, $options: 'i' } });
+
+    // If no products found, return a "Sold Out" message
+    if (products.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: 'Sold Out',
+        pagination: {
+          current: page,
+          pages: 0,
+          total: 0,
+          perPage: limit
+        }
+      });
+    }
 
     res.status(200).json({
       success: true,

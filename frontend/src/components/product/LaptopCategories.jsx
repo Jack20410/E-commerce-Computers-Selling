@@ -155,7 +155,7 @@ const LaptopCategories = () => {
           </button>
         </div>
         <div className="mt-10 text-center">
-          <a href="/laptops" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+          <a href="/products/category/laptop" className="inline-flex items-center text-blue-600 hover:text-blue-800">
             View All Laptops
             <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -167,4 +167,4 @@ const LaptopCategories = () => {
   );
 };
 
-export default LaptopCategories; 
+export default LaptopCategories;

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import ProductCard from '../components/product/ProductCard';
-import productService from '../services/productService';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -12,11 +11,16 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const data = await productService.getProducts();
-        setProducts(data);
-        setError(null);
+        // Gọi trực tiếp API backend
+        const res = await fetch('http://localhost:3001/products');
+        const data = await res.json();
+        if (data.success) {
+          setProducts(data.data);
+          setError(null);
+        } else {
+          setError('Failed to load products. Please try again.');
+        }
       } catch (err) {
-        console.error('Error fetching products:', err);
         setError('Failed to load products. Please try again.');
       } finally {
         setLoading(false);
@@ -49,7 +53,7 @@ const ProductsPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products.map(product => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       </div>
@@ -57,4 +61,4 @@ const ProductsPage = () => {
   );
 };
 
-export default ProductsPage; 
+export default ProductsPage;
