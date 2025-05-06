@@ -125,7 +125,8 @@ exports.getProductById = async (req, res) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
+        error: 'NOT_FOUND'
       });
     }
 
@@ -134,6 +135,13 @@ exports.getProductById = async (req, res) => {
       data: product
     });
   } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid product ID format',
+        error: 'INVALID_ID'
+      });
+    }
     handleError(error, res);
   }
 };

@@ -5,23 +5,27 @@ import api from './api';
  */
 const productService = {
   /**
-   * Get all products with optional filtering
-   * @param {Object} filters - Query parameters for filtering products
-   * @returns {Promise} - Promise resolving to products data
+   * Get all products with optional filtering and pagination
+   * @param {Object} params - Query parameters for filtering and pagination
+   * @returns {Promise} - Promise resolving to products data with pagination
    */
-  getProducts: (filters = {}) => {
-    // Build query string from filters
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, value);
+  getProducts: async (params = {}) => {
+    try {
+      console.log('Fetching products with params:', params);
+      const response = await api.get('/products', { params });
+      console.log('Products response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch products');
       }
-    });
-    
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `/products?${queryString}` : '/products';
-    
-    return api.get(endpoint);
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination
+      };
+    } catch (error) {
+      console.error('Error in getProducts:', error);
+      throw error.response?.data || error;
+    }
   },
   
   /**
@@ -29,8 +33,75 @@ const productService = {
    * @param {string|number} id - Product ID
    * @returns {Promise} - Promise resolving to product data
    */
-  getProductById: (id) => {
-    return api.get(`/products/${id}`);
+  getProductById: async (id) => {
+    try {
+      console.log('Fetching product with ID:', id);
+      const response = await api.get(`/products/${id}`);
+      console.log('Product response:', response.data);
+      
+      if (!response.data) {
+        throw new Error('No response data received');
+      }
+
+      // Return the product data regardless of success flag
+      // Some valid responses might not have the success flag
+      return response.data.data || response.data;
+      
+    } catch (error) {
+      console.error('Error in getProductById:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Search products
+   * @param {string} query - Search query
+   * @returns {Promise} - Promise resolving to search results
+   */
+  searchProducts: async (query, params = {}) => {
+    try {
+      console.log('Searching products:', query, params);
+      const response = await api.get('/products/search', {
+        params: { q: query, ...params }
+      });
+      console.log('Search response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Search failed');
+      }
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination
+      };
+    } catch (error) {
+      console.error('Error in searchProducts:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Get products by category
+   * @param {string} category - Category name
+   * @param {Object} params - Additional query parameters
+   * @returns {Promise} - Promise resolving to products in category
+   */
+  getProductsByCategory: async (category, params = {}) => {
+    try {
+      console.log('Fetching products by category:', category, params);
+      const response = await api.get(`/products/category/${category}`, { params });
+      console.log('Category products response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch category products');
+      }
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination
+      };
+    } catch (error) {
+      console.error('Error in getProductsByCategory:', error);
+      throw error.response?.data || error;
+    }
   },
   
   /**
