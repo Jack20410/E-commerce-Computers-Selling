@@ -30,17 +30,21 @@ const validateObjectId = (req, res, next) => {
 // View routes
 router.get('/add', renderAddProductForm);
 router.get('/category/:category', renderCategoryPage);
+// router.get('/category/:category/view', renderCategoryPage); // đổi đường dẫn view
 
 // API routes
 router.route('/')
   .post(uploadImages, createProduct)
   .get(getProducts);
 
+  
+router.route('/').get(getProducts);
+
 // Search route
 router.get('/search', searchProducts);
 
-// Category routes
-router.get('/category/:category', getProductsByCategory);
+// Category API route (JSON)
+router.get('/category/:category', getProductsByCategory); // chỉ trả về JSON cho frontend
 
 // Image management routes
 router.route('/:id/images')
