@@ -12,7 +12,7 @@ const productService = {
   getProducts: async (params = {}) => {
     try {
       console.log('Fetching products with params:', params);
-      const response = await api.get('/products', { params });
+      const response = await api.get('/products/api/products', { params });
       console.log('Products response:', response.data);
       
       if (!response.data.success) {
@@ -36,7 +36,7 @@ const productService = {
   getProductById: async (id) => {
     try {
       console.log('Fetching product with ID:', id);
-      const response = await api.get(`/products/${id}`);
+      const response = await api.get(`/products/api/${id}`);
       console.log('Product response:', response.data);
       
       if (!response.data) {
@@ -61,7 +61,7 @@ const productService = {
   searchProducts: async (query, params = {}) => {
     try {
       console.log('Searching products:', query, params);
-      const response = await api.get('/products/search', {
+      const response = await api.get('/products/api/search', {
         params: { q: query, ...params }
       });
       console.log('Search response:', response.data);
@@ -88,7 +88,7 @@ const productService = {
   getProductsByCategory: async (category, params = {}) => {
     try {
       console.log('Fetching products by category:', category, params);
-      const response = await api.get(`/products/category/${category}`, { params });
+      const response = await api.get(`/products/api/category/${category}`, { params });
       console.log('Category products response:', response.data);
       
       if (!response.data.success) {
@@ -105,12 +105,34 @@ const productService = {
   },
   
   /**
+   * Get similar products for a specific product
+   * @param {string} category - Product category
+   * @param {string} productId - Current product ID to exclude
+   * @returns {Promise} - Promise resolving to similar products
+   */
+  getSimilarProducts: async (category, productId) => {
+    try {
+      console.log('Fetching similar products for:', category, 'excluding:', productId);
+      const response = await api.get(`/products/api/similar/${category}/${productId}`);
+      console.log('Similar products response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch similar products');
+      }
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error in getSimilarProducts:', error);
+      throw error.response?.data || error;
+    }
+  },
+  
+  /**
    * Get featured products
    * @param {number} limit - Number of featured products to retrieve
    * @returns {Promise} - Promise resolving to featured products data
    */
   getFeaturedProducts: (limit = 4) => {
-    return api.get(`/products/featured?limit=${limit}`);
+    return api.get(`/products/api/featured?limit=${limit}`);
   },
   
   /**
@@ -118,7 +140,7 @@ const productService = {
    * @returns {Promise} - Promise resolving to categories data
    */
   getCategories: () => {
-    return api.get('/categories');
+    return api.get('/products/api/categories');
   },
 };
 

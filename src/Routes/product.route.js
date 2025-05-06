@@ -13,7 +13,9 @@ const {
   addProductImages,
   deleteProductImage,
   renderAddProductForm,
-  renderCategoryPage
+  renderCategoryPage,
+  renderEditProductForm,
+  getSimilarProducts
 } = require('../Controllers/product.controller');
 
 // Middleware for checking if ID is valid
@@ -27,37 +29,70 @@ const validateObjectId = (req, res, next) => {
   next();
 };
 
-// View routes
+// ====================================
+// HTML RENDERING ROUTES (View Routes)
+// ====================================
+// These routes return HTML for browser viewing
+
+// View forms
 router.get('/add', renderAddProductForm);
+router.get('/:id/edit', validateObjectId, renderEditProductForm);
+
+// Category page (HTML)
 router.get('/category/:category', renderCategoryPage);
-// router.get('/category/:category/view', renderCategoryPage); // đổi đường dẫn view
 
-// API routes
+// =====================================================================================================================================================
+// API ROUTES (JSON Responses)
+// =====================================================================================================================================================
+// All API routes return JSON and are prefixed with /api/
+
+// Product listing and creation
+router.route('/api/products')
+  .get(getProducts)
+  .post(uploadImages, createProduct);
+
+// Search products
+router.get('/api/search', searchProducts);
+
+// Category products
+router.get('/api/category/:category', getProductsByCategory);
+
+// Similar products 
+router.get('/api/similar/:category/:productId', getSimilarProducts);
+
+// Image management
+router.route('/api/:id/images')
+  .post(validateObjectId, uploadImages, addProductImages)
+  .delete(validateObjectId, deleteProductImage);
+
+// Individual product operations
+router.route('/api/:id')
+  .get(validateObjectId, getProductById)
+  .put(validateObjectId, uploadImages, updateProduct)
+  .delete(validateObjectId, deleteProduct);
+
+// Stock update
+router.patch('/api/:id/stock', validateObjectId, updateStock);
+
+// =====================================================================================================================================================
+// LEGACY ROUTES (for backward compatibility)
+// =====================================================================================================================================================
+// These routes support existing frontend code
+
 router.route('/')
-  .post(uploadImages, createProduct)
-  .get(getProducts);
+  .get(getProducts)
+  .post(uploadImages, createProduct);
 
-  
-router.route('/').get(getProducts);
+router.route('/:id')
+  .get(validateObjectId, getProductById)
+  .put(validateObjectId, uploadImages, updateProduct)
+  .delete(validateObjectId, deleteProduct);
 
-// Search route
-router.get('/search', searchProducts);
-
-// Category API route (JSON)
-router.get('/category/:category', getProductsByCategory); // chỉ trả về JSON cho frontend
-
-// Image management routes
 router.route('/:id/images')
   .post(validateObjectId, uploadImages, addProductImages)
   .delete(validateObjectId, deleteProductImage);
 
-// Individual product routes with ID validation
-router.route('/:id')
-  .get(validateObjectId, getProductById)
-  .put(validateObjectId, updateProduct)
-  .delete(validateObjectId, deleteProduct);
-
-// Stock update route
+router.get('/search', searchProducts);
 router.patch('/:id/stock', validateObjectId, updateStock);
 
 module.exports = router;

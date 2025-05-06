@@ -1,14 +1,15 @@
 const Product = require('../Models/product.model');
 const { upload, deleteProductImages, getImageUrls, getFilenameFromUrl } = require('../utils/upload.util');
+const specificationFields = require('../utils/specificationFields');
 
 // Helper function to handle errors
 const handleError = (error, res) => {
-  console.error('Error:', error);
-  return res.status(500).json({
-    success: false,
-    message: 'Server Error',
-    error: error.message
-  });
+    console.error('Error:', error);
+    return res.status(500).json({
+        success: false,
+        message: 'Server Error',
+        error: error.message
+    });
 };
 
 // Middleware for handling multiple image uploads
@@ -101,7 +102,8 @@ exports.getProducts = async (req, res) => {
       .limit(limit);
 
     const total = await Product.countDocuments(filter);
-
+    
+    // Always return JSON for this endpoint
     res.status(200).json({
       success: true,
       data: products,
@@ -130,6 +132,7 @@ exports.getProductById = async (req, res) => {
       });
     }
 
+    // Always return JSON for this endpoint
     res.status(200).json({
       success: true,
       data: product
@@ -146,18 +149,10 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// Update a product
-exports.updateProduct = async (req, res) => {
+// Render edit product form
+exports.renderEditProductForm = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -165,12 +160,121 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Product updated successfully',
-      data: product
+    res.render('products/edit', {
+      title: 'Edit Product',
+      product,
+      specificationFields: JSON.stringify(specificationFields)
     });
   } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// Update a product
+exports.updateProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Handle file upload error
+    if (req.fileValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: req.fileValidationError
+      });
+    }
+
+    // Update basic information
+    const updateData = { ...req.body };
+    delete updateData.imageOrder; // Remove imageOrder from basic update data
+    delete updateData.deletedImages; // Remove deletedImages from basic update data
+
+    // Handle image reordering
+    if (req.body.imageOrder) {
+      const newOrder = req.body.imageOrder;
+      const reorderedImages = [];
+      
+      // Reorder existing images based on the new order
+      newOrder.forEach(imageId => {
+        const image = product.images.find(img => img._id.toString() === imageId);
+        if (image) {
+          reorderedImages.push(image);
+        }
+      });
+      
+      product.images = reorderedImages;
+    }
+
+    // Handle deleted images
+    if (req.body.deletedImages) {
+      const deletedImages = Array.isArray(req.body.deletedImages) 
+        ? req.body.deletedImages 
+        : [req.body.deletedImages];
+
+      // Remove images from storage
+      for (const imageId of deletedImages) {
+        const image = product.images.find(img => img._id.toString() === imageId);
+        if (image) {
+          const filename = getFilenameFromUrl(image.url);
+          await deleteProductImages(product.category, [filename]);
+        }
+      }
+
+      // Remove deleted images from product
+      product.images = product.images.filter(
+        img => !deletedImages.includes(img._id.toString())
+      );
+    }
+
+    // Add new images if any
+    if (req.files && req.files.length > 0) {
+      const newImageUrls = getImageUrls(product.category, req.files.map(file => file.filename));
+      const newImageObjects = newImageUrls.map((url, index) => ({
+        url,
+        isMain: product.images.length === 0 && index === 0,
+        order: product.images.length + index
+      }));
+
+      product.images = [...product.images, ...newImageObjects];
+
+      // Ensure we don't exceed maximum number of images (5)
+      if (product.images.length > 5) {
+        // Delete excess images
+        const excessImages = product.images.slice(5);
+        const excessFilenames = excessImages.map(img => getFilenameFromUrl(img.url));
+        await deleteProductImages(product.category, excessFilenames);
+        
+        // Keep only first 5 images
+        product.images = product.images.slice(0, 5);
+      }
+    }
+
+    // Update other product data
+    Object.assign(product, updateData);
+    await product.save();
+
+    // If this is an API request, send JSON response
+    if (req.xhr || req.headers.accept.includes('application/json')) {
+      res.status(200).json({
+        success: true,
+        message: 'Product updated successfully',
+        data: product
+      });
+    } else {
+      // Otherwise redirect to product page
+      res.redirect(`/products/${product._id}`);
+    }
+  } catch (error) {
+    // Delete uploaded files if update fails
+    if (req.files && req.files.length > 0) {
+      await deleteProductImages(req.body.category, req.files.map(file => file.filename));
+    }
+    
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
@@ -218,6 +322,8 @@ exports.getProductsByCategory = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+
+    console.log('API getProductsByCategory called for:', category);
 
     const products = await Product.find({ category: { $regex: `^${category}$`, $options: 'i' } })
       .sort({ createdAt: -1 })
@@ -507,6 +613,34 @@ exports.renderCategoryPage = async (req, res) => {
     // Get unique brands for filter dropdown
     const brands = await Product.distinct('brand', { category });
 
+    // More reliable API detection - check origin, accept header, and request type
+    const isApiRequest = 
+      req.xhr || 
+      req.headers.accept.includes('application/json') ||
+      req.headers.origin?.includes('localhost:3000') ||  // Check if request is from frontend
+      req.headers.origin?.includes('127.0.0.1:3000') ||
+      req.query.format === 'json';                      // Allow explicit format request
+    
+    console.log('Request headers:', {
+      origin: req.headers.origin,
+      accept: req.headers.accept,
+      isApiRequest
+    });
+
+    if (isApiRequest) {
+      return res.status(200).json({
+        success: true,
+        data: products,
+        pagination: {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total,
+          perPage: limit
+        }
+      });
+    }
+
+    // Render HTML view only for browser requests
     res.render('products/category', {
       title: `${category.charAt(0).toUpperCase() + category.slice(1)}s`,
       category,
@@ -517,6 +651,32 @@ exports.renderCategoryPage = async (req, res) => {
       total
     });
   } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// Get similar products (specifically for product detail page)
+exports.getSimilarProducts = async (req, res) => {
+  try {
+    const { category, productId } = req.params;
+    
+    console.log('Getting similar products for category:', category, 'excluding:', productId);
+    
+    // Find products in the same category, excluding the current product
+    const similarProducts = await Product.find({
+      category,
+      _id: { $ne: productId }
+    })
+    .sort({ createdAt: -1 })
+    .limit(4);
+    
+    // Always return JSON
+    return res.status(200).json({
+      success: true,
+      data: similarProducts
+    });
+  } catch (error) {
+    console.error('Error in getSimilarProducts:', error);
     handleError(error, res);
   }
 };

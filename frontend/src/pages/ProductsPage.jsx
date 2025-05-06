@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 
 const ProductsPage = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,6 +32,10 @@ const ProductsPage = () => {
     fetchProducts();
   }, []);
 
+  const handleProductClick = (productId) => {
+    navigate(`/products/${productId}`);
+  };
+
   return (
     <>
       <Helmet>
@@ -53,7 +59,13 @@ const ProductsPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products.map(product => (
-            <ProductCard key={product._id} product={product} />
+            <div 
+              key={product._id} 
+              onClick={() => handleProductClick(product._id)}
+              className="cursor-pointer"
+            >
+              <ProductCard product={product} />
+            </div>
           ))}
         </div>
       </div>
