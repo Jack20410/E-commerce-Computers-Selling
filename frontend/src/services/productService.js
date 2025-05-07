@@ -2,7 +2,6 @@ import api from './api';
 
 /**
  * Service for product-related API operations
- * All endpoints use /api prefix to ensure JSON responses
  */
 const productService = {
   /**
@@ -11,7 +10,7 @@ const productService = {
   getProducts: async (params = {}) => {
     try {
       console.log('Fetching products with params:', params);
-      const response = await api.get('/products/api/products', { params });
+      const response = await api.get('/api/products', { params });
       console.log('Products response:', response.data);
       
       if (!response.data.success) {
@@ -47,7 +46,7 @@ const productService = {
         formData.append(key, productData[key]);
       });
 
-      const response = await api.post('/products/api/products', formData, {
+      const response = await api.post('/api/products', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -67,7 +66,7 @@ const productService = {
   getProductById: async (id) => {
     try {
       console.log('Fetching product with ID:', id);
-      const response = await api.get(`/products/api/${id}`);
+      const response = await api.get(`/api/products/${id}`);
       console.log('Product response:', response.data);
       
       if (!response.data) {
@@ -102,7 +101,7 @@ const productService = {
         formData.append(key, productData[key]);
       });
 
-      const response = await api.put(`/products/api/${id}`, formData, {
+      const response = await api.put(`/api/products/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -121,7 +120,7 @@ const productService = {
    */
   deleteProduct: async (id) => {
     try {
-      const response = await api.delete(`/products/api/${id}`);
+      const response = await api.delete(`/api/products/${id}`);
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to delete product');
       }
@@ -138,7 +137,7 @@ const productService = {
   searchProducts: async (query, params = {}) => {
     try {
       console.log('Searching products:', query, params);
-      const response = await api.get('/products/api/search', {
+      const response = await api.get('/api/products/search', {
         params: { q: query, ...params }
       });
       console.log('Search response:', response.data);
@@ -162,7 +161,7 @@ const productService = {
   getProductsByCategory: async (category, params = {}) => {
     try {
       console.log('Fetching products by category:', category, params);
-      const response = await api.get(`/products/api/category/${category}`, { params });
+      const response = await api.get(`/api/products/category/${category}`, { params });
       console.log('Category products response:', response.data);
       
       if (!response.data) {
@@ -197,7 +196,7 @@ const productService = {
   getSimilarProducts: async (category, productId) => {
     try {
       console.log('Fetching similar products for:', category, 'excluding:', productId);
-      const response = await api.get(`/products/api/similar/${category}/${productId}`);
+      const response = await api.get(`/api/products/similar/${category}/${productId}`);
       console.log('Similar products response:', response.data);
       
       if (!response.data.success) {
@@ -215,7 +214,7 @@ const productService = {
    */
   getBrandsByCategory: async (category) => {
     try {
-      const response = await api.get(`/products/api/category/${category}/brands`);
+      const response = await api.get(`/api/products/category/${category}/brands`);
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch brands');
       }
@@ -231,7 +230,7 @@ const productService = {
    */
   updateStock: async (id, stock) => {
     try {
-      const response = await api.patch(`/products/api/${id}/stock`, { stock });
+      const response = await api.patch(`/api/products/${id}/stock`, { stock });
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to update stock');
       }
@@ -252,7 +251,7 @@ const productService = {
         formData.append('images', image);
       });
 
-      const response = await api.post(`/products/api/${id}/images`, formData, {
+      const response = await api.post(`/api/products/${id}/images`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -271,7 +270,7 @@ const productService = {
    */
   deleteProductImage: async (id, imageUrl) => {
     try {
-      const response = await api.delete(`/products/api/${id}/images`, {
+      const response = await api.delete(`/api/products/${id}/images`, {
         data: { imageUrl }
       });
       if (!response.data.success) {

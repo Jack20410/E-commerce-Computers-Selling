@@ -466,8 +466,6 @@ const ProductDetailPage = () => {
             <ol className="flex items-center space-x-2 text-xs">
               <li><Link to="/" className="text-gray-500 hover:text-blue-600 transition-colors">Home</Link></li>
               <li><span className="text-gray-400">/</span></li>
-              <li><Link to="/products" className="text-gray-500 hover:text-blue-600 transition-colors">Products</Link></li>
-              <li><span className="text-gray-400">/</span></li>
               <li><Link to={`/products/category/${product.category}`} className="text-gray-500 hover:text-blue-600 transition-colors capitalize">{product.category}</Link></li>
               <li><span className="text-gray-400">/</span></li>
               <li className="text-gray-900 font-medium truncate">{product.model}</li>

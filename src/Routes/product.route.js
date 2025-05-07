@@ -3,22 +3,16 @@ const router = express.Router();
 const {
   createProduct,
   getProducts,
-  getProducts_HTML,
   getProductById,
-  getProductById_HTML,
   updateProduct,
   deleteProduct,
   getProductsByCategory,
-  getProductsByCategory_HTML,
   searchProducts,
-  searchProducts_HTML,
   updateStock,
   uploadImages,
   addProductImages,
   deleteProductImage,
-  getSimilarProducts,
-  renderAddProductForm_HTML,
-  renderEditProductForm_HTML
+  getSimilarProducts
 } = require('../Controllers/product.controller');
 
 // Middleware to validate MongoDB ObjectId
@@ -38,18 +32,18 @@ const validateObjectId = (req, res, next) => {
 // =====================================================================
 
 // Search products
-router.get('/api/search', searchProducts);
+router.get('/search', searchProducts);
 
 // Get all products & create new product
-router.route('/api/products')
+router.route('/')
   .get(getProducts)
   .post(uploadImages, createProduct);
 
 // Get products by category
-router.get('/api/category/:category', getProductsByCategory);
+router.get('/category/:category', getProductsByCategory);
 
 // Get all brands for a category
-router.get('/api/category/:category/brands', async (req, res) => {
+router.get('/category/:category/brands', async (req, res) => {
   try {
     const { category } = req.params;
     const Product = require('../Models/product.model');
@@ -61,44 +55,20 @@ router.get('/api/category/:category/brands', async (req, res) => {
 });
 
 // Get similar products in same category (excluding current product)
-router.get('/api/similar/:category/:productId', getSimilarProducts);
+router.get('/similar/:category/:productId', getSimilarProducts);
 
 // Get, update, delete product by ID
-router.route('/api/:id')
+router.route('/:id')
   .get(validateObjectId, getProductById)
   .put(validateObjectId, uploadImages, updateProduct)
   .delete(validateObjectId, deleteProduct);
 
 // Manage product images
-router.route('/api/:id/images')
+router.route('/:id/images')
   .post(validateObjectId, uploadImages, addProductImages)
   .delete(validateObjectId, deleteProductImage);
 
 // Update product stock
-router.patch('/api/:id/stock', validateObjectId, updateStock);
-
-// =====================================================================
-// WEB ROUTES (HTML Responses for Server-Side Rendering)
-// These routes render HTML pages
-// =====================================================================
-
-
-// Product listing and category pages
-router.get('/category/:category', getProductsByCategory_HTML);
-
-// Add product form
-router.get('/add', renderAddProductForm_HTML);
-
-// Edit product form
-router.get('/:id/edit', validateObjectId, renderEditProductForm_HTML);
-
-
-// Product management routes (Create, Update, Delete)
-router.route('/')
-  .post(uploadImages, createProduct);  // Create new product
-
-router.route('/:id')
-  .put(validateObjectId, uploadImages, updateProduct)
-  .delete(validateObjectId, deleteProduct);
+router.patch('/:id/stock', validateObjectId, updateStock);
 
 module.exports = router;
