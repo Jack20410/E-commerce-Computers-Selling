@@ -3,37 +3,37 @@ const Categories = () => {
     {
       id: 1,
       name: 'Pre-built PCs',
-      image: 'https://images.unsplash.com/photo-1625842268584-8f3296236761?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80',
+      image: './public/images/pre-built-pc.webp',
       description: 'Ready-to-go gaming and workstation PCs',
     },
     {
       id: 2,
       name: 'Laptops',
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80',
+      image: './public/images/laptop.jpg',
       description: 'Gaming, business, and everyday laptops',
     },
     {
       id: 3,
       name: 'CPUs',
-      image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80',
+      image: './public/images/cpu.webp',
       description: 'Processors from Intel and AMD',
     },
     {
       id: 4,
       name: 'Graphics Cards',
-      image: 'https://images.unsplash.com/photo-1591405351990-4726e331f141?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80',
+      image: './public/images/gpu.jpg',
       description: 'NVIDIA and AMD GPUs for gaming and content creation',
     },
     {
       id: 5,
       name: 'Gears',
-      image: 'https://images.unsplash.com/photo-1594380128001-8eed5d4b7a5c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80',
+      image: './public/images/gears.png',
       description: 'Keyboards, mice, monitors, and more',
     },
     {
       id: 6,
       name: 'Storage',
-      image: 'https://images.unsplash.com/photo-1615293889206-74747b8e2ff5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80',
+      image: './public/images/storage.jpg',
       description: 'SSDs, HDDs, and external storage solutions',
     },
   ];
