@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { provinces, districts, wards } = require('vietnam-provinces');
 
 const addressSchema = new mongoose.Schema({
   isDefault: {
@@ -13,17 +14,38 @@ const addressSchema = new mongoose.Schema({
   ward: {
     type: String,
     required: [true, 'Ward is required'],
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(v) {
+        const wardData = wards.find(ward => ward.name === v);
+        return wardData !== undefined;
+      },
+      message: props => `${props.value} is not a valid ward in Vietnam!`
+    }
   },
   district: {
     type: String,
     required: [true, 'District is required'],
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(v) {
+        const districtData = districts.find(district => district.name === v);
+        return districtData !== undefined;
+      },
+      message: props => `${props.value} is not a valid district in Vietnam!`
+    }
   },
   city: {
     type: String,
     required: [true, 'City is required'],
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(v) {
+        const provinceData = provinces.find(province => province.name === v);
+        return provinceData !== undefined;
+      },
+      message: props => `${props.value} is not a valid city/province in Vietnam!`
+    }
   }
 }, { _id: true });
 
@@ -143,6 +165,29 @@ userSchema.methods.hasRole = function(role) {
 // Method để kiểm tra xem user có phải là guest không
 userSchema.methods.isGuestUser = function() {
   return this.isGuest === true;
+};
+
+// Thêm static method để lấy danh sách tỉnh/thành phố
+userSchema.statics.getProvinces = function() {
+  return provinces.map(province => province.name);
+};
+
+// Thêm static method để lấy danh sách quận/huyện theo tỉnh/thành phố
+userSchema.statics.getDistricts = function(provinceName) {
+  const province = provinces.find(p => p.name === provinceName);
+  if (!province) return [];
+  return districts
+    .filter(district => district.province_code === province.code)
+    .map(district => district.name);
+};
+
+// Thêm static method để lấy danh sách phường/xã theo quận/huyện
+userSchema.statics.getWards = function(districtName) {
+  const district = districts.find(d => d.name === districtName);
+  if (!district) return [];
+  return wards
+    .filter(ward => ward.district_code === district.code)
+    .map(ward => ward.name);
 };
 
 const User = mongoose.model('User', userSchema);

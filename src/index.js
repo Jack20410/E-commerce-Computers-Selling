@@ -9,7 +9,9 @@ const connectDB = require('./config/database');
 const productRoutes = require('./Routes/product.route');
 const authRoutes = require('./Routes/auth.route');
 const userRoutes = require('./Routes/user.route');
+const addressRoutes = require('./Routes/address.route');
 const passport = require('./Config/passport');
+
 
 // Initialize express app
 const app = express();
@@ -51,6 +53,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/auth', authRoutes);
 app.use('/products', productRoutes);
 app.use('/users', userRoutes);
+app.use('/api/address', addressRoutes);
 
 // Root route
 app.get('/', (req, res) => {

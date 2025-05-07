@@ -3,27 +3,19 @@ const bcrypt = require('bcryptjs');
 const passwordUtils = {
   // Kiểm tra độ mạnh của mật khẩu
   validatePassword: (password) => {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
+    const minLength = 6;
+    const hasLetter = /[a-zA-Z]/.test(password);
     const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
     const errors = [];
     if (password.length < minLength) {
-      errors.push(`Mật khẩu phải có ít nhất ${minLength} ký tự`);
+      errors.push(`Password must be at least ${minLength} characters long`);
     }
-    if (!hasUpperCase) {
-      errors.push('Mật khẩu phải chứa ít nhất một chữ hoa');
-    }
-    if (!hasLowerCase) {
-      errors.push('Mật khẩu phải chứa ít nhất một chữ thường');
+    if (!hasLetter) {
+      errors.push('Password must contain at least one letter');
     }
     if (!hasNumbers) {
-      errors.push('Mật khẩu phải chứa ít nhất một số');
-    }
-    if (!hasSpecialChar) {
-      errors.push('Mật khẩu phải chứa ít nhất một ký tự đặc biệt');
+      errors.push('Password must contain at least one number');
     }
 
     return {

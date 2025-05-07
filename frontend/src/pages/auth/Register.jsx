@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuthBanner from '../../components/ui/AuthBanner';
+import axios from 'axios';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,6 +19,80 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+
+  // Fetch provinces on component mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/address/provinces');
+        setProvinces(response.data || []);
+      } catch (error) {
+        console.error('Error fetching provinces:', error);
+        setProvinces([]);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Fetch districts when province changes
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (selectedProvince) {
+        try {
+          console.log('Selected province code:', selectedProvince);
+          const response = await axios.get(`http://localhost:3001/api/address/districts/${selectedProvince}`);
+          console.log('Districts API response:', response.data);
+          setDistricts(response.data);
+          setWards([]); // Reset wards when district changes
+          setFormData(prev => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              district: '',
+              ward: ''
+            }
+          }));
+        } catch (error) {
+          console.error('Error fetching districts:', error);
+        }
+      } else {
+        setDistricts([]);
+      }
+    };
+    fetchDistricts();
+  }, [selectedProvince]);
+
+  // Fetch wards when district changes
+  useEffect(() => {
+    const fetchWards = async () => {
+      if (selectedDistrict) {
+        try {
+          console.log('Selected district code:', selectedDistrict);
+          const response = await axios.get(`http://localhost:3001/api/address/wards/${selectedDistrict}`);
+          console.log('Wards API response:', response.data);
+          setWards(response.data);
+          setFormData(prev => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              ward: ''
+            }
+          }));
+        } catch (error) {
+          console.error('Error fetching wards:', error);
+        }
+      } else {
+        setWards([]);
+      }
+    };
+    fetchWards();
+  }, [selectedDistrict]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,10 +113,67 @@ const Register = () => {
     }
   };
 
+  const handleProvinceChange = (e) => {
+    const provinceCode = e.target.value;
+    setSelectedProvince(provinceCode);
+    const province = provinces.find(p => p.code === provinceCode);
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        city: province ? province.name : '',
+        district: '',
+        ward: ''
+      }
+    }));
+  };
+
+  const handleDistrictChange = (e) => {
+    const districtCode = e.target.value;
+    console.log('District select onChange value:', districtCode);
+    setSelectedDistrict(districtCode);
+    const district = districts.find(d => String(d.code) === String(districtCode));
+    console.log('District found:', district);
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        district: district ? district.name : '',
+        ward: ''
+      }
+    }));
+  };
+
+  const handleWardChange = (e) => {
+    const wardCode = e.target.value;
+    console.log('Ward select onChange value:', wardCode);
+    const ward = wards.find(w => String(w.code) === String(wardCode));
+    console.log('Ward found:', ward);
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        ward: wardCode
+      }
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+
+    // Lấy tên phường, quận, thành phố từ mã
+    const wardObj = wards.find(w => String(w.code) === String(formData.address.ward));
+    const districtObj = districts.find(d => String(d.code) === String(selectedDistrict));
+    const provinceObj = provinces.find(p => String(p.code) === String(selectedProvince));
+
+    const addressToSend = {
+      ...formData.address,
+      ward: wardObj ? wardObj.name : '',
+      district: districtObj ? districtObj.name : '',
+      city: provinceObj ? provinceObj.name : ''
+    };
 
     try {
       const response = await fetch('http://localhost:3001/auth/register', {
@@ -49,7 +181,10 @@ const Register = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          address: addressToSend
+        }),
       });
 
       const data = await response.json();
@@ -129,75 +264,85 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                <h3 className="text-lg font-medium text-gray-900 sticky top-0 bg-white py-2 z-10">Address</h3>
-                
+              {/* Address */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">Address</h3>
+                {/* City/Province */}
                 <div>
-                  <label htmlFor="street" className="block text-sm font-medium text-gray-700">
-                    Street
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                    City/Province
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="address.street"
-                      id="street"
-                      value={formData.address.street}
-                      onChange={handleChange}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
+                  <select
+                    id="city"
+                    value={selectedProvince}
+                    onChange={handleProvinceChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    required
+                  >
+                    <option value="">Select City/Province</option>
+                    {Array.isArray(provinces) && provinces.map(province => (
+                      <option key={province.code} value={province.code}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-                <div>
-                  <label htmlFor="ward" className="block text-sm font-medium text-gray-700">
-                    Ward
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="address.ward"
-                      id="ward"
-                      value={formData.address.ward}
-                      onChange={handleChange}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-
+                {/* District */}
                 <div>
                   <label htmlFor="district" className="block text-sm font-medium text-gray-700">
                     District
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="address.district"
-                      id="district"
-                      value={formData.address.district}
-                      onChange={handleChange}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
+                  <select
+                    id="district"
+                    value={selectedDistrict}
+                    onChange={handleDistrictChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    required
+                    disabled={!selectedProvince}
+                  >
+                    <option value="">Select District</option>
+                    {Array.isArray(districts) && districts.map(district => (
+                      <option key={district.code} value={String(district.code)}>
+                        {district.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
+                {/* Ward */}
                 <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                    City
+                  <label htmlFor="ward" className="block text-sm font-medium text-gray-700">
+                    Ward
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="address.city"
-                      id="city"
-                      value={formData.address.city}
-                      onChange={handleChange}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
+                  <select
+                    id="ward"
+                    value={formData.address.ward}
+                    onChange={handleWardChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    required
+                    disabled={!selectedDistrict}
+                  >
+                    <option value="">Select Ward</option>
+                    {Array.isArray(wards) && wards.map(ward => (
+                      <option key={ward.code} value={String(ward.code)}>
+                        {ward.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Street */}
+                <div>
+                  <label htmlFor="street" className="block text-sm font-medium text-gray-700">
+                    Street
+                  </label>
+                  <input
+                    type="text"
+                    name="address.street"
+                    id="street"
+                    value={formData.address.street}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    required
+                  />
                 </div>
               </div>
 

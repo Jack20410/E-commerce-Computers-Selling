@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
+import axios from 'axios';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -47,6 +48,11 @@ const ProfilePage = () => {
   });
 
   const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
 
   // Kiểm tra authentication và khởi tạo dữ liệu
   useEffect(() => {
@@ -94,6 +100,72 @@ const ProfilePage = () => {
     clearMessages();
   }, [activeTab]);
 
+  // Fetch provinces on component mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/address/provinces');
+        setProvinces(response.data || []);
+      } catch (error) {
+        console.error('Error fetching provinces:', error);
+        setProvinces([]);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Fetch districts when province changes
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (selectedProvince) {
+        try {
+          const response = await axios.get(`http://localhost:3001/api/address/districts/${selectedProvince}`);
+          setDistricts(response.data || []);
+          setWards([]); // Reset wards when district changes
+          setPersonalInfo(prev => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              district: '',
+              ward: ''
+            }
+          }));
+        } catch (error) {
+          console.error('Error fetching districts:', error);
+          setDistricts([]);
+        }
+      } else {
+        setDistricts([]);
+      }
+    };
+    fetchDistricts();
+  }, [selectedProvince]);
+
+  // Fetch wards when district changes
+  useEffect(() => {
+    const fetchWards = async () => {
+      if (selectedDistrict) {
+        try {
+          const response = await axios.get(`http://localhost:3001/api/address/wards/${selectedDistrict}`);
+          setWards(response.data || []);
+          setPersonalInfo(prev => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              ward: ''
+            }
+          }));
+        } catch (error) {
+          console.error('Error fetching wards:', error);
+          setWards([]);
+        }
+      } else {
+        setWards([]);
+      }
+    };
+    fetchWards();
+  }, [selectedDistrict]);
+
   const handlePersonalInfoChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('.')) {
@@ -114,24 +186,19 @@ const ProfilePage = () => {
   };
 
   const validatePassword = (password) => {
+    const minLength = 6;
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumbers = /\d/.test(password);
     const errors = [];
-    
-    if (password.length < 8) {
-      errors.push('Mật khẩu phải có ít nhất 8 ký tự');
+    if (password.length < minLength) {
+      errors.push(`Password must be at least ${minLength} characters long`);
     }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Mật khẩu phải chứa ít nhất 1 chữ hoa');
+    if (!hasLetter) {
+      errors.push('Password must contain at least one letter');
     }
-    if (!/[a-z]/.test(password)) {
-      errors.push('Mật khẩu phải chứa ít nhất 1 chữ thường');
+    if (!hasNumbers) {
+      errors.push('Password must contain at least one number');
     }
-    if (!/[0-9]/.test(password)) {
-      errors.push('Mật khẩu phải chứa ít nhất 1 số');
-    }
-    if (!/[!@#$%^&*]/.test(password)) {
-      errors.push('Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*)');
-    }
-    
     return errors;
   };
 
@@ -178,15 +245,20 @@ const ProfilePage = () => {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      navigate('/login', { state: { from: '/profile' } });
-      return;
-    }
-
+    // Lấy tên từ code trước khi gửi lên server
+    const wardObj = wards.find(w => String(w.code) === String(personalInfo.address.ward));
+    const districtObj = districts.find(d => String(d.code) === String(personalInfo.address.district));
+    const provinceObj = provinces.find(p => String(p.code) === String(personalInfo.address.city));
+    const addressToSend = {
+      ...personalInfo.address,
+      ward: wardObj ? wardObj.name : '',
+      district: districtObj ? districtObj.name : '',
+      city: provinceObj ? provinceObj.name : ''
+    };
     try {
       await updateProfile({
         fullName: personalInfo.fullName,
-        address: personalInfo.address
+        address: addressToSend
       });
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -328,6 +400,47 @@ const ProfilePage = () => {
     }
   };
 
+  const handleProvinceChange = (e) => {
+    const provinceCode = e.target.value;
+    setSelectedProvince(provinceCode);
+    const province = provinces.find(p => String(p.code) === String(provinceCode));
+    setPersonalInfo(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        city: provinceCode, // Lưu code
+        district: '',
+        ward: ''
+      }
+    }));
+  };
+
+  const handleDistrictChange = (e) => {
+    const districtCode = e.target.value;
+    setSelectedDistrict(districtCode);
+    const district = districts.find(d => String(d.code) === String(districtCode));
+    setPersonalInfo(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        district: districtCode, // Lưu code
+        ward: ''
+      }
+    }));
+  };
+
+  const handleWardChange = (e) => {
+    const wardCode = e.target.value;
+    const ward = wards.find(w => String(w.code) === String(wardCode));
+    setPersonalInfo(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        ward: wardCode // Lưu code
+      }
+    }));
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -440,6 +553,7 @@ const ProfilePage = () => {
                   />
                 </div>
 
+                {/* Address */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-gray-900">Address</h3>
                   
@@ -459,48 +573,65 @@ const ProfilePage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="ward" className="block text-sm font-medium text-gray-700">
-                      Ward
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                      City/Province
                     </label>
-                    <input
-                      type="text"
-                      name="address.ward"
-                      id="ward"
-                      value={personalInfo.address.ward}
-                      onChange={handlePersonalInfoChange}
+                    <select
+                      id="city"
+                      value={personalInfo.address.city}
+                      onChange={handleProvinceChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                       required
-                    />
+                    >
+                      <option value="">Select City/Province</option>
+                      {Array.isArray(provinces) && provinces.map(province => (
+                        <option key={province.code} value={String(province.code)}>
+                          {province.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <label htmlFor="district" className="block text-sm font-medium text-gray-700">
                       District
                     </label>
-                    <input
-                      type="text"
-                      name="address.district"
+                    <select
                       id="district"
                       value={personalInfo.address.district}
-                      onChange={handlePersonalInfoChange}
+                      onChange={handleDistrictChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                       required
-                    />
+                      disabled={!personalInfo.address.city}
+                    >
+                      <option value="">Select District</option>
+                      {Array.isArray(districts) && districts.map(district => (
+                        <option key={district.code} value={String(district.code)}>
+                          {district.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                      City
+                    <label htmlFor="ward" className="block text-sm font-medium text-gray-700">
+                      Ward
                     </label>
-                    <input
-                      type="text"
-                      name="address.city"
-                      id="city"
-                      value={personalInfo.address.city}
-                      onChange={handlePersonalInfoChange}
+                    <select
+                      id="ward"
+                      value={personalInfo.address.ward}
+                      onChange={handleWardChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                       required
-                    />
+                      disabled={!personalInfo.address.district}
+                    >
+                      <option value="">Select Ward</option>
+                      {Array.isArray(wards) && wards.map(ward => (
+                        <option key={ward.code} value={String(ward.code)}>
+                          {ward.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
