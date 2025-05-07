@@ -4,10 +4,11 @@ const API_URL = process.env.NODE_ENV === 'production'
   ? process.env.REACT_APP_API_URL 
   : 'http://localhost:3001';
 
+console.log('API URL:', API_URL);
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
   withCredentials: true
@@ -17,7 +18,17 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Log the request for debugging
-    console.log('Making request to:', config.url);
+    console.log('Making request to:', config.url, config.method);
+    console.log('Request data type:', config.data instanceof FormData ? 'FormData' : typeof config.data);
+    
+    // Don't set Content-Type for FormData - axios will set it automatically with boundary
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    } else {
+      // Ensure Content-Type is not set for FormData
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {

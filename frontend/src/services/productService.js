@@ -31,32 +31,60 @@ const productService = {
    */
   createProduct: async (productData) => {
     try {
-      const formData = new FormData();
+      // productData should already be FormData
+      if (!(productData instanceof FormData)) {
+        throw new Error('Product data must be FormData');
+      }
       
-      // Handle images if present
-      if (productData.images) {
-        productData.images.forEach(image => {
-          formData.append('images', image);
-        });
-        delete productData.images;
+      // Add a timestamp to prevent caching
+      productData.append('_timestamp', Date.now());
+
+      // Check and parse specifications to ensure it's valid JSON
+      const specificationsStr = productData.get('specifications');
+      if (specificationsStr) {
+        try {
+          // Validate JSON format
+          const parsedSpecs = JSON.parse(specificationsStr);
+          console.log('Valid specifications JSON:', parsedSpecs);
+          
+          // If parsing was successful, replace the specifications with the validated string
+          productData.delete('specifications');
+          productData.append('specifications', JSON.stringify(parsedSpecs));
+        } catch (e) {
+          console.error('Invalid JSON in specifications:', e);
+          throw new Error('Specifications must be a valid JSON object');
+        }
       }
 
-      // Add other product data
-      Object.keys(productData).forEach(key => {
-        formData.append(key, productData[key]);
-      });
-
-      const response = await api.post('/api/products', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create product');
+      // Log what's in the FormData (for debugging)
+      console.log('Creating product with FormData:');
+      for (let pair of productData.entries()) {
+        if (pair[0] === 'images') {
+          console.log(pair[0], ':', pair[1].name);
+        } else {
+          console.log(pair[0], ':', pair[1]);
+        }
       }
+
+      // Important: Let axios set the correct multipart/form-data content-type with boundary
+      const response = await api.post('/api/products', productData);
+
+      console.log('Backend response:', response);
+
+      if (!response.data || !response.data.success) {
+        const errorMessage = response.data?.message || 'Failed to create product';
+        console.error('API Error Response:', response.data);
+        throw new Error(errorMessage);
+      }
+      
       return response.data.data;
     } catch (error) {
       console.error('Error in createProduct:', error);
-      throw error.response?.data || error;
+      if (error.response?.data) {
+        console.error('Response error data:', error.response.data);
+        throw error.response.data;
+      }
+      throw error;
     }
   },
 
@@ -86,24 +114,22 @@ const productService = {
    */
   updateProduct: async (id, productData) => {
     try {
-      const formData = new FormData();
-      
-      // Handle images if present
-      if (productData.images) {
-        productData.images.forEach(image => {
-          formData.append('images', image);
-        });
-        delete productData.images;
+      // productData should already be FormData
+      if (!(productData instanceof FormData)) {
+        throw new Error('Product data must be FormData');
       }
 
-      // Add other product data
-      Object.keys(productData).forEach(key => {
-        formData.append(key, productData[key]);
-      });
+      // Log FormData contents for debugging
+      console.log('Updating product with FormData:');
+      for (let pair of productData.entries()) {
+        if (pair[0] === 'images') {
+          console.log(pair[0], ':', pair[1].name);
+        } else {
+          console.log(pair[0], ':', pair[1]);
+        }
+      }
 
-      const response = await api.put(`/api/products/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await api.put(`/api/products/${id}`, productData);
 
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to update product');
@@ -111,7 +137,11 @@ const productService = {
       return response.data.data;
     } catch (error) {
       console.error('Error in updateProduct:', error);
-      throw error.response?.data || error;
+      if (error.response?.data) {
+        console.error('Response error data:', error.response.data);
+        throw error.response.data;
+      }
+      throw error;
     }
   },
 

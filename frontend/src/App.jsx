@@ -15,6 +15,8 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ProfilePage from './pages/ProfilePage';
 import OAuth2Redirect from './pages/auth/OAuth2Redirect';
 import AddProduct from './pages/admin/AddProduct';
+import EditProduct from './pages/admin/EditProduct';
+
 // import AppRoutes from './routes';
 
 function App() {
@@ -39,6 +41,7 @@ function App() {
                   <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
                   {/* Admin Routes */}
                   <Route path="/admin/add-product" element={<AddProduct />} />
+                  <Route path="/admin/edit-product/:id" element={<EditProduct />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </main>

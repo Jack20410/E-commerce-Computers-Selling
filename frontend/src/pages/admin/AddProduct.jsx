@@ -1,85 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-
-const categorySpecs = {
-  pc: {
-    processor: { type: 'text', required: true, label: 'Processor' },
-    ram: { type: 'text', required: true, label: 'RAM' },
-    storage: { type: 'text', required: true, label: 'Storage' },
-    graphicsCard: { type: 'text', required: true, label: 'Graphics Card' },
-    motherboard: { type: 'text', required: true, label: 'Motherboard' },
-    powerSupply: { type: 'text', required: true, label: 'Power Supply' },
-    case: { type: 'text', required: true, label: 'Case' },
-    operatingSystem: { type: 'text', required: false, label: 'Operating System' },
-  },
-  laptop: {
-    processor: { type: 'text', required: true, label: 'Processor' },
-    ram: { type: 'text', required: true, label: 'RAM' },
-    storage: { type: 'text', required: true, label: 'Storage' },
-    displaySize: { type: 'text', required: true, label: 'Display Size' },
-    graphicsCard: { type: 'text', required: true, label: 'Graphics Card' },
-    batteryLife: { type: 'text', required: true, label: 'Battery Life' },
-    weight: { type: 'text', required: true, label: 'Weight' },
-    operatingSystem: { type: 'text', required: false, label: 'Operating System' },
-  },
-  cpu: {
-    socket: { type: 'text', required: true, label: 'Socket' },
-    cores: { type: 'number', required: true, label: 'Cores' },
-    threads: { type: 'number', required: true, label: 'Threads' },
-    baseSpeed: { type: 'text', required: true, label: 'Base Speed' },
-    boostSpeed: { type: 'text', required: true, label: 'Boost Speed' },
-    graphic: { type: 'text', required: true, label: 'Integrated Graphics' },
-    tdp: { type: 'text', required: true, label: 'TDP' },
-  },
-  graphicsCard: {
-    chipset: { type: 'text', required: true, label: 'Chipset' },
-    memory: { type: 'text', required: true, label: 'Memory' },
-    memoryType: { type: 'text', required: true, label: 'Memory Type' },
-    coreClock: { type: 'text', required: true, label: 'Core Clock' },
-    boostClock: { type: 'text', required: true, label: 'Boost Clock' },
-    powerConsumption: { type: 'text', required: true, label: 'Power Consumption' },
-    ports: { type: 'text', required: false, label: 'Ports (comma separated)' },
-  },
-  motherboard: {
-    socket: { type: 'text', required: true, label: 'Socket' },
-    chipset: { type: 'text', required: true, label: 'Chipset' },
-    formFactor: { type: 'text', required: true, label: 'Form Factor' },
-    memorySlots: { type: 'number', required: true, label: 'Memory Slots' },
-    maxMemory: { type: 'text', required: true, label: 'Maximum Memory' },
-    supportedMemoryType: { type: 'text', required: true, label: 'Supported Memory Type' },
-    pcieSlots: { type: 'text', required: false, label: 'PCIe Slots (comma separated)' },
-    sataConnectors: { type: 'number', required: true, label: 'SATA Connectors' },
-  },
-  memory: {
-    type: { type: 'text', required: true, label: 'Type' },
-    capacity: { type: 'text', required: true, label: 'Capacity' },
-    speed: { type: 'text', required: true, label: 'Speed' },
-    latency: { type: 'text', required: true, label: 'Latency' },
-    voltage: { type: 'text', required: true, label: 'Voltage' },
-  },
-  storage: {
-    type: { type: 'text', required: true, label: 'Type' },
-    capacity: { type: 'text', required: true, label: 'Capacity' },
-    formFactor: { type: 'text', required: true, label: 'Form Factor' },
-    interface: { type: 'text', required: true, label: 'Interface' },
-    readSpeed: { type: 'text', required: true, label: 'Read Speed' },
-    writeSpeed: { type: 'text', required: true, label: 'Write Speed' },
-  },
-  monitor: {
-    displaySize: { type: 'text', required: true, label: 'Display Size' },
-    resolution: { type: 'text', required: true, label: 'Resolution' },
-    panelType: { type: 'text', required: true, label: 'Panel Type' },
-    refreshRate: { type: 'text', required: true, label: 'Refresh Rate' },
-    responseTime: { type: 'text', required: true, label: 'Response Time' },
-    ports: { type: 'text', required: false, label: 'Ports (comma separated)' },
-    hdrSupport: { type: 'checkbox', required: false, label: 'HDR Support' },
-  },
-  gears: {
-    type: { type: 'text', required: true, label: 'Type' },
-    connectivity: { type: 'text', required: true, label: 'Connectivity' },
-    features: { type: 'text', required: false, label: 'Features (comma separated)' },
-  },
-};
+import specificationFields from '../../utils/specificationFields';
+import productService from '../../services/productService';
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -90,8 +11,11 @@ const AddProduct = () => {
     stock: '',
     description: '',
     specifications: {},
-    images: [],
+    images: []
   });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
 
   const handleBaseInputChange = (e) => {
     const { name, value } = e.target;
@@ -103,20 +27,8 @@ const AddProduct = () => {
 
   const handleSpecificationChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const finalValue = type === 'checkbox' ? checked : value;
     
-    let finalValue = value;
-    
-    // Handle checkboxes
-    if (type === 'checkbox') {
-      finalValue = checked;
-    }
-    
-    // Handle array fields (comma-separated strings)
-    const spec = categorySpecs[formData.category][name];
-    if (spec && (name === 'ports' || name === 'pcieSlots' || name === 'features')) {
-      finalValue = value.split(',').map(item => item.trim()).filter(item => item);
-    }
-
     setFormData(prev => ({
       ...prev,
       specifications: {
@@ -129,61 +41,103 @@ const AddProduct = () => {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 5) {
-      alert('Maximum 5 images allowed');
+      setMessage({ text: 'Maximum 5 images allowed', type: 'error' });
       return;
     }
     
-    // Create preview URLs and prepare for upload
-    const imageFiles = files.map((file, index) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      isMain: index === 0, // First image is main by default
-      order: index
-    }));
-
+    // Create preview URLs
+    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+    setImagePreviewUrls(newPreviewUrls);
+    
     setFormData(prev => ({
       ...prev,
-      images: imageFiles
+      images: files
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setLoading(true);
+    setMessage({ text: '', type: '' });
+
     try {
-      const formDataToSend = new FormData();
+      // Basic validation
+      if (!formData.category) {
+        throw new Error('Category is required');
+      }
+
+      if (formData.images.length === 0) {
+        throw new Error('At least one image is required');
+      }
+
+      // Create FormData for multipart/form-data submission
+      const productData = new FormData();
       
-      // Append base product data
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('brand', formData.brand);
-      formDataToSend.append('model', formData.model);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('stock', formData.stock);
-      formDataToSend.append('description', formData.description);
-      
-      // Append specifications
-      formDataToSend.append('specifications', JSON.stringify(formData.specifications));
-      
-      // Append images
-      formData.images.forEach((image, index) => {
-        formDataToSend.append('images', image.file);
-        formDataToSend.append('imageMetadata', JSON.stringify({
-          isMain: image.isMain,
-          order: image.order
-        }));
+      // Add base fields
+      productData.append('category', formData.category);
+      productData.append('brand', formData.brand);
+      productData.append('model', formData.model);
+      productData.append('price', formData.price);
+      productData.append('stock', formData.stock);
+      productData.append('description', formData.description);
+
+      // Add each specification field individually
+      const currentSpecs = specificationFields[formData.category] || [];
+      currentSpecs.forEach(field => {
+        const fieldName = field.name;
+        let fieldValue = formData.specifications[fieldName];
+        
+        // Special handling for array fields
+        if (fieldName === 'ports' || fieldName === 'pcieSlots' || fieldName === 'features') {
+          if (typeof fieldValue === 'string') {
+            // Already a string, no need to convert
+            productData.append(`specifications[${fieldName}]`, fieldValue);
+          } else if (Array.isArray(fieldValue)) {
+            // Join array to string (backend will parse it)
+            productData.append(`specifications[${fieldName}]`, fieldValue.join(','));
+          }
+        } 
+        // Special handling for checkbox fields
+        else if (field.type === 'checkbox') {
+          productData.append(`specifications[${fieldName}]`, fieldValue ? 'true' : 'false');
+        }
+        // Regular fields
+        else if (fieldValue !== undefined && fieldValue !== null) {
+          productData.append(`specifications[${fieldName}]`, fieldValue);
+        }
       });
 
-      const response = await axios.post('/api/products', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // Add images
+      formData.images.forEach((image) => {
+        productData.append('images', image);
       });
 
-      alert('Product added successfully!');
-      // Reset form or redirect
+      // Use productService instead of direct fetch
+      const result = await productService.createProduct(productData);
+
+      setMessage({ text: 'Product added successfully!', type: 'success' });
+      
+      // Reset form
+      setFormData({
+        category: '',
+        brand: '',
+        model: '',
+        price: '',
+        stock: '',
+        description: '',
+        specifications: {},
+        images: []
+      });
+      setImagePreviewUrls([]);
+      
     } catch (error) {
       console.error('Error adding product:', error);
-      alert('Error adding product. Please try again.');
+      setMessage({ 
+        text: error.message || (typeof error === 'string' ? error : 'Error adding product'), 
+        type: 'error' 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,156 +145,219 @@ const AddProduct = () => {
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Add New Product</h1>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Base Product Information */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-2">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleBaseInputChange}
-              className="w-full p-2 border rounded"
-              required
-            >
-              <option value="">Select Category</option>
-              {Object.keys(categorySpecs).map(cat => (
-                <option key={cat} value={cat}>{cat.toUpperCase()}</option>
-              ))}
-            </select>
-          </div>
+      {message.text && (
+        <div 
+          className={`mb-4 p-4 rounded ${
+            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+      
+      <form 
+        onSubmit={handleSubmit} 
+        className="space-y-6"
+        encType="multipart/form-data"
+      >
+        {/* Basic Information Card */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-2 font-medium">Category*</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleBaseInputChange}
+                className="w-full p-2 border rounded"
+                required
+              >
+                <option value="">Select Category</option>
+                <option value="pc">PC</option>
+                <option value="laptop">Laptop</option>
+                <option value="cpu">CPU</option>
+                <option value="graphicsCard">Graphics Card</option>
+                <option value="motherboard">Motherboard</option>
+                <option value="memory">Memory</option>
+                <option value="storage">Storage</option>
+                <option value="monitor">Monitor</option>
+                <option value="gears">Gears</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block mb-2">Brand</label>
-            <input
-              type="text"
-              name="brand"
-              value={formData.brand}
-              onChange={handleBaseInputChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
+            <div>
+              <label className="block mb-2 font-medium">Brand*</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand}
+                onChange={handleBaseInputChange}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block mb-2">Model</label>
-            <input
-              type="text"
-              name="model"
-              value={formData.model}
-              onChange={handleBaseInputChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
+            <div>
+              <label className="block mb-2 font-medium">Model*</label>
+              <input
+                type="text"
+                name="model"
+                value={formData.model}
+                onChange={handleBaseInputChange}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block mb-2">Price</label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleBaseInputChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
+            <div>
+              <label className="block mb-2 font-medium">Price*</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleBaseInputChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block mb-2">Stock</label>
-            <input
-              type="number"
-              name="stock"
-              value={formData.stock}
-              onChange={handleBaseInputChange}
-              className="w-full p-2 border rounded"
-              required
-            />
+            <div>
+              <label className="block mb-2 font-medium">Stock*</label>
+              <input
+                type="number"
+                name="stock"
+                value={formData.stock}
+                onChange={handleBaseInputChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block mb-2 font-medium">Description*</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleBaseInputChange}
+                className="w-full p-2 border rounded"
+                rows="3"
+                required
+              />
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="block mb-2">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleBaseInputChange}
-            className="w-full p-2 border rounded"
-            rows="4"
-            required
-          />
-        </div>
-
-        {/* Dynamic Specifications based on category */}
+        {/* Specifications Card */}
         {formData.category && (
-          <div className="specifications-section">
+          <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Specifications</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(categorySpecs[formData.category]).map(([key, spec]) => (
-                <div key={key}>
-                  <label className="block mb-2">{spec.label}</label>
-                  <input
-                    type={spec.type}
-                    name={key}
-                    value={
-                      spec.type === 'checkbox' 
-                        ? undefined 
-                        : Array.isArray(formData.specifications[key])
-                          ? formData.specifications[key].join(', ')
-                          : formData.specifications[key] || ''
-                    }
-                    checked={spec.type === 'checkbox' ? formData.specifications[key] : undefined}
-                    onChange={handleSpecificationChange}
-                    className="w-full p-2 border rounded"
-                    required={spec.required}
-                    placeholder={
-                      (key === 'ports' || key === 'pcieSlots' || key === 'features')
-                        ? 'Enter values separated by commas'
-                        : undefined
-                    }
-                  />
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {specificationFields[formData.category]?.map((spec) => {
+                if (spec.type === 'checkbox') {
+                  return (
+                    <div key={spec.name} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={spec.name}
+                        name={spec.name}
+                        checked={!!formData.specifications[spec.name]}
+                        onChange={handleSpecificationChange}
+                        className="mr-2"
+                      />
+                      <label htmlFor={spec.name} className="font-medium">
+                        {spec.label}{spec.required === false ? '' : '*'}
+                      </label>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={spec.name}>
+                    <label className="block mb-2 font-medium">
+                      {spec.label}{spec.required === false ? '' : '*'}
+                    </label>
+                    <input
+                      type={spec.type}
+                      name={spec.name}
+                      value={formData.specifications[spec.name] || ''}
+                      onChange={handleSpecificationChange}
+                      className="w-full p-2 border rounded"
+                      required={spec.required !== false}
+                      placeholder={
+                        spec.name === 'ports' || spec.name === 'pcieSlots' || spec.name === 'features'
+                          ? 'Enter values separated by commas'
+                          : ''
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Image Upload */}
-        <div>
-          <label className="block mb-2">Images (Max 5)</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="w-full p-2 border rounded"
-            required
-          />
-          {/* Image Previews */}
-          <div className="grid grid-cols-5 gap-2 mt-2">
-            {formData.images.map((image, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={image.preview}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-24 object-cover rounded"
-                />
-                {image.isMain && (
-                  <span className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 text-xs rounded">
-                    Main
-                  </span>
-                )}
-              </div>
-            ))}
+        {/* Image Upload Card */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Product Images</h2>
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">Add Images (Max 5)*</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full p-2 border rounded"
+              required
+            />
           </div>
+          
+          {/* Image Previews */}
+          {imagePreviewUrls.length > 0 && (
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Image Preview</h3>
+              <div className="flex flex-wrap gap-4">
+                {imagePreviewUrls.map((url, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={url}
+                      alt={`Preview ${index + 1}`}
+                      className="w-32 h-32 object-cover border rounded"
+                    />
+                    {index === 0 && (
+                      <span className="absolute top-0 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded-bl-lg">
+                        Main
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-        >
-          Add Product
-        </button>
+        <div className="flex gap-4">
+          <button
+            type="submit"
+            className={`px-6 py-2 rounded text-white ${
+              loading ? 'bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+            disabled={loading}
+          >
+            {loading ? 'Adding Product...' : 'Add Product'}
+          </button>
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="px-6 py-2 bg-gray-300 hover:bg-gray-400 rounded"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );
