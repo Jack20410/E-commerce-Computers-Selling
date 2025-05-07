@@ -48,20 +48,22 @@ app.use(methodOverride('_method'));
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, '../frontend/dist'))); // Serve React build
+// app.use(express.static(path.join(__dirname, '../frontend/dist'))); // Serve React build
 
 // API Routes
 app.use('/auth', authRoutes);
 app.use('/products', productRoutes);
 app.use('/users', userRoutes);
 app.use('/api/addresses', addressRoutes);
+
+
 // Home page (HTML rendered by EJS)
 app.get('/', (req, res) => {
   res.render('home', {
     title: 'Welcome to Computer Store',
     messages: {}
   });
-});
+}); 
 
 // Error handling middleware (must be before catch-all)
 app.use((err, req, res, next) => {
@@ -76,10 +78,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// React SPA fallback (serve index.html for unknown routes)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-});
+// // React SPA fallback (serve index.html for unknown routes)
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+// });
 
 // Start server
 const PORT = process.env.PORT || 3001;

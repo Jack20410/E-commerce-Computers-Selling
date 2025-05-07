@@ -2,14 +2,11 @@ import api from './api';
 
 /**
  * Service for product-related API operations
+ * All endpoints use /api prefix to ensure JSON responses
  */
 const productService = {
-
-
   /**
    * Get all products with optional filtering and pagination
-   * @param {Object} params - Query parameters for filtering and pagination
-   * @returns {Promise} - Promise resolving to products data with pagination
    */
   getProducts: async (params = {}) => {
     try {
@@ -29,11 +26,43 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-//===================================================================================================================================
+
+  /**
+   * Create a new product
+   */
+  createProduct: async (productData) => {
+    try {
+      const formData = new FormData();
+      
+      // Handle images if present
+      if (productData.images) {
+        productData.images.forEach(image => {
+          formData.append('images', image);
+        });
+        delete productData.images;
+      }
+
+      // Add other product data
+      Object.keys(productData).forEach(key => {
+        formData.append(key, productData[key]);
+      });
+
+      const response = await api.post('/products/api/products', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to create product');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in createProduct:', error);
+      throw error.response?.data || error;
+    }
+  },
+
   /**
    * Get a single product by ID
-   * @param {string|number} id - Product ID
-   * @returns {Promise} - Promise resolving to product data
    */
   getProductById: async (id) => {
     try {
@@ -45,8 +74,6 @@ const productService = {
         throw new Error('No response data received');
       }
 
-      // Return the product data regardless of success flag
-      // Some valid responses might not have the success flag
       return response.data.data || response.data;
       
     } catch (error) {
@@ -54,11 +81,59 @@ const productService = {
       throw error;
     }
   },
-//===================================================================================================================================
+
+  /**
+   * Update a product
+   */
+  updateProduct: async (id, productData) => {
+    try {
+      const formData = new FormData();
+      
+      // Handle images if present
+      if (productData.images) {
+        productData.images.forEach(image => {
+          formData.append('images', image);
+        });
+        delete productData.images;
+      }
+
+      // Add other product data
+      Object.keys(productData).forEach(key => {
+        formData.append(key, productData[key]);
+      });
+
+      const response = await api.put(`/products/api/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to update product');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in updateProduct:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Delete a product
+   */
+  deleteProduct: async (id) => {
+    try {
+      const response = await api.delete(`/products/api/${id}`);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to delete product');
+      }
+      return response.data.message;
+    } catch (error) {
+      console.error('Error in deleteProduct:', error);
+      throw error.response?.data || error;
+    }
+  },
+
   /**
    * Search products
-   * @param {string} query - Search query
-   * @returns {Promise} - Promise resolving to search results
    */
   searchProducts: async (query, params = {}) => {
     try {
@@ -80,12 +155,9 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-//===================================================================================================================================
+
   /**
    * Get products by category
-   * @param {string} category - Category name
-   * @param {Object} params - Additional query parameters
-   * @returns {Promise} - Promise resolving to products in category
    */
   getProductsByCategory: async (category, params = {}) => {
     try {
@@ -93,13 +165,10 @@ const productService = {
       const response = await api.get(`/products/api/category/${category}`, { params });
       console.log('Category products response:', response.data);
       
-      // Kiểm tra cấu trúc phản hồi cẩn thận hơn
       if (!response.data) {
         throw new Error('No response data received');
       }
       
-      // Đối với một số API, success có thể không tồn tại
-      // Kiểm tra cả trường hợp có data mà không có success flag
       if (response.data.data) {
         return {
           data: response.data.data,
@@ -121,12 +190,9 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-//===================================================================================================================================
+
   /**
    * Get similar products for a specific product
-   * @param {string} category - Product category
-   * @param {string} productId - Current product ID to exclude
-   * @returns {Promise} - Promise resolving to similar products
    */
   getSimilarProducts: async (category, productId) => {
     try {
@@ -143,23 +209,80 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-//===================================================================================================================================
+
   /**
-   * Get featured products
-   * @param {number} limit - Number of featured products to retrieve
-   * @returns {Promise} - Promise resolving to featured products data
+   * Get all brands for a specific category
    */
-  getFeaturedProducts: (limit = 4) => {
-    return api.get(`/products/api/featured?limit=${limit}`);
+  getBrandsByCategory: async (category) => {
+    try {
+      const response = await api.get(`/products/api/category/${category}/brands`);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch brands');
+      }
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error in getBrandsByCategory:', error);
+      throw error.response?.data || error;
+    }
   },
-//===================================================================================================================================
+
   /**
-   * Get product categories
-   * @returns {Promise} - Promise resolving to categories data
+   * Update product stock
    */
-  getCategories: () => {
-    return api.get('/products/api/categories');
+  updateStock: async (id, stock) => {
+    try {
+      const response = await api.patch(`/products/api/${id}/stock`, { stock });
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to update stock');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in updateStock:', error);
+      throw error.response?.data || error;
+    }
   },
+
+  /**
+   * Add images to a product
+   */
+  addProductImages: async (id, images) => {
+    try {
+      const formData = new FormData();
+      images.forEach(image => {
+        formData.append('images', image);
+      });
+
+      const response = await api.post(`/products/api/${id}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to add images');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in addProductImages:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Delete a product image
+   */
+  deleteProductImage: async (id, imageUrl) => {
+    try {
+      const response = await api.delete(`/products/api/${id}/images`, {
+        data: { imageUrl }
+      });
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to delete image');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in deleteProductImage:', error);
+      throw error.response?.data || error;
+    }
+  }
 };
 
 export default productService; 

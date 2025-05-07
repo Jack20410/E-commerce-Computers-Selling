@@ -3,19 +3,25 @@ const router = express.Router();
 const {
   createProduct,
   getProducts,
+  getProducts_HTML,
   getProductById,
+  getProductById_HTML,
   updateProduct,
   deleteProduct,
   getProductsByCategory,
+  getProductsByCategory_HTML,
   searchProducts,
+  searchProducts_HTML,
   updateStock,
   uploadImages,
   addProductImages,
   deleteProductImage,
-  getSimilarProducts
+  getSimilarProducts,
+  renderAddProductForm_HTML,
+  renderEditProductForm_HTML
 } = require('../Controllers/product.controller');
 
-// Middleware kiểm tra ID MongoDB hợp lệ
+// Middleware to validate MongoDB ObjectId
 const validateObjectId = (req, res, next) => {
   if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
     return res.status(400).json({
@@ -28,13 +34,13 @@ const validateObjectId = (req, res, next) => {
 
 // =====================================================================
 // API ROUTES (JSON Responses for React frontend)
-// All routes are prefixed with /products
+// All API routes are prefixed with /api
 // =====================================================================
 
-//   Search
+// Search products
 router.get('/api/search', searchProducts);
 
-// et all products & create new product
+// Get all products & create new product
 router.route('/api/products')
   .get(getProducts)
   .post(uploadImages, createProduct);
@@ -68,11 +74,31 @@ router.route('/api/:id/images')
   .post(validateObjectId, uploadImages, addProductImages)
   .delete(validateObjectId, deleteProductImage);
 
-//Update product stock
+// Update product stock
 router.patch('/api/:id/stock', validateObjectId, updateStock);
 
-// ===============================================================
-// Không còn legacy routes hoặc HTML rendering để tránh xung đột
-// ===============================================================
+// =====================================================================
+// WEB ROUTES (HTML Responses for Server-Side Rendering)
+// These routes render HTML pages
+// =====================================================================
+
+
+// Product listing and category pages
+router.get('/category/:category', getProductsByCategory_HTML);
+
+// Add product form
+router.get('/add', renderAddProductForm_HTML);
+
+// Edit product form
+router.get('/:id/edit', validateObjectId, renderEditProductForm_HTML);
+
+
+// Product management routes (Create, Update, Delete)
+router.route('/')
+  .post(uploadImages, createProduct);  // Create new product
+
+router.route('/:id')
+  .put(validateObjectId, uploadImages, updateProduct)
+  .delete(validateObjectId, deleteProduct);
 
 module.exports = router;
