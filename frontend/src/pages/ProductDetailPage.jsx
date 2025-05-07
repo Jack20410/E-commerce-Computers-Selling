@@ -315,7 +315,7 @@ const sampleRatingDistribution = {
 const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -391,9 +391,32 @@ const ProductDetailPage = () => {
   }, [product]);
 
   const handleAddToCart = () => {
-    if (product) {
-      addItem(product, quantity);
-      // Optionally show a success message or redirect to cart
+    if (!product) return;
+
+    const cartProduct = {
+      id: product._id,
+      name: `${product.brand} ${product.model}`,
+      price: Number(product.price),
+      image: product.images?.[0]?.url ? getImageUrl(product.images[0].url) : getPlaceholderImage(product.category),
+      brand: product.brand,
+      model: product.model,
+      category: product.category,
+      stock: product.stock,
+      quantity: quantity
+    };
+
+    let success = true;
+    for (let i = 0; i < quantity; i++) {
+      const result = addToCart(cartProduct);
+      if (!result) {
+        success = false;
+        break;
+      }
+    }
+
+    if (!success) {
+      setError(`Sorry, only ${product.stock} items available in stock.`);
+      setTimeout(() => setError(null), 3000);
     }
   };
 
@@ -431,6 +454,12 @@ const ProductDetailPage = () => {
       </Helmet>
       
       <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen py-4">
+        {error && (
+          <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+            {error}
+          </div>
+        )}
+        
         <div className="container mx-auto px-3 max-w-6xl">
           {/* Breadcrumb */}
           <nav className="mb-4">

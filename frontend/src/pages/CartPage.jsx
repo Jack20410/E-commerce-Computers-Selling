@@ -5,18 +5,18 @@ import CartItem from '../components/cart/CartItem';
 import { formatVND } from '../utils/currencyFormatter';
 
 const CartPage = () => {
-  const { cart, clearCart } = useCart();
-  const { items, total } = cart;
-
+  const { cartItems, clearCart, getCartTotal } = useCart();
+  
   // Simple tax calculation (for study purposes)
-  const tax = total * 0.08;
-  const shipping = total > 100 ? 0 : 10;
-  const orderTotal = total + tax + shipping;
+  const subtotal = getCartTotal();
+  const tax = subtotal * 0.08;
+  const shipping = subtotal > 5000000 ? 0 : 50000; // Free shipping over 5M VND
+  const orderTotal = subtotal + tax + shipping;
 
   return (
     <>
       <Helmet>
-        <title>Your Cart | Computer Store</title>
+        <title>Your Cart | TechStation</title>
         <meta name="description" content="View and manage items in your shopping cart" />
       </Helmet>
       <div className="container mx-auto px-4 py-8">
@@ -25,12 +25,12 @@ const CartPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-md p-6 mb-4">
-              {items.length === 0 ? (
+              {cartItems.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500 mb-4">Your cart is empty</p>
                   <Link 
                     to="/products" 
-                    className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                    className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg transition-all duration-300"
                   >
                     Browse Products
                   </Link>
@@ -38,15 +38,15 @@ const CartPage = () => {
               ) : (
                 <>
                   <div className="flex justify-between border-b pb-4 mb-4">
-                    <h2 className="text-lg font-semibold">Cart Items ({items.length})</h2>
+                    <h2 className="text-lg font-semibold">Cart Items ({cartItems.length})</h2>
                     <button 
                       onClick={clearCart}
-                      className="text-sm text-red-500 hover:text-red-700"
+                      className="text-sm text-red-500 hover:text-red-700 transition-colors duration-200"
                     >
                       Clear Cart
                     </button>
                   </div>
-                  {items.map(item => (
+                  {cartItems.map(item => (
                     <CartItem key={item.id} item={item} />
                   ))}
                 </>
@@ -60,14 +60,14 @@ const CartPage = () => {
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <div className="flex justify-between mb-2">
                   <span>Subtotal</span>
-                  <span>{formatVND(total)}</span>
+                  <span>{formatVND(subtotal)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span>Shipping</span>
                   <span>{shipping === 0 ? 'Free' : formatVND(shipping)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <span>Tax</span>
+                  <span>Tax (8%)</span>
                   <span>{formatVND(tax)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t border-gray-200 pt-4 mt-2">
@@ -76,14 +76,14 @@ const CartPage = () => {
                 </div>
               </div>
               <button 
-                className={`w-full py-3 rounded-lg mt-6 transition-colors ${
-                  items.length === 0 
+                className={`w-full py-3 rounded-lg mt-6 transition-all duration-300 ${
+                  cartItems.length === 0 
                     ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white transform hover:scale-[1.02]'
                 }`}
-                disabled={items.length === 0}
+                disabled={cartItems.length === 0}
               >
-                Checkout
+                Proceed to Checkout
               </button>
             </div>
           </div>

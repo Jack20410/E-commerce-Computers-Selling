@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { formatVND } from '../../utils/currencyFormatter';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { cartItems = [], getCartTotal, getCartItemsCount, removeFromCart } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const cartPreviewRef = useRef(null);
 
   // Handle scroll effect
   useEffect(() => {
@@ -18,9 +23,86 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Handle click outside cart preview
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cartPreviewRef.current && !cartPreviewRef.current.contains(event.target)) {
+        setIsCartPreviewOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  // Cart preview component
+  const CartPreview = () => {
+    if (!isCartPreviewOpen || !Array.isArray(cartItems) || cartItems.length === 0) return null;
+
+    return (
+      <div
+        ref={cartPreviewRef}
+        className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl py-4 z-50"
+      >
+        <div className="px-4 py-2 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800">Shopping Cart</h3>
+          <p className="text-sm text-gray-500">{getCartItemsCount()} items</p>
+        </div>
+        <div className="max-h-96 overflow-y-auto">
+          {cartItems.map((item) => {
+            if (!item || !item.id) return null;
+            return (
+              <div key={item.id} className="px-4 py-3 hover:bg-gray-50 transition-colors duration-150">
+                <div className="flex items-center space-x-4">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.name || 'Product'}
+                      className="w-16 h-16 object-cover rounded-lg"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                        e.target.onerror = null;
+                      }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-gray-800">{item.name || 'Unnamed Product'}</h4>
+                    <p className="text-sm text-gray-500">
+                      {item.quantity || 0} × {formatVND(item.price)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => removeFromCart(item.id)}
+                    className="text-gray-400 hover:text-red-500 transition-colors duration-150"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="px-4 py-3 border-t border-gray-100">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm font-medium text-gray-600">Total:</span>
+            <span className="text-lg font-semibold text-gray-800">{formatVND(getCartTotal())}</span>
+          </div>
+          <Link
+            to="/cart"
+            className="block w-full text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300"
+            onClick={() => setIsCartPreviewOpen(false)}
+          >
+            View Cart
+          </Link>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -50,7 +132,7 @@ const Navbar = () => {
                     </button>
                     <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
                       <div className="py-2 px-1">
-                        <Link to="/products/category/cpu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">Gaming PC</Link>
+                        <Link to="/products/category/pc" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">Gaming PC</Link>
                         <Link to="/products/category/laptop" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">Laptop</Link>
                       </div>
                     </div>
@@ -146,14 +228,23 @@ const Navbar = () => {
               )}
 
               {/* Cart */}
-              <Link to="/cart" className="relative text-gray-700 hover:text-blue-600 transition-all duration-200 hover:scale-105">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transform transition-transform duration-200 hover:scale-110">
-                  0
-                </span>
-              </Link>
+              <div className="relative">
+                <button
+                  onMouseEnter={() => setIsCartPreviewOpen(true)}
+                  onClick={() => navigate('/cart')}
+                  className="relative text-gray-700 hover:text-blue-600 transition-all duration-200 hover:scale-105"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {getCartItemsCount() > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transform transition-transform duration-200 hover:scale-110">
+                      {getCartItemsCount()}
+                    </span>
+                  )}
+                </button>
+                <CartPreview />
+              </div>
             </div>
 
             {/* Mobile menu button */}
