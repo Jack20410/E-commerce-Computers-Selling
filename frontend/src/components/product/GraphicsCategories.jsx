@@ -156,7 +156,7 @@ const GraphicsCategories = () => {
         </div>
         <div className="mt-10 text-center">
           <Link to="/products/category/graphicsCard" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            Xem tất cả Graphics Cards
+          View ALl Graphics Cards
             <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>

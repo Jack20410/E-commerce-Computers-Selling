@@ -79,8 +79,14 @@ const ProductCard = ({ product }) => {
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
+        {/* Brand Badge */}
+        {product.brand && (
+          <span className="inline-block bg-gray-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded mb-1">
+            {product.brand}
+          </span>
+        )}
         <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
-          {product.brand} {product.model}
+          {product.model}
         </h3>
         <div className="text-blue-600 font-extrabold text-lg mb-2">
           {product.price.toLocaleString('vi-VN')}₫

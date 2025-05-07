@@ -324,10 +324,23 @@ exports.getProductsByCategory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    // Parse sort parameter
+    let sort = {};
+    if (req.query.sort) {
+      const sortField = req.query.sort;
+      if (sortField.startsWith('-')) {
+        sort[sortField.substring(1)] = -1;
+      } else {
+        sort[sortField] = 1;
+      }
+    } else {
+      sort = { createdAt: -1 };
+    }
+
     console.log('API getProductsByCategory called for:', category);
 
     const products = await Product.find({ category: { $regex: `^${category}$`, $options: 'i' } })
-      .sort({ createdAt: -1 })
+      .sort(sort) // <-- Use dynamic sort
       .skip(skip)
       .limit(limit);
 

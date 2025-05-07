@@ -7,29 +7,31 @@ import productService from '../services/productService';
 
 const ProductsPage = () => {
   const navigate = useNavigate();
-  const { category } = useParams(); // Lấy category từ URL nếu có
+  const { category } = useParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sort, setSort] = useState(''); // NEW: sort state
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    
+
     const fetchProducts = async () => {
       try {
         let res;
+        let sortQuery = sort ? `&sort=${sort}` : '';
         if (category) {
           console.log('Fetching products for category:', category);
-          // Gọi API trực tiếp để test
-          const response = await fetch(`http://localhost:3001/products/api/category/${category}`);
+          const response = await fetch(`http://localhost:3001/products/api/category/${category}?${sort ? `sort=${sort}` : ''}`);
           const data = await response.json();
           if (!data.success) {
             throw new Error(data.message || 'Failed to fetch category products');
           }
           res = { data: data.data, pagination: data.pagination };
         } else {
-          res = await productService.getProducts();
+          // If your productService supports sort param, pass it
+          res = await productService.getProducts({ sort });
         }
         setProducts(res.data);
       } catch (err) {
@@ -39,9 +41,9 @@ const ProductsPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProducts();
-  }, [category]);
+  }, [category, sort]); // Add sort as dependency
 
   const handleProductClick = (productId) => {
     navigate(`/products/${productId}`);
@@ -54,10 +56,23 @@ const ProductsPage = () => {
         <meta name="description" content="Browse our selection of computers and accessories" />
       </Helmet>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">
-          {category ? `Tất cả sản phẩm ${category}` : 'All Products'}
-        </h1>
-
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">
+            {category ? `All Products ${category}` : 'All Products'}
+          </h1>
+          {/* Sort Dropdown */}
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm"
+          >
+            <option value="">Sort by</option>
+            <option value="price">Price: Low to High</option>
+            <option value="-price">Price: High to Low</option>
+            <option value="brand">Brand: A-Z</option>         {/* NEW */}
+            <option value="-brand">Brand: Z-A</option>        {/* NEW */}
+          </select>
+        </div>
         {loading && (
           <p className="text-center text-gray-500">Loading products...</p>
         )}

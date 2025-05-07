@@ -12,13 +12,10 @@ const {
   uploadImages,
   addProductImages,
   deleteProductImage,
-  renderAddProductForm,
-  renderCategoryPage,
-  renderEditProductForm,
   getSimilarProducts
 } = require('../Controllers/product.controller');
 
-// Middleware for checking if ID is valid
+// Middleware kiểm tra ID MongoDB hợp lệ
 const validateObjectId = (req, res, next) => {
   if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
     return res.status(400).json({
@@ -29,76 +26,41 @@ const validateObjectId = (req, res, next) => {
   next();
 };
 
-// ====================================
-// HTML RENDERING ROUTES (View Routes)
-// ====================================
-// These routes return HTML for browser viewing
+// =====================================================================
+// API ROUTES (JSON Responses for React frontend)
+// All routes are prefixed with /products
+// =====================================================================
 
-// View forms
-router.get('/add', renderAddProductForm);
-router.get('/:id/edit', validateObjectId, renderEditProductForm);
+//   Search
+router.get('/api/search', searchProducts);
 
-// Category page (HTML)
-router.get('/category/:category', renderCategoryPage);
-
-// =====================================================================================================================================================
-// API ROUTES (JSON Responses)
-// =====================================================================================================================================================
-// All API routes return JSON and are prefixed with /api/
-
-// Product listing and creation
+// et all products & create new product
 router.route('/api/products')
   .get(getProducts)
   .post(uploadImages, createProduct);
 
-// Search products
-router.get('/api/search', searchProducts);
-
-// Category API route (JSON)
-
-router.get('/category/:category', getProductsByCategory);
-
-// API trả về JSON sản phẩm theo category
-// router.get('/api/category/:category', getProductsByCategory);
-// Category products
+// Get products by category
 router.get('/api/category/:category', getProductsByCategory);
 
-// Similar products 
+// Get similar products in same category (excluding current product)
 router.get('/api/similar/:category/:productId', getSimilarProducts);
 
-// Image management
-router.route('/api/:id/images')
-  .post(validateObjectId, uploadImages, addProductImages)
-  .delete(validateObjectId, deleteProductImage);
-
-// Individual product operations
+// Get, update, delete product by ID
 router.route('/api/:id')
   .get(validateObjectId, getProductById)
   .put(validateObjectId, uploadImages, updateProduct)
   .delete(validateObjectId, deleteProduct);
 
-// Stock update
-router.patch('/api/:id/stock', validateObjectId, updateStock);
-
-// =====================================================================================================================================================
-// LEGACY ROUTES (for backward compatibility)
-// =====================================================================================================================================================
-// These routes support existing frontend code
-
-router.route('/')
-  .get(getProducts)
-  .post(uploadImages, createProduct);
-
-router.route('/:id')
-  .get(validateObjectId, getProductById)
-  .put(validateObjectId, uploadImages, updateProduct)
-  .delete(validateObjectId, deleteProduct);
-
-router.route('/:id/images')
+// Manage product images
+router.route('/api/:id/images')
   .post(validateObjectId, uploadImages, addProductImages)
   .delete(validateObjectId, deleteProductImage);
 
-router.get('/search', searchProducts);
-router.patch('/:id/stock', validateObjectId, updateStock);
+//Update product stock
+router.patch('/api/:id/stock', validateObjectId, updateStock);
+
+// ===============================================================
+// Không còn legacy routes hoặc HTML rendering để tránh xung đột
+// ===============================================================
 
 module.exports = router;

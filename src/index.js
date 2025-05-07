@@ -1,5 +1,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -11,7 +12,6 @@ const authRoutes = require('./Routes/auth.route');
 const userRoutes = require('./Routes/user.route');
 const addressRoutes = require('./Routes/address.route');
 const passport = require('./Config/passport');
-
 
 // Initialize express app
 const app = express();
@@ -48,14 +48,14 @@ app.use(methodOverride('_method'));
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../frontend/dist'))); // Serve React build
 
-// Routes
+// API Routes
 app.use('/auth', authRoutes);
 app.use('/products', productRoutes);
 app.use('/users', userRoutes);
-app.use('/api/address', addressRoutes);
-
-// Root route
+app.use('/api/addresses', addressRoutes);
+// Home page (HTML rendered by EJS)
 app.get('/', (req, res) => {
   res.render('home', {
     title: 'Welcome to Computer Store',
@@ -63,8 +63,7 @@ app.get('/', (req, res) => {
   });
 });
 
-
-// Error handling middleware
+// Error handling middleware (must be before catch-all)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).render('error', {
@@ -75,6 +74,11 @@ app.use((err, req, res, next) => {
       message: err.message || 'Internal server error'
     }
   });
+});
+
+// React SPA fallback (serve index.html for unknown routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
 // Start server

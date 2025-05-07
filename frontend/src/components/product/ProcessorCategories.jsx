@@ -122,7 +122,7 @@ const ProcessorCategories = () => {
             {loading ? (
               <div className="flex justify-center items-center w-full py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                <span className="ml-3">Đang tải dữ liệu...</span>
+                <span className="ml-3">Loading data...</span>
               </div>
             ) : error ? (
               <div className="text-center w-full py-10 text-red-500">
@@ -131,11 +131,11 @@ const ProcessorCategories = () => {
                   onClick={() => fetchProcessors()} 
                   className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                  Thử lại
+                  Retry
                 </button>
               </div>
             ) : processors.length === 0 ? (
-              <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
+              <div className="text-center w-full py-10">No products found.</div>
             ) : (
               processors.map(processor => (
                 <div key={processor._id} className="slider-card">
