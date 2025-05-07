@@ -1,93 +1,76 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
+import productService from '../../services/productService';
 import './CategorySlider.css';
+import { Link } from 'react-router-dom';
 
 const MonitorCategories = () => {
+  const [monitors, setMonitors] = useState([]);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const sliderRef = useRef(null);
 
-  const sampleMonitors = [
-    {
-      id: 1,
-      name: "ASUS ROG Swift PG32UQX",
-      description: "32\" 4K HDR 144Hz G-SYNC Ultimate Gaming Monitor",
-      price: 49990000,
-      oldPrice: 52990000,
-      discount: 9,
-      image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 2,
-      name: "LG 34WN80C-B UltraWide",
-      description: "34\" WQHD Curved USB-C Monitor",
-      price: 15990000,
-      image: "https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 3,
-      name: "Dell UltraSharp U2723QE",
-      description: "27\" 4K USB-C Hub Monitor",
-      price: 17990000,
-      oldPrice: 19990000,
-      discount: 11,
-      image: "https://images.unsplash.com/photo-1585792180666-f7347c490ee2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 4,
-      name: "Samsung Odyssey G9",
-      description: "49\" DQHD 240Hz Curved Gaming Monitor",
-      price: 39990000,
-      image: "https://images.unsplash.com/photo-1619953942547-233eab5a70d6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 5,
-      name: "LG 27GP950-B",
-      description: "27\" 4K 144Hz Nano IPS Gaming Monitor",
-      price: 22990000,
-      oldPrice: 24990000,
-      discount: 8,
-      image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 6,
-      name: "ASUS ProArt PA32UCX",
-      description: "32\" 4K HDR Mini LED Professional Monitor",
-      price: 69990000,
-      image: "https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 7,
-      name: "Alienware AW3423DW",
-      description: "34\" QD-OLED Curved Gaming Monitor",
-      price: 34990000,
-      oldPrice: 37990000,
-      discount: 8,
-      image: "https://images.unsplash.com/photo-1585792180666-f7347c490ee2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 8,
-      name: "BenQ PD3200U",
-      description: "32\" 4K Designer Monitor",
-      price: 19990000,
-      image: "https://images.unsplash.com/photo-1619953942547-233eab5a70d6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 9,
-      name: "MSI MPG ARTYMIS 343CQR",
-      description: "34\" UWQHD 165Hz Curved Gaming Monitor",
-      price: 24990000,
-      oldPrice: 26990000,
-      discount: 7,
-      image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 10,
-      name: "ViewSonic VP3268a-4K",
-      description: "32\" 4K Professional Monitor",
-      price: 21990000,
-      image: "https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
+  useEffect(() => {
+    fetchMonitors();
+  }, []);
+
+  const fetchMonitors = async (filterParams = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Gọi trực tiếp API để debug
+      console.log('Gọi API monitor với params:', filterParams);
+      
+      try {
+        const response = await fetch(`http://localhost:3001/products/category/monitor?limit=10&sort=-createdAt`);
+        const data = await response.json();
+        console.log('Dữ liệu trả về từ API trực tiếp:', data);
+        
+        if (data.success) {
+          setMonitors(data.data);
+        } else {
+          console.error('API không trả về thành công:', data);
+          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
+          setMonitors([]);
+        }
+      } catch (directErr) {
+        console.error('Lỗi khi gọi API trực tiếp:', directErr);
+        
+        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
+        try {
+          console.log('Thử lại với productService');
+          const serviceResponse = await productService.getProductsByCategory('monitor', { 
+            limit: 10,
+            sort: '-createdAt',
+            ...filterParams 
+          });
+          
+          console.log('Phản hồi từ productService:', serviceResponse);
+          
+          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
+            setMonitors(serviceResponse.data);
+          } else {
+            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
+            setError('Không thể tải dữ liệu sản phẩm');
+            setMonitors([]);
+          }
+        } catch (serviceErr) {
+          console.error('Lỗi khi dùng productService:', serviceErr);
+          setError('Không thể kết nối đến máy chủ');
+          setMonitors([]);
+        }
+      }
+      
+    } catch (err) {
+      console.error('Lỗi tổng quát khi lấy dữ liệu monitor:', err);
+      setError('Không thể kết nối đến máy chủ');
+      setMonitors([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const scroll = (direction) => {
     const container = sliderRef.current;
@@ -136,16 +119,35 @@ const MonitorCategories = () => {
               transform: `translateX(-${scrollPosition}px)`
             }}
           >
-            {sampleMonitors.map(monitor => (
-              <div key={monitor.id} className="slider-card">
-                <ProductCard product={monitor} />
+            {loading ? (
+              <div className="flex justify-center items-center w-full py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <span className="ml-3">Đang tải dữ liệu...</span>
               </div>
-            ))}
+            ) : error ? (
+              <div className="text-center w-full py-10 text-red-500">
+                <p>{error}</p>
+                <button 
+                  onClick={() => fetchMonitors()} 
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : monitors.length === 0 ? (
+              <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
+            ) : (
+              monitors.map(monitor => (
+                <div key={monitor._id} className="slider-card">
+                  <ProductCard product={monitor} />
+                </div>
+              ))
+            )}
           </div>
           <button 
             className="slider-button next"
             onClick={() => scroll('next')}
-            disabled={scrollPosition >= (sampleMonitors.length - 4) * 300}
+            disabled={!monitors.length || scrollPosition >= (monitors.length - 4) * 300}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -153,12 +155,12 @@ const MonitorCategories = () => {
           </button>
         </div>
         <div className="mt-10 text-center">
-          <a href="/products/category/monitor" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            View All Monitors
+          <Link to="/products/category/monitor" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+            Xem tất cả Monitors
             <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

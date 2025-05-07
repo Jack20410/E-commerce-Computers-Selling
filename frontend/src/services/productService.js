@@ -93,15 +93,31 @@ const productService = {
       const response = await api.get(`/products/api/category/${category}`, { params });
       console.log('Category products response:', response.data);
       
+      // Kiểm tra cấu trúc phản hồi cẩn thận hơn
+      if (!response.data) {
+        throw new Error('No response data received');
+      }
+      
+      // Đối với một số API, success có thể không tồn tại
+      // Kiểm tra cả trường hợp có data mà không có success flag
+      if (response.data.data) {
+        return {
+          data: response.data.data,
+          pagination: response.data.pagination || {}
+        };
+      }
+      
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch category products');
       }
+      
       return {
-        data: response.data.data,
-        pagination: response.data.pagination
+        data: response.data.data || [],
+        pagination: response.data.pagination || {}
       };
     } catch (error) {
       console.error('Error in getProductsByCategory:', error);
+      console.error('Original error details:', error.response?.data || error);
       throw error.response?.data || error;
     }
   },

@@ -30,6 +30,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/products" element={<ProductsPage />} />
+                <Route path="/products/category/:category" element={<ProductsPage />} />
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />

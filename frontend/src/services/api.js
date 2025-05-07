@@ -39,6 +39,10 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('Response error:', error.response || error);
+    // Chi tiết hơn về lỗi kết nối
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Connection refused - check if backend server is running');
+    }
     // Handle specific error cases
     if (error.response) {
       // The request was made and the server responded with a status code

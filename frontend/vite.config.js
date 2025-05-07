@@ -8,6 +8,12 @@ export default defineConfig({
     port: 3000,
     hmr: {
       overlay: false
+    },
+    proxy: {
+      '/products': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      }
     }
   },
   optimizeDeps: {

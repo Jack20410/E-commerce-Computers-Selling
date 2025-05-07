@@ -1,108 +1,89 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
+import productService from '../../services/productService';
 import './CategorySlider.css';
+import { Link } from 'react-router-dom';
 
 const LaptopCategories = () => {
+  const [laptops, setLaptops] = useState([]);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const sliderRef = useRef(null);
 
-  const sampleLaptops = [
-    {
-      id: 1,
-      name: "ROG Strix G15 Gaming Laptop",
-      description: "AMD Ryzen 9, RTX 3080, 32GB RAM, 1TB SSD",
-      price: 45990000,
-      oldPrice: 52990000,
-      discount: 13,
-      image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1468&q=80"
-    },
-    {
-      id: 2,
-      name: "MacBook Pro 16",
-      description: "M1 Pro, 16GB RAM, 512GB SSD, 16-inch Retina Display",
-      price: 57990000,
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1026&q=80"
-    },
-    {
-      id: 3,
-      name: "Dell XPS 13 Plus",
-      description: "Intel i7, 16GB RAM, 1TB SSD, 4K OLED Display",
-      price: 39990000,
-      oldPrice: 43990000,
-      discount: 10,
-      image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1032&q=80"
-    },
-    {
-      id: 4,
-      name: "Razer Blade 15",
-      description: "Intel i9, RTX 3070 Ti, 32GB RAM, 1TB SSD",
-      price: 49990000,
-      oldPrice: 54990000,
-      discount: 9,
-      image: "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 5,
-      name: "Lenovo Legion 7i",
-      description: "Intel i7, RTX 3080, 32GB RAM, 2TB SSD",
-      price: 47990000,
-      image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1468&q=80"
-    },
-    {
-      id: 6,
-      name: "MacBook Air M2",
-      description: "M2 chip, 16GB RAM, 512GB SSD, 13.6-inch Display",
-      price: 32990000,
-      oldPrice: 35990000,
-      discount: 8,
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1026&q=80"
-    },
-    {
-      id: 7,
-      name: "HP Spectre x360",
-      description: "Intel i7, 16GB RAM, 1TB SSD, OLED Touch Display",
-      price: 37990000,
-      image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1032&q=80"
-    },
-    {
-      id: 8,
-      name: "MSI GE76 Raider",
-      description: "Intel i9, RTX 3080 Ti, 64GB RAM, 2TB SSD",
-      price: 59990000,
-      oldPrice: 64990000,
-      discount: 7,
-      image: "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 9,
-      name: "Acer Predator Triton",
-      description: "Intel i7, RTX 3070, 32GB RAM, 1TB SSD",
-      price: 41990000,
-      image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1468&q=80"
-    },
-    {
-      id: 10,
-      name: "ASUS ZenBook Pro",
-      description: "Intel i9, RTX 3060, 32GB RAM, 1TB SSD",
-      price: 44990000,
-      oldPrice: 47990000,
-      discount: 6,
-      image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1032&q=80"
+  useEffect(() => {
+    fetchLaptops();
+  }, []);
+
+  const fetchLaptops = async (filterParams = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Lấy laptop từ API với các tham số lọc
+      
+      // Gọi trực tiếp API để debug
+      console.log('Gọi API laptop với params:', filterParams);
+      
+      // Thử cách 1: Gọi trực tiếp như trong ProductsPage.jsx
+      try {
+        const response = await fetch(`http://localhost:3001/products/category/laptop?limit=10&sort=-createdAt`);
+        const data = await response.json();
+        console.log('Dữ liệu trả về từ API trực tiếp:', data);
+        
+        if (data.success) {
+          setLaptops(data.data);
+        } else {
+          console.error('API không trả về thành công:', data);
+          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
+          setLaptops([]);
+        }
+      } catch (directErr) {
+        console.error('Lỗi khi gọi API trực tiếp:', directErr);
+        
+        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
+        try {
+          console.log('Thử lại với productService');
+          const serviceResponse = await productService.getProductsByCategory('laptop', { 
+            limit: 10,
+            sort: '-createdAt',
+            ...filterParams 
+          });
+          
+          console.log('Phản hồi từ productService:', serviceResponse);
+          
+          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
+            setLaptops(serviceResponse.data);
+          } else {
+            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
+            setError('Không thể tải dữ liệu sản phẩm');
+            setLaptops([]);
+          }
+        } catch (serviceErr) {
+          console.error('Lỗi khi dùng productService:', serviceErr);
+          setError('Không thể kết nối đến máy chủ');
+          setLaptops([]);
+        }
+      }
+      
+    } catch (err) {
+      console.error('Lỗi tổng quát khi lấy dữ liệu laptop:', err);
+      setError('Không thể kết nối đến máy chủ');
+      setLaptops([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const scroll = (direction) => {
     const container = sliderRef.current;
     const scrollAmount = 300; // Width of one card
     const maxScroll = container.scrollWidth - container.clientWidth;
-    
     let newPosition;
     if (direction === 'next') {
       newPosition = Math.min(scrollPosition + scrollAmount, maxScroll);
     } else {
       newPosition = Math.max(scrollPosition - scrollAmount, 0);
     }
-    
     container.scrollTo({
       left: newPosition,
       behavior: 'smooth'
@@ -115,12 +96,13 @@ const LaptopCategories = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Gaming & Professional Laptops
+            Laptop Gaming & Chuyên Nghiệp
           </h2>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-            Find the perfect laptop for your needs - from gaming beasts to ultralight workstations
+            Tìm laptop hoàn hảo cho nhu cầu của bạn - từ máy gaming mạnh mẽ đến máy trạm làm việc siêu nhẹ
           </p>
         </div>
+        
         <div className="mt-10 slider-container">
           <button 
             className="slider-button prev"
@@ -131,6 +113,7 @@ const LaptopCategories = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
+          
           <div 
             ref={sliderRef}
             className="slider-wrapper"
@@ -138,29 +121,50 @@ const LaptopCategories = () => {
               transform: `translateX(-${scrollPosition}px)`
             }}
           >
-            {sampleLaptops.map(laptop => (
-              <div key={laptop.id} className="slider-card">
-                <ProductCard product={laptop} />
+            {loading ? (
+              <div className="flex justify-center items-center w-full py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <span className="ml-3">Đang tải dữ liệu...</span>
               </div>
-            ))}
+            ) : error ? (
+              <div className="text-center w-full py-10 text-red-500">
+                <p>{error}</p>
+                <button 
+                  onClick={() => fetchLaptops()} 
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : laptops.length === 0 ? (
+              <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
+            ) : (
+              laptops.map(laptop => (
+                <div key={laptop._id} className="slider-card">
+                  <ProductCard product={laptop} />
+                </div>
+              ))
+            )}
           </div>
+          
           <button 
             className="slider-button next"
             onClick={() => scroll('next')}
-            disabled={scrollPosition >= (sampleLaptops.length - 4) * 300}
+            disabled={!laptops.length || scrollPosition >= (laptops.length - 4) * 300}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
+        
         <div className="mt-10 text-center">
-          <a href="/products/category/laptop" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            View All Laptops
+          <Link to="/products/category/laptop" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+            Xem tất cả Laptop
             <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

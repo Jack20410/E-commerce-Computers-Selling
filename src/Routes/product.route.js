@@ -54,6 +54,12 @@ router.route('/api/products')
 // Search products
 router.get('/api/search', searchProducts);
 
+// Category API route (JSON)
+
+router.get('/category/:category', getProductsByCategory);
+
+// API trả về JSON sản phẩm theo category
+// router.get('/api/category/:category', getProductsByCategory);
 // Category products
 router.get('/api/category/:category', getProductsByCategory);
 

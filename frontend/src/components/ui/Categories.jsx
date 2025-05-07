@@ -1,60 +1,69 @@
+import { Link } from 'react-router-dom';
 const Categories = () => {
   const categories = [
     {
       id: 1,
-      name: 'Pre-built PCs',
+      name: 'pc',
       image: '/images/pre-built-pc.webp',
       description: 'Ready-to-go gaming and workstation PCs',
     },
     {
       id: 2,
-      name: 'Laptops',
+      name: 'laptop',
       image: '/images/laptop.jpg',
       description: 'Gaming, business, and everyday laptops',
     },
     {
       id: 3,
-      name: 'CPUs',
+      name: 'cpu',
       image: '/images/cpu.webp',
       description: 'Processors from Intel and AMD',
     },
     {
       id: 4,
-      name: 'Graphics Cards',
+      name: 'graphicsCard',
       image: '/images/gpu.jpg',
       description: 'NVIDIA and AMD GPUs for gaming and content creation',
     },
     {
       id: 5,
-      name: 'Gears',
+      name: 'gears',
       image: '/images/gears.png',
       description: 'Keyboards, mice, monitors, and more',
     },
     {
       id: 6,
-      name: 'Storage',
+      name: 'storage',
       image: '/images/storage.jpg',
       description: 'SSDs, HDDs, and external storage solutions',
     },
     {
       id: 7,
-      name: 'Monitors',
+      name: 'monitor',
       image: '/images/monitors.jpg',
       description: 'High-quality displays for gaming and professional use',
     },
     {
       id: 8,
-      name: 'Motherboards',
+      name: 'motherboard',
       image: '/images/motherboard.jpg',
       description: 'Premium motherboards for Intel and AMD platforms',
     },
     {
       id: 9,
-      name: 'Memory',
+      name: 'memory',
       image: '/images/memory.png',
       description: 'High-performance RAM modules for your system',
     },
   ];
+
+  // Helper to create slug for URL
+  const getCategorySlug = (name) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  // Helper to capitalize the first letter for display
+  const capitalizeFirstLetter = (str) =>
+    str.charAt(0).toUpperCase() + str.slice(1);
 
   return (
     <div className="bg-gray-100 py-16">
@@ -70,8 +79,8 @@ const Categories = () => {
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
-            <a
-              href="#"
+            <Link
+              to={`/products/category/${getCategorySlug(category.name)}`}
               key={category.id}
               className="group relative bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
             >
@@ -84,7 +93,7 @@ const Categories = () => {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                  {category.name}
+                  {capitalizeFirstLetter(category.name)}
                 </h3>
                 <p className="mt-2 text-base text-gray-500">
                   {category.description}
@@ -108,7 +117,7 @@ const Categories = () => {
                   </span>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>
@@ -116,4 +125,4 @@ const Categories = () => {
   );
 };
 
-export default Categories; 
+export default Categories;

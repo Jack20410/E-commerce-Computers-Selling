@@ -1,95 +1,76 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
+import productService from '../../services/productService';
 import './CategorySlider.css';
+import { Link } from 'react-router-dom';
 
 const ProcessorCategories = () => {
+  const [processors, setProcessors] = useState([]);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const sliderRef = useRef(null);
 
-  const sampleProcessors = [
-    {
-      id: 1,
-      name: "AMD Ryzen 9 7950X",
-      description: "16-Core, 32-Thread, Up to 5.7GHz, Socket AM5",
-      price: 16990000,
-      oldPrice: 18990000,
-      discount: 12,
-      image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 2,
-      name: "Intel Core i9-13900K",
-      description: "24-Core (8P+16E), Up to 5.8GHz, LGA 1700",
-      price: 14990000,
-      image: "https://images.unsplash.com/photo-1555617778-02518510b9fa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 3,
-      name: "AMD Ryzen 7 7700X",
-      description: "8-Core, 16-Thread, Up to 5.4GHz, Socket AM5",
-      price: 8990000,
-      oldPrice: 9990000,
-      discount: 11,
-      image: "https://images.unsplash.com/photo-1592664474496-8f3d1183e805?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 4,
-      name: "Intel Core i5-13600K",
-      description: "14-Core (6P+8E), Up to 5.1GHz, LGA 1700",
-      price: 7490000,
-      image: "https://images.unsplash.com/photo-1563770660941-20978e870e26?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 5,
-      name: "AMD Ryzen 5 7600X",
-      description: "6-Core, 12-Thread, Up to 5.3GHz, Socket AM5",
-      price: 6990000,
-      oldPrice: 7490000,
-      discount: 7,
-      image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 6,
-      name: "Intel Core i7-13700K",
-      description: "16-Core (8P+8E), Up to 5.4GHz, LGA 1700",
-      price: 9990000,
-      image: "https://images.unsplash.com/photo-1555617778-02518510b9fa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 7,
-      name: "AMD Ryzen 9 7900X",
-      description: "12-Core, 24-Thread, Up to 5.6GHz, Socket AM5",
-      price: 12990000,
-      oldPrice: 13990000,
-      discount: 8,
-      image: "https://images.unsplash.com/photo-1592664474496-8f3d1183e805?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 8,
-      name: "Intel Core i5-12600K",
-      description: "10-Core (6P+4E), Up to 4.9GHz, LGA 1700",
-      price: 5990000,
-      image: "https://images.unsplash.com/photo-1563770660941-20978e870e26?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 9,
-      name: "AMD Ryzen 7 5800X3D",
-      description: "8-Core, 16-Thread, Up to 4.5GHz, Socket AM4",
-      price: 7990000,
-      oldPrice: 8490000,
-      discount: 6,
-      image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 10,
-      name: "Intel Core i9-12900KS",
-      description: "16-Core (8P+8E), Up to 5.5GHz, LGA 1700",
-      price: 13990000,
-      oldPrice: 15990000,
-      discount: 13,
-      image: "https://images.unsplash.com/photo-1555617778-02518510b9fa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
+  useEffect(() => {
+    fetchProcessors();
+  }, []);
+
+  const fetchProcessors = async (filterParams = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Gọi trực tiếp API để debug
+      console.log('Gọi API processor với params:', filterParams);
+      
+      try {
+        const response = await fetch(`http://localhost:3001/products/category/cpu?limit=10&sort=-createdAt`);
+        const data = await response.json();
+        console.log('Dữ liệu trả về từ API trực tiếp:', data);
+        
+        if (data.success) {
+          setProcessors(data.data);
+        } else {
+          console.error('API không trả về thành công:', data);
+          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
+          setProcessors([]);
+        }
+      } catch (directErr) {
+        console.error('Lỗi khi gọi API trực tiếp:', directErr);
+        
+        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
+        try {
+          console.log('Thử lại với productService');
+          const serviceResponse = await productService.getProductsByCategory('processor', { 
+            limit: 10,
+            sort: '-createdAt',
+            ...filterParams 
+          });
+          
+          console.log('Phản hồi từ productService:', serviceResponse);
+          
+          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
+            setProcessors(serviceResponse.data);
+          } else {
+            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
+            setError('Không thể tải dữ liệu sản phẩm');
+            setProcessors([]);
+          }
+        } catch (serviceErr) {
+          console.error('Lỗi khi dùng productService:', serviceErr);
+          setError('Không thể kết nối đến máy chủ');
+          setProcessors([]);
+        }
+      }
+      
+    } catch (err) {
+      console.error('Lỗi tổng quát khi lấy dữ liệu processor:', err);
+      setError('Không thể kết nối đến máy chủ');
+      setProcessors([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const scroll = (direction) => {
     const container = sliderRef.current;
@@ -138,16 +119,35 @@ const ProcessorCategories = () => {
               transform: `translateX(-${scrollPosition}px)`
             }}
           >
-            {sampleProcessors.map(processor => (
-              <div key={processor.id} className="slider-card">
-                <ProductCard product={processor} />
+            {loading ? (
+              <div className="flex justify-center items-center w-full py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <span className="ml-3">Đang tải dữ liệu...</span>
               </div>
-            ))}
+            ) : error ? (
+              <div className="text-center w-full py-10 text-red-500">
+                <p>{error}</p>
+                <button 
+                  onClick={() => fetchProcessors()} 
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : processors.length === 0 ? (
+              <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
+            ) : (
+              processors.map(processor => (
+                <div key={processor._id} className="slider-card">
+                  <ProductCard product={processor} />
+                </div>
+              ))
+            )}
           </div>
           <button 
             className="slider-button next"
             onClick={() => scroll('next')}
-            disabled={scrollPosition >= (sampleProcessors.length - 4) * 300}
+            disabled={!processors.length || scrollPosition >= (processors.length - 4) * 300}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -155,12 +155,12 @@ const ProcessorCategories = () => {
           </button>
         </div>
         <div className="mt-10 text-center">
-          <a href="/products/category/processor" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            View All Processors
+          <Link to="/products/category/cpu" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+            View all Processors
             <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

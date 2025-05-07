@@ -1,95 +1,76 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
+import productService from '../../services/productService';
 import './CategorySlider.css';
+import { Link } from 'react-router-dom';
 
 const GraphicsCategories = () => {
+  const [graphics, setGraphics] = useState([]);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const sliderRef = useRef(null);
 
-  const sampleGraphicsCards = [
-    {
-      id: 1,
-      name: "NVIDIA RTX 4090",
-      description: "24GB GDDR6X, Ray Tracing, DLSS 3.0",
-      price: 42990000,
-      oldPrice: 45990000,
-      discount: 11,
-      image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 2,
-      name: "AMD Radeon RX 7900 XTX",
-      description: "24GB GDDR6, Ray Tracing, FSR 3.0",
-      price: 27990000,
-      image: "https://images.unsplash.com/photo-1587202372616-b43abea06c2f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 3,
-      name: "NVIDIA RTX 4080",
-      description: "16GB GDDR6X, Ray Tracing, DLSS 3.0",
-      price: 31990000,
-      oldPrice: 33990000,
-      discount: 8,
-      image: "https://images.unsplash.com/photo-1587202372634-32789010c0ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 4,
-      name: "AMD Radeon RX 7800 XT",
-      description: "16GB GDDR6, Ray Tracing, FSR 3.0",
-      price: 19990000,
-      oldPrice: 21990000,
-      discount: 9,
-      image: "https://images.unsplash.com/photo-1587202372616-b43abea06c2f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 5,
-      name: "NVIDIA RTX 4070 Ti",
-      description: "12GB GDDR6X, Ray Tracing, DLSS 3.0",
-      price: 23990000,
-      image: "https://images.unsplash.com/photo-1587202372634-32789010c0ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 6,
-      name: "AMD Radeon RX 7700 XT",
-      description: "12GB GDDR6, Ray Tracing, FSR 3.0",
-      price: 17990000,
-      oldPrice: 19990000,
-      discount: 10,
-      image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 7,
-      name: "NVIDIA RTX 4070",
-      description: "12GB GDDR6X, Ray Tracing, DLSS 3.0",
-      price: 18990000,
-      image: "https://images.unsplash.com/photo-1587202372634-32789010c0ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 8,
-      name: "AMD Radeon RX 6950 XT",
-      description: "16GB GDDR6, Ray Tracing, FSR 2.0",
-      price: 24990000,
-      oldPrice: 26990000,
-      discount: 7,
-      image: "https://images.unsplash.com/photo-1587202372616-b43abea06c2f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 9,
-      name: "NVIDIA RTX 3090 Ti",
-      description: "24GB GDDR6X, Ray Tracing, DLSS 2.0",
-      price: 29990000,
-      oldPrice: 32990000,
-      discount: 9,
-      image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    },
-    {
-      id: 10,
-      name: "AMD Radeon RX 6900 XT",
-      description: "16GB GDDR6, Ray Tracing, FSR 2.0",
-      price: 22990000,
-      image: "https://images.unsplash.com/photo-1587202372616-b43abea06c2f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
+  useEffect(() => {
+    fetchGraphicsCards();
+  }, []);
+
+  const fetchGraphicsCards = async (filterParams = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Gọi trực tiếp API để debug
+      console.log('Gọi API graphics card với params:', filterParams);
+      
+      try {
+        const response = await fetch(`http://localhost:3001/products/category/graphicsCard?limit=10&sort=-createdAt`);
+        const data = await response.json();
+        console.log('Dữ liệu trả về từ API trực tiếp:', data);
+        
+        if (data.success) {
+          setGraphics(data.data);
+        } else {
+          console.error('API không trả về thành công:', data);
+          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
+          setGraphics([]);
+        }
+      } catch (directErr) {
+        console.error('Lỗi khi gọi API trực tiếp:', directErr);
+        
+        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
+        try {
+          console.log('Thử lại với productService');
+          const serviceResponse = await productService.getProductsByCategory('graphicsCard', { 
+            limit: 10,
+            sort: '-createdAt',
+            ...filterParams 
+          });
+          
+          console.log('Phản hồi từ productService:', serviceResponse);
+          
+          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
+            setGraphics(serviceResponse.data);
+          } else {
+            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
+            setError('Không thể tải dữ liệu sản phẩm');
+            setGraphics([]);
+          }
+        } catch (serviceErr) {
+          console.error('Lỗi khi dùng productService:', serviceErr);
+          setError('Không thể kết nối đến máy chủ');
+          setGraphics([]);
+        }
+      }
+      
+    } catch (err) {
+      console.error('Lỗi tổng quát khi lấy dữ liệu graphics card:', err);
+      setError('Không thể kết nối đến máy chủ');
+      setGraphics([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const scroll = (direction) => {
     const container = sliderRef.current;
@@ -138,16 +119,35 @@ const GraphicsCategories = () => {
               transform: `translateX(-${scrollPosition}px)`
             }}
           >
-            {sampleGraphicsCards.map(gpu => (
-              <div key={gpu.id} className="slider-card">
-                <ProductCard product={gpu} />
+            {loading ? (
+              <div className="flex justify-center items-center w-full py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <span className="ml-3">Đang tải dữ liệu...</span>
               </div>
-            ))}
+            ) : error ? (
+              <div className="text-center w-full py-10 text-red-500">
+                <p>{error}</p>
+                <button 
+                  onClick={() => fetchGraphicsCards()} 
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : graphics.length === 0 ? (
+              <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
+            ) : (
+              graphics.map(gpu => (
+                <div key={gpu._id} className="slider-card">
+                  <ProductCard product={gpu} />
+                </div>
+              ))
+            )}
           </div>
           <button 
             className="slider-button next"
             onClick={() => scroll('next')}
-            disabled={scrollPosition >= (sampleGraphicsCards.length - 4) * 300}
+            disabled={!graphics.length || scrollPosition >= (graphics.length - 4) * 300}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -155,12 +155,12 @@ const GraphicsCategories = () => {
           </button>
         </div>
         <div className="mt-10 text-center">
-          <a href="/products/category/graphics card" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            View All Graphics Cards
+          <Link to="/products/category/graphicsCard" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+            Xem tất cả Graphics Cards
             <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </div>
