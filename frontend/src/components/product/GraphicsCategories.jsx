@@ -15,57 +15,20 @@ const GraphicsCategories = () => {
     fetchGraphicsCards();
   }, []);
 
-  const fetchGraphicsCards = async (filterParams = {}) => {
+  const fetchGraphicsCards = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Gọi trực tiếp API để debug
-      console.log('Gọi API graphics card với params:', filterParams);
+      const response = await productService.getProductsByCategory('graphicsCard', { 
+        limit: 10,
+        sort: '-createdAt'
+      });
       
-      try {
-        const response = await fetch(`http://localhost:3001/products/category/graphicsCard?limit=10&sort=-createdAt`);
-        const data = await response.json();
-        console.log('Dữ liệu trả về từ API trực tiếp:', data);
-        
-        if (data.success) {
-          setGraphics(data.data);
-        } else {
-          console.error('API không trả về thành công:', data);
-          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
-          setGraphics([]);
-        }
-      } catch (directErr) {
-        console.error('Lỗi khi gọi API trực tiếp:', directErr);
-        
-        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
-        try {
-          console.log('Thử lại với productService');
-          const serviceResponse = await productService.getProductsByCategory('graphicsCard', { 
-            limit: 10,
-            sort: '-createdAt',
-            ...filterParams 
-          });
-          
-          console.log('Phản hồi từ productService:', serviceResponse);
-          
-          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
-            setGraphics(serviceResponse.data);
-          } else {
-            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
-            setError('Không thể tải dữ liệu sản phẩm');
-            setGraphics([]);
-          }
-        } catch (serviceErr) {
-          console.error('Lỗi khi dùng productService:', serviceErr);
-          setError('Không thể kết nối đến máy chủ');
-          setGraphics([]);
-        }
-      }
-      
-    } catch (err) {
-      console.error('Lỗi tổng quát khi lấy dữ liệu graphics card:', err);
-      setError('Không thể kết nối đến máy chủ');
+      setGraphics(response.data);
+    } catch (error) {
+      console.error('Error fetching graphics cards:', error);
+      setError('Failed to load graphics cards. Please try again later.');
       setGraphics([]);
     } finally {
       setLoading(false);

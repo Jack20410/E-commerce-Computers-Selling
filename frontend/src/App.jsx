@@ -14,6 +14,7 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ProfilePage from './pages/ProfilePage';
 import OAuth2Redirect from './pages/auth/OAuth2Redirect';
+import AddProduct from './pages/admin/AddProduct';
 // import AppRoutes from './routes';
 
 function App() {
@@ -21,25 +22,29 @@ function App() {
     <Router>
       <AuthProvider>
         <ProfileProvider>
-          <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
-            <Navbar />
-            <main className="flex-grow w-full">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/category/:category" element={<ProductsPage />} />
-                <Route path="/products/:id" element={<ProductDetailPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+          <CartProvider>
+            <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+              <Navbar />
+              <main className="flex-grow w-full">
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/category/:category" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
+                  {/* Admin Routes */}
+                  <Route path="/admin/add-product" element={<AddProduct />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </CartProvider>
         </ProfileProvider>
       </AuthProvider>
     </Router>

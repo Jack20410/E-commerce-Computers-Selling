@@ -11,9 +11,9 @@ const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sort, setSort] = useState(''); // NEW: sort state
-  const [brands, setBrands] = useState([]); // NEW: brands state
-  const [selectedBrand, setSelectedBrand] = useState(''); // NEW: selected brand
+  const [sort, setSort] = useState('');
+  const [brands, setBrands] = useState([]);
+  const [selectedBrand, setSelectedBrand] = useState('');
 
   useEffect(() => {
     // Fetch brands for the current category
@@ -23,14 +23,10 @@ const ProductsPage = () => {
         return;
       }
       try {
-        const res = await fetch(`http://localhost:3001/products/api/category/${category}/brands`);
-        const data = await res.json();
-        if (data.success) {
-          setBrands(data.data);
-        } else {
-          setBrands([]);
-        }
-      } catch {
+        const response = await productService.getBrandsByCategory(category);
+        setBrands(response || []);
+      } catch (err) {
+        console.error('Error fetching brands:', err);
         setBrands([]);
       }
     };
@@ -38,36 +34,33 @@ const ProductsPage = () => {
   }, [category]);
   
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
     const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        let res;
-        let sortQuery = sort ? `&sort=${sort}` : '';
-        let brandQuery = selectedBrand ? `&brand=${encodeURIComponent(selectedBrand)}` : '';
+        const params = {
+          sort: sort || undefined,
+          brand: selectedBrand || undefined
+        };
+
+        let response;
         if (category) {
-          const response = await fetch(
-            `http://localhost:3001/products/api/category/${category}?${sort ? `sort=${sort}` : ''}${brandQuery}`
-          );
-          const data = await response.json();
-          if (!data.success) {
-            throw new Error(data.message || 'Failed to fetch category products');
-          }
-          res = { data: data.data, pagination: data.pagination };
+          response = await productService.getProductsByCategory(category, params);
+          setProducts(response.data);
         } else {
-          res = await productService.getProducts({ sort, brand: selectedBrand });
+          response = await productService.getProducts(params);
+          setProducts(response.data);
         }
-        setProducts(res.data);
       } catch (err) {
-        setError(`Failed to load products: ${err.message || 'Unknown error'}`);
+        setError(err.message || 'Failed to load products');
+        console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [category, sort, selectedBrand]); // Add selectedBrand as dependency
+  }, [category, sort, selectedBrand]);
 
   const handleProductClick = (productId) => {
     navigate(`/products/${productId}`);
@@ -82,7 +75,7 @@ const ProductsPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">
-            {category ? `All Products ${category}` : 'All Products'}
+            {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Products` : 'All Products'}
           </h1>
           <div className="flex gap-4">
             {/* Brand Dropdown */}
@@ -129,7 +122,7 @@ const ProductsPage = () => {
             <div 
               key={product._id} 
               onClick={() => handleProductClick(product._id)}
-              className="cursor-pointer"
+              className="cursor-pointer transform transition-transform duration-200 hover:scale-105"
             >
               <ProductCard product={product} />
             </div>

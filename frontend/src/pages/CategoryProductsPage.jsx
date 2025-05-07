@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
+import productService from '../services/productService';
 
 const CategoryProductsPage = () => {
   const { category } = useParams();
@@ -13,15 +14,15 @@ const CategoryProductsPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`http://localhost:3000/products/category/${encodeURIComponent(category)}`);
-        const data = await res.json();
+        const response = await fetch(`/api/products/category/${category}`);
+        const data = await response.json();
         if (data.success) {
           setProducts(data.data);
         } else {
           setError('Failed to load products.');
         }
       } catch (err) {
-        setError('Failed to load products.');
+        setError(err.message || 'Failed to load products.');
       } finally {
         setLoading(false);
       }

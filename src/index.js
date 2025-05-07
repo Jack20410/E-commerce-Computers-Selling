@@ -43,7 +43,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/users', userRoutes);
-app.use('/api/addresses', addressRoutes);
+app.use('/api/address', addressRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

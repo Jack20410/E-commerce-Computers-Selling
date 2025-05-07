@@ -20,52 +20,21 @@ const MonitorCategories = () => {
       setLoading(true);
       setError(null);
       
-      // Gọi trực tiếp API để debug
-      console.log('Gọi API monitor với params:', filterParams);
+      const response = await productService.getProductsByCategory('monitor', { 
+        limit: 10,
+        sort: '-createdAt',
+        ...filterParams 
+      });
       
-      try {
-        const response = await fetch(`http://localhost:3001/products/category/monitor?limit=10&sort=-createdAt`);
-        const data = await response.json();
-        console.log('Dữ liệu trả về từ API trực tiếp:', data);
-        
-        if (data.success) {
-          setMonitors(data.data);
-        } else {
-          console.error('API không trả về thành công:', data);
-          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
-          setMonitors([]);
-        }
-      } catch (directErr) {
-        console.error('Lỗi khi gọi API trực tiếp:', directErr);
-        
-        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
-        try {
-          console.log('Thử lại với productService');
-          const serviceResponse = await productService.getProductsByCategory('monitor', { 
-            limit: 10,
-            sort: '-createdAt',
-            ...filterParams 
-          });
-          
-          console.log('Phản hồi từ productService:', serviceResponse);
-          
-          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
-            setMonitors(serviceResponse.data);
-          } else {
-            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
-            setError('Không thể tải dữ liệu sản phẩm');
-            setMonitors([]);
-          }
-        } catch (serviceErr) {
-          console.error('Lỗi khi dùng productService:', serviceErr);
-          setError('Không thể kết nối đến máy chủ');
-          setMonitors([]);
-        }
+      if (response.data && Array.isArray(response.data)) {
+        setMonitors(response.data);
+      } else {
+        setError('Could not load products');
+        setMonitors([]);
       }
-      
     } catch (err) {
-      console.error('Lỗi tổng quát khi lấy dữ liệu monitor:', err);
-      setError('Không thể kết nối đến máy chủ');
+      console.error('Error fetching monitors:', err);
+      setError('Could not connect to server');
       setMonitors([]);
     } finally {
       setLoading(false);

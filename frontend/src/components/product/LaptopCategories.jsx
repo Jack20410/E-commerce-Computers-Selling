@@ -19,55 +19,22 @@ const LaptopCategories = () => {
     try {
       setLoading(true);
       setError(null);
-      // Lấy laptop từ API với các tham số lọc
       
-      // Gọi trực tiếp API để debug
-      console.log('Gọi API laptop với params:', filterParams);
+      const response = await productService.getProductsByCategory('laptop', { 
+        limit: 10,
+        sort: '-createdAt',
+        ...filterParams 
+      });
       
-      // Thử cách 1: Gọi trực tiếp như trong ProductsPage.jsx
-      try {
-        const response = await fetch(`http://localhost:3001/products/category/laptop?limit=10&sort=-createdAt`);
-        const data = await response.json();
-        console.log('Dữ liệu trả về từ API trực tiếp:', data);
-        
-        if (data.success) {
-          setLaptops(data.data);
-        } else {
-          console.error('API không trả về thành công:', data);
-          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
-          setLaptops([]);
-        }
-      } catch (directErr) {
-        console.error('Lỗi khi gọi API trực tiếp:', directErr);
-        
-        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
-        try {
-          console.log('Thử lại với productService');
-          const serviceResponse = await productService.getProductsByCategory('laptop', { 
-            limit: 10,
-            sort: '-createdAt',
-            ...filterParams 
-          });
-          
-          console.log('Phản hồi từ productService:', serviceResponse);
-          
-          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
-            setLaptops(serviceResponse.data);
-          } else {
-            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
-            setError('Không thể tải dữ liệu sản phẩm');
-            setLaptops([]);
-          }
-        } catch (serviceErr) {
-          console.error('Lỗi khi dùng productService:', serviceErr);
-          setError('Không thể kết nối đến máy chủ');
-          setLaptops([]);
-        }
+      if (response.data && Array.isArray(response.data)) {
+        setLaptops(response.data);
+      } else {
+        setError('Could not load products');
+        setLaptops([]);
       }
-      
     } catch (err) {
-      console.error('Lỗi tổng quát khi lấy dữ liệu laptop:', err);
-      setError('Không thể kết nối đến máy chủ');
+      console.error('Error fetching laptops:', err);
+      setError('Could not connect to server');
       setLaptops([]);
     } finally {
       setLoading(false);

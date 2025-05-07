@@ -20,53 +20,21 @@ const ProcessorCategories = () => {
       setLoading(true);
       setError(null);
       
-      // Gọi trực tiếp API để debug
-      console.log('Gọi API processor với params:', filterParams);
+      const response = await productService.getProductsByCategory('cpu', { 
+        limit: 10,
+        sort: '-createdAt',
+        ...filterParams 
+      });
       
-      try {
-        const response = await fetch(`http://localhost:3001/products/category/cpu?limit=10&sort=-createdAt`);
-        const data = await response.json();
-        console.log('Dữ liệu trả về từ API trực tiếp:', data);
-        
-        if (data.success) {
-          setProcessors(data.data);
-        } else {
-          console.error('API không trả về thành công:', data);
-          setError(data.message || 'Không thể tải dữ liệu sản phẩm');
-          setProcessors([]);
-        }
-      } catch (directErr) {
-        console.error('Lỗi khi gọi API trực tiếp:', directErr);
-        
-        // Nếu gọi trực tiếp lỗi, thử lại cách cũ
-        try {
-          // Thử lại với productService
-          console.log('Thử lại với productService');
-          const serviceResponse = await productService.getProductsByCategory('cpu', { 
-            limit: 10,
-            sort: '-createdAt',
-            ...filterParams 
-          });
-          
-          console.log('Phản hồi từ productService:', serviceResponse);
-          
-          if (serviceResponse.data && Array.isArray(serviceResponse.data)) {
-            setProcessors(serviceResponse.data);
-          } else {
-            console.error('Dữ liệu không đúng định dạng:', serviceResponse);
-            setError('Không thể tải dữ liệu sản phẩm');
-            setProcessors([]);
-          }
-        } catch (serviceErr) {
-          console.error('Lỗi khi dùng productService:', serviceErr);
-          setError('Không thể kết nối đến máy chủ');
-          setProcessors([]);
-        }
+      if (response.data && Array.isArray(response.data)) {
+        setProcessors(response.data);
+      } else {
+        setError('Could not load products');
+        setProcessors([]);
       }
-      
     } catch (err) {
-      console.error('Lỗi tổng quát khi lấy dữ liệu processor:', err);
-      setError('Không thể kết nối đến máy chủ');
+      console.error('Error fetching processors:', err);
+      setError('Could not connect to server');
       setProcessors([]);
     } finally {
       setLoading(false);
