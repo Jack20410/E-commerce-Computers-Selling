@@ -36,6 +36,24 @@ const Categories = () => {
       image: './public/images/storage.jpg',
       description: 'SSDs, HDDs, and external storage solutions',
     },
+    {
+      id: 7,
+      name: 'Monitors',
+      image: './public/images/monitors.jpg',
+      description: 'High-quality displays for gaming and professional use',
+    },
+    {
+      id: 8,
+      name: 'Motherboards',
+      image: './public/images/motherboard.jpg',
+      description: 'Premium motherboards for Intel and AMD platforms',
+    },
+    {
+      id: 9,
+      name: 'Memory',
+      image: './public/images/memory.png',
+      description: 'High-performance RAM modules for your system',
+    },
   ];
 
   return (
