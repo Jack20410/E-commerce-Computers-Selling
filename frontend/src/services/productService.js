@@ -4,6 +4,8 @@ import api from './api';
  * Service for product-related API operations
  */
 const productService = {
+
+
   /**
    * Get all products with optional filtering and pagination
    * @param {Object} params - Query parameters for filtering and pagination
@@ -27,7 +29,7 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-  
+//===================================================================================================================================
   /**
    * Get a single product by ID
    * @param {string|number} id - Product ID
@@ -52,7 +54,7 @@ const productService = {
       throw error;
     }
   },
-  
+//===================================================================================================================================
   /**
    * Search products
    * @param {string} query - Search query
@@ -78,7 +80,7 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-
+//===================================================================================================================================
   /**
    * Get products by category
    * @param {string} category - Category name
@@ -103,7 +105,7 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-  
+//===================================================================================================================================
   /**
    * Get similar products for a specific product
    * @param {string} category - Product category
@@ -125,7 +127,7 @@ const productService = {
       throw error.response?.data || error;
     }
   },
-  
+//===================================================================================================================================
   /**
    * Get featured products
    * @param {number} limit - Number of featured products to retrieve
@@ -134,7 +136,7 @@ const productService = {
   getFeaturedProducts: (limit = 4) => {
     return api.get(`/products/api/featured?limit=${limit}`);
   },
-  
+//===================================================================================================================================
   /**
    * Get product categories
    * @returns {Promise} - Promise resolving to categories data
