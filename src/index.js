@@ -9,9 +9,13 @@ const connectDB = require('./config/database');
 const productRoutes = require('./Routes/product.route');
 const authRoutes = require('./Routes/auth.route');
 const userRoutes = require('./Routes/user.route');
+const passport = require('./Config/passport');
 
 // Initialize express app
 const app = express();
+
+// Initialize passport
+app.use(passport.initialize());
 
 // Connect to MongoDB
 connectDB();

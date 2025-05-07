@@ -1,13 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../Controllers/auth.controller');
+const {
+  register,
+  login,
+  verifyEmail,
+  createGuestUser,
+  googleLogin,
+  googleCallback
+} = require('../Controllers/auth.controller');
 const { authenticateToken } = require('../Middlewares/auth.middleware');
 
 // Public routes
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.post('/guest', authController.createGuestUser);
-router.get('/verify-email/:token', authController.verifyEmail);
+router.post('/register', register);
+router.post('/login', login);
+router.post('/guest', createGuestUser);
+router.get('/verify-email/:token', verifyEmail);
+router.get('/google', googleLogin);
+router.get('/google/callback', googleCallback);
 
 // Protected routes (cần JWT token)
 router.get('/me', authenticateToken, (req, res) => {

@@ -12,6 +12,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ProfilePage from './pages/ProfilePage';
+import OAuth2Redirect from './pages/auth/OAuth2Redirect';
 // import AppRoutes from './routes';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/cart" element={<CartPage />} />
+                <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>

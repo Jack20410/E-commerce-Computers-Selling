@@ -5,7 +5,8 @@ import { useProfile } from '../context/ProfileContext';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isGoogleUser = !!user?.googleId;
   const { 
     loading, 
     error, 
@@ -357,31 +358,35 @@ const ProfilePage = () => {
                 } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
                 disabled={isFirstLogin}
               >
-                Thông tin cá nhân
+                Personal Info
               </button>
-              <button
-                onClick={() => setActiveTab('change-password')}
-                className={`${
-                  activeTab === 'change-password'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
-              >
-                Đổi mật khẩu
-              </button>
-              <button
-                onClick={() => !isFirstLogin && setActiveTab('recover-password')}
-                className={`${
-                  activeTab === 'recover-password'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } ${
-                  isFirstLogin ? 'opacity-50 cursor-not-allowed' : ''
-                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
-                disabled={isFirstLogin}
-              >
-                Khôi phục mật khẩu
-              </button>
+              {!isGoogleUser && (
+                <button
+                  onClick={() => setActiveTab('change-password')}
+                  className={`${
+                    activeTab === 'change-password'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                >
+                  Change Password
+                </button>
+              )}
+              {!isGoogleUser && (
+                <button
+                  onClick={() => !isFirstLogin && setActiveTab('recover-password')}
+                  className={`${
+                    activeTab === 'recover-password'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } ${
+                    isFirstLogin ? 'opacity-50 cursor-not-allowed' : ''
+                  } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                  disabled={isFirstLogin}
+                >
+                  Recover Password
+                </button>
+              )}
             </nav>
           </div>
 
@@ -408,7 +413,7 @@ const ProfilePage = () => {
               <form onSubmit={handleUpdateProfile} className="space-y-6">
                 <div>
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                    Họ và tên
+                    Full Name
                   </label>
                   <input
                     type="text"
@@ -436,11 +441,11 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900">Địa chỉ</h3>
+                  <h3 className="text-lg font-medium text-gray-900">Address</h3>
                   
                   <div>
                     <label htmlFor="street" className="block text-sm font-medium text-gray-700">
-                      Đường
+                      Street
                     </label>
                     <input
                       type="text"
@@ -455,7 +460,7 @@ const ProfilePage = () => {
 
                   <div>
                     <label htmlFor="ward" className="block text-sm font-medium text-gray-700">
-                      Phường/Xã
+                      Ward
                     </label>
                     <input
                       type="text"
@@ -470,7 +475,7 @@ const ProfilePage = () => {
 
                   <div>
                     <label htmlFor="district" className="block text-sm font-medium text-gray-700">
-                      Quận/Huyện
+                      District
                     </label>
                     <input
                       type="text"
@@ -485,7 +490,7 @@ const ProfilePage = () => {
 
                   <div>
                     <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                      Thành phố
+                      City
                     </label>
                     <input
                       type="text"
@@ -507,14 +512,14 @@ const ProfilePage = () => {
                       loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                   >
-                    {loading ? 'Đang cập nhật...' : 'Cập nhật thông tin'}
+                    {loading ? 'Updating...' : 'Update Info'}
                   </button>
                 </div>
               </form>
             )}
 
             {/* Change Password Form */}
-            {activeTab === 'change-password' && (
+            {!isGoogleUser && activeTab === 'change-password' && (
               <form onSubmit={handleChangePassword} className="space-y-6">
                 {passwordErrors.general && (
                   <div className="p-3 bg-red-50 text-red-500 rounded-md text-sm">
@@ -524,7 +529,7 @@ const ProfilePage = () => {
 
                 <div>
                   <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                    Mật khẩu hiện tại
+                    Current Password
                   </label>
                   <input
                     type="password"
@@ -544,7 +549,7 @@ const ProfilePage = () => {
 
                 <div>
                   <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                    Mật khẩu mới
+                    New Password
                   </label>
                   <input
                     type="password"
@@ -564,7 +569,7 @@ const ProfilePage = () => {
 
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                    Xác nhận mật khẩu mới
+                    Confirm New Password
                   </label>
                   <input
                     type="password"
@@ -592,14 +597,14 @@ const ProfilePage = () => {
                         : 'bg-blue-600 hover:bg-blue-700'
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                   >
-                    {loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
+                    {loading ? 'Updating...' : 'Change Password'}
                   </button>
                 </div>
               </form>
             )}
 
             {/* Recover Password Form */}
-            {activeTab === 'recover-password' && (
+            {!isGoogleUser && activeTab === 'recover-password' && (
               <form onSubmit={handleRecoverPassword} className="space-y-6">
                 <div>
                   <label htmlFor="recoveryEmail" className="block text-sm font-medium text-gray-700">
@@ -614,7 +619,7 @@ const ProfilePage = () => {
                     className={`mt-1 block w-full rounded-md border ${
                       error ? 'border-red-300' : 'border-gray-300'
                     } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    placeholder="Nhập email của bạn"
+                    placeholder="Enter your email"
                     required
                   />
                   {error && (
@@ -630,7 +635,7 @@ const ProfilePage = () => {
                       loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                   >
-                    {loading ? 'Đang gửi...' : 'Gửi mật khẩu mới'}
+                    {loading ? 'Sending...' : 'Send New Password'}
                   </button>
                 </div>
               </form>

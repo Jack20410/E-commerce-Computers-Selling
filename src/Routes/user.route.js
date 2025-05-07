@@ -10,4 +10,5 @@ router.post('/change-password', auth, userController.changePassword);
 router.get('/check-first-login', auth, userController.checkFirstLogin);
 router.post('/recover-password', userController.recoverPassword);
 
+
 module.exports = router; 

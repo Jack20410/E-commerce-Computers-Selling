@@ -19,16 +19,16 @@ const AuthBanner = () => {
           </span>
         </h1>
         <p className="text-gray-300 text-center text-lg md:text-xl max-w-2xl mb-8">
-          Khám phá thế giới công nghệ với những sản phẩm chất lượng cao và dịch vụ chuyên nghiệp
+          Discover the world of technology with high-quality products and professional service
         </p>
         <div className="grid grid-cols-2 gap-6 text-center text-gray-300">
           <div>
             <div className="text-3xl font-bold text-blue-400 mb-2">1000+</div>
-            <div className="text-sm">Sản phẩm</div>
+            <div className="text-sm">Products</div>
           </div>
           <div>
             <div className="text-3xl font-bold text-blue-400 mb-2">24/7</div>
-            <div className="text-sm">Hỗ trợ khách hàng</div>
+            <div className="text-sm">Customer Support</div>
           </div>
         </div>
       </div>

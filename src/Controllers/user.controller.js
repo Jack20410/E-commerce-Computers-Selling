@@ -79,13 +79,18 @@ const userController = {
         });
       }
 
-      // Kiểm tra mật khẩu hiện tại
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(400).json({
-          success: false,
-          message: 'Mật khẩu hiện tại không đúng'
-        });
+      // Nếu user chưa từng đặt mật khẩu (Google user), cho phép đặt mới luôn
+      if (!user.password) {
+        // Không kiểm tra currentPassword
+      } else {
+        // Kiểm tra mật khẩu hiện tại
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+          return res.status(400).json({
+            success: false,
+            message: 'Mật khẩu hiện tại không đúng'
+          });
+        }
       }
 
       // Kiểm tra độ mạnh của mật khẩu mới

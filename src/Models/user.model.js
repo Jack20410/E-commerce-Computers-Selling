@@ -48,7 +48,18 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: function() {
+      return !this.googleId; // Password chỉ required nếu không có googleId
+    }
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  googleProfile: {
+    type: Object,
+    select: false // Mặc định không lấy thông tin này khi query
   },
   role: {
     type: String,
