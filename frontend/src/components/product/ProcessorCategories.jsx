@@ -40,8 +40,9 @@ const ProcessorCategories = () => {
         
         // Nếu gọi trực tiếp lỗi, thử lại cách cũ
         try {
+          // Thử lại với productService
           console.log('Thử lại với productService');
-          const serviceResponse = await productService.getProductsByCategory('processor', { 
+          const serviceResponse = await productService.getProductsByCategory('cpu', { 
             limit: 10,
             sort: '-createdAt',
             ...filterParams 

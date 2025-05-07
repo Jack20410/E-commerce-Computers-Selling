@@ -337,14 +337,20 @@ exports.getProductsByCategory = async (req, res) => {
       sort = { createdAt: -1 };
     }
 
-    console.log('API getProductsByCategory called for:', category);
+    // === ADD FILTER FOR BRAND ===
+    const filter = { category: { $regex: `^${category}$`, $options: 'i' } };
+    if (req.query.brand) {
+      filter.brand = req.query.brand;
+    }
 
-    const products = await Product.find({ category: { $regex: `^${category}$`, $options: 'i' } })
-      .sort(sort) // <-- Use dynamic sort
+    console.log('API getProductsByCategory called for:', category, 'with filter:', filter);
+
+    const products = await Product.find(filter)
+      .sort(sort)
       .skip(skip)
       .limit(limit);
 
-    const total = await Product.countDocuments({ category: { $regex: `^${category}$`, $options: 'i' } });
+    const total = await Product.countDocuments(filter);
 
     // If no products found, return a "Sold Out" message
     if (products.length === 0) {

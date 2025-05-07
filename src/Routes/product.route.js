@@ -42,6 +42,18 @@ router.route('/api/products')
 // Get products by category
 router.get('/api/category/:category', getProductsByCategory);
 
+// Get all brands for a category
+router.get('/api/category/:category/brands', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const Product = require('../Models/product.model');
+    const brands = await Product.distinct('brand', { category: { $regex: `^${category}$`, $options: 'i' } });
+    res.status(200).json({ success: true, data: brands });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch brands', error: error.message });
+  }
+});
+
 // Get similar products in same category (excluding current product)
 router.get('/api/similar/:category/:productId', getSimilarProducts);
 

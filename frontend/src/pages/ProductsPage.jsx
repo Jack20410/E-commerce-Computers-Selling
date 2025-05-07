@@ -12,7 +12,31 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sort, setSort] = useState(''); // NEW: sort state
+  const [brands, setBrands] = useState([]); // NEW: brands state
+  const [selectedBrand, setSelectedBrand] = useState(''); // NEW: selected brand
 
+  useEffect(() => {
+    // Fetch brands for the current category
+    const fetchBrands = async () => {
+      if (!category) {
+        setBrands([]);
+        return;
+      }
+      try {
+        const res = await fetch(`http://localhost:3001/products/api/category/${category}/brands`);
+        const data = await res.json();
+        if (data.success) {
+          setBrands(data.data);
+        } else {
+          setBrands([]);
+        }
+      } catch {
+        setBrands([]);
+      }
+    };
+    fetchBrands();
+  }, [category]);
+  
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -21,21 +45,21 @@ const ProductsPage = () => {
       try {
         let res;
         let sortQuery = sort ? `&sort=${sort}` : '';
+        let brandQuery = selectedBrand ? `&brand=${encodeURIComponent(selectedBrand)}` : '';
         if (category) {
-          console.log('Fetching products for category:', category);
-          const response = await fetch(`http://localhost:3001/products/api/category/${category}?${sort ? `sort=${sort}` : ''}`);
+          const response = await fetch(
+            `http://localhost:3001/products/api/category/${category}?${sort ? `sort=${sort}` : ''}${brandQuery}`
+          );
           const data = await response.json();
           if (!data.success) {
             throw new Error(data.message || 'Failed to fetch category products');
           }
           res = { data: data.data, pagination: data.pagination };
         } else {
-          // If your productService supports sort param, pass it
-          res = await productService.getProducts({ sort });
+          res = await productService.getProducts({ sort, brand: selectedBrand });
         }
         setProducts(res.data);
       } catch (err) {
-        console.error('Error details:', err);
         setError(`Failed to load products: ${err.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
@@ -43,7 +67,7 @@ const ProductsPage = () => {
     };
 
     fetchProducts();
-  }, [category, sort]); // Add sort as dependency
+  }, [category, sort, selectedBrand]); // Add selectedBrand as dependency
 
   const handleProductClick = (productId) => {
     navigate(`/products/${productId}`);
@@ -60,18 +84,33 @@ const ProductsPage = () => {
           <h1 className="text-3xl font-bold">
             {category ? `All Products ${category}` : 'All Products'}
           </h1>
-          {/* Sort Dropdown */}
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2 text-sm"
-          >
-            <option value="">Sort by</option>
-            <option value="price">Price: Low to High</option>
-            <option value="-price">Price: High to Low</option>
-            <option value="brand">Brand: A-Z</option>         {/* NEW */}
-            <option value="-brand">Brand: Z-A</option>        {/* NEW */}
-          </select>
+          <div className="flex gap-4">
+            {/* Brand Dropdown */}
+            {brands.length > 0 && (
+              <select
+                value={selectedBrand}
+                onChange={e => setSelectedBrand(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 text-sm"
+              >
+                <option value="">All Brands</option>
+                {brands.map(brand => (
+                  <option key={brand} value={brand}>{brand}</option>
+                ))}
+              </select>
+            )}
+            {/* Sort Dropdown */}
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm"
+            >
+              <option value="">Sort by</option>
+              <option value="price">Price: Low to High</option>
+              <option value="-price">Price: High to Low</option>
+              <option value="brand">Brand: A-Z</option>
+              <option value="-brand">Brand: Z-A</option>
+            </select>
+          </div>
         </div>
         {loading && (
           <p className="text-center text-gray-500">Loading products...</p>
