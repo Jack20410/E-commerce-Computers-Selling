@@ -324,38 +324,39 @@ exports.getProductsByCategory = async (req, res) => {
 // Search products
 exports.searchProducts = async (req, res) => {
   try {
-    const { q } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    let search = req.query.query;
+    if (typeof search !== 'string') search = '';
+    search = search.trim();
 
-    const searchQuery = {
+    if (!search) {
+      return res.json({ products: [] });
+    }
+
+    const products = await Product.find({
       $or: [
-        { brand: { $regex: q, $options: 'i' } },
-        { model: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } }
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
       ]
-    };
-
-    const products = await Product.find(searchQuery)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Product.countDocuments(searchQuery);
-
-    res.status(200).json({
-      success: true,
-      data: products,
-      pagination: {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total,
-        perPage: limit
-      }
     });
+
+    // Map products to include all fields needed by ProductCard
+    const mappedProducts = products.map(product => ({
+      id: product._id,
+      name: product.name,
+      model: product.model, // <-- add this line
+      price: product.price,
+      image: product.images && product.images.length > 0 ? product.images[0].url : null,
+      category: product.category,
+      stock: product.stock,
+      brand: product.brand,
+      images: product.images,
+      // add any other fields your ProductCard needs
+    }));
+
+    res.json({ products: mappedProducts });
   } catch (error) {
-    handleError(error, res);
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching search results' });
   }
 };
 

@@ -122,7 +122,7 @@ const ProductCard = ({ product }) => {
           </span>
         )}
         <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
-          {product.model}
+          {product.name || product.model}
         </h3>
         <div className="text-blue-600 font-extrabold text-lg mb-2">
           {product.price.toLocaleString('vi-VN')}₫

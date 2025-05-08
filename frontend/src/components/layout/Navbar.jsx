@@ -13,6 +13,13 @@ const Navbar = () => {
   const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const cartPreviewRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const handleSearch = () => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery !== "") {
+      navigate(`/products?query=${encodeURIComponent(trimmedQuery)}`); // <-- change here
+    }
+  };
 
   // Handle scroll effect
   useEffect(() => {
@@ -165,19 +172,40 @@ const Navbar = () => {
 
             {/* Search, Auth, and Cart */}
             <div className="hidden md:flex items-center space-x-6">
-              {/* Search */}
-              <div className="relative group">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-64 pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 group-hover:bg-white transition-all duration-200"
-                />
-                <div className="absolute left-3 top-2.5">
-                  <svg className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-              </div>
+              {/* Search bar */}
+      <div className="relative group">
+        {/* Search icon */}
+        <div
+          className="absolute left-3 top-2.5 cursor-pointer"
+          onClick={handleSearch}
+        >
+          <svg
+            className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        {/* Search input */}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
+          placeholder="Search products..."
+          className="w-64 pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 group-hover:bg-white transition-all duration-200"
+        />
+      </div>
 
               {/* Auth Buttons or User Menu */}
               {isAuthenticated ? (

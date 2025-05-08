@@ -16,6 +16,7 @@ import ProfilePage from './pages/ProfilePage';
 import OAuth2Redirect from './pages/auth/OAuth2Redirect';
 import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
+// import SearchResults from './components/product/SearchResults';
 
 // import AppRoutes from './routes';
 
@@ -32,6 +33,7 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  {/* <Route path="/search" element={<SearchResults />} /> */}
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/products" element={<ProductsPage />} />
@@ -55,3 +57,4 @@ function App() {
 }
 
 export default App;
+// 

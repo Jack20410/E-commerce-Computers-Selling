@@ -164,25 +164,10 @@ const productService = {
   /**
    * Search products
    */
-  searchProducts: async (query, params = {}) => {
-    try {
-      console.log('Searching products:', query, params);
-      const response = await api.get('/api/products/search', {
-        params: { q: query, ...params }
-      });
-      console.log('Search response:', response.data);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Search failed');
-      }
-      return {
-        data: response.data.data,
-        pagination: response.data.pagination
-      };
-    } catch (error) {
-      console.error('Error in searchProducts:', error);
-      throw error.response?.data || error;
-    }
+  searchProducts: async (query) => {
+    const res = await fetch(`/api/products/search?query=${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error('Failed to fetch search results');
+    return res.json();
   },
 
   /**
@@ -280,11 +265,11 @@ const productService = {
       images.forEach(image => {
         formData.append('images', image);
       });
-
+  
       const response = await api.post(`/api/products/${id}/images`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-
+  
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to add images');
       }
@@ -314,4 +299,4 @@ const productService = {
   }
 };
 
-export default productService; 
+export default productService;
