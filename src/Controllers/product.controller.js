@@ -166,15 +166,20 @@ exports.updateProduct = async (req, res) => {
 
     const updateData = { ...req.body };
     delete updateData.imageOrder;
+    delete updateData.imageMain;
     delete updateData.deletedImages;
 
+    // Handle image reordering and main image setting
     if (req.body.imageOrder) {
-      const newOrder = req.body.imageOrder;
+      const newOrder = Array.isArray(req.body.imageOrder) ? req.body.imageOrder : [req.body.imageOrder];
+      const imageMain = Array.isArray(req.body.imageMain) ? req.body.imageMain : [req.body.imageMain];
       const reorderedImages = [];
       
-      newOrder.forEach(imageId => {
+      newOrder.forEach((imageId, index) => {
         const image = product.images.find(img => img._id.toString() === imageId);
         if (image) {
+          image.order = index;
+          image.isMain = imageMain[index] === 'true';
           reorderedImages.push(image);
         }
       });
@@ -182,6 +187,7 @@ exports.updateProduct = async (req, res) => {
       product.images = reorderedImages;
     }
 
+    // Handle deleted images
     if (req.body.deletedImages) {
       const deletedImages = Array.isArray(req.body.deletedImages) 
         ? req.body.deletedImages 
@@ -198,8 +204,14 @@ exports.updateProduct = async (req, res) => {
       product.images = product.images.filter(
         img => !deletedImages.includes(img._id.toString())
       );
+
+      // If we deleted the main image, set the first remaining image as main
+      if (product.images.length > 0 && !product.images.some(img => img.isMain)) {
+        product.images[0].isMain = true;
+      }
     }
 
+    // Handle new images
     if (req.files && req.files.length > 0) {
       const newImageUrls = getImageUrls(product.category, req.files.map(file => file.filename));
       const newImageObjects = newImageUrls.map((url, index) => ({
@@ -216,6 +228,11 @@ exports.updateProduct = async (req, res) => {
         await deleteProductImages(product.category, excessFilenames);
         product.images = product.images.slice(0, 5);
       }
+    }
+
+    // Ensure there is always one main image if there are any images
+    if (product.images.length > 0 && !product.images.some(img => img.isMain)) {
+      product.images[0].isMain = true;
     }
 
     Object.assign(product, updateData);

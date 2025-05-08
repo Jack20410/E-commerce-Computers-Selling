@@ -616,6 +616,16 @@ const EditProduct = () => {
           )}
         </div>
 
+        {message.text && (
+        <div 
+          className={`mb-4 p-4 rounded ${
+            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
         <div className="flex gap-4">
           <button
             type="submit"
