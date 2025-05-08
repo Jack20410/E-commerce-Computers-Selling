@@ -3,7 +3,7 @@ const User = require('../Models/user.model');
 const Product = require('../Models/product.model');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
-const { sendWelcomeEmail } = require('../services/email.service');
+const { sendWelcomeEmail, sendOrderConfirmationEmail } = require('../services/email.service');
 
 // Get orders by user
 exports.getOrdersByUser = async (req, res) => {
@@ -220,20 +220,34 @@ exports.createOrder = async (req, res) => {
                 });
             }
 
+            // Check if product is in stock
+            if (product.stockQuantity < item.quantity) {
+                return res.status(400).json({
+                    message: `Insufficient stock for product: ${product.name}`,
+                    available: product.stockQuantity,
+                    requested: item.quantity
+                });
+            }
+
             // Create processed item with product details
+            const mainImage = product.images.find(img => img.isMain);
             const processedItem = {
                 product: product._id,
                 quantity: item.quantity,
                 price: product.price,
                 productSnapshot: {
-                    name: product.name,
+                    name: product.brand + ' ' + product.model,
                     brand: product.brand,
                     model: product.model,
                     category: product.category,
-                    image: product.images[0],
+                    image: mainImage ? mainImage.url : product.images[0]?.url,
                     specifications: product.specifications
                 }
             };
+
+            // Update stock quantity
+            product.stockQuantity -= item.quantity;
+            await product.save();
 
             processedItems.push(processedItem);
             subtotal += product.price * item.quantity;
@@ -273,6 +287,16 @@ exports.createOrder = async (req, res) => {
                 select: 'name images price'
             }
         ]);
+
+        // Send order confirmation email
+        await sendOrderConfirmationEmail({
+            ...order.toObject(),
+            user: {
+                fullName: user.fullName,
+                email: user.email
+            },
+            shippingAddress: shippingAddress
+        });
 
         res.status(201).json({
             message: 'Order created successfully',
@@ -456,7 +480,7 @@ exports.createGuestOrder = async (req, res) => {
             email,
             fullName,
             shippingAddress,
-            paymentMethod
+            paymentMethod,
         } = req.body;
 
         // Validate required fields
@@ -472,6 +496,12 @@ exports.createGuestOrder = async (req, res) => {
 
         if (!paymentMethod) {
             return res.status(400).json({ message: 'Payment method is required' });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Invalid email format' });
         }
 
         // Validate shipping address
@@ -508,7 +538,7 @@ exports.createGuestOrder = async (req, res) => {
             await user.save();
             isNewUser = true;
 
-            // Gửi email chào mừng với mật khẩu tạm thời (gửi mật khẩu gốc, không phải hash)
+            // Gửi email chào mừng với mật khẩu tạm thời
             await sendWelcomeEmail({
                 email: user.email,
                 fullName: user.fullName,
@@ -534,19 +564,33 @@ exports.createGuestOrder = async (req, res) => {
                 });
             }
 
+            // Check if product is in stock
+            if (product.stockQuantity < item.quantity) {
+                return res.status(400).json({
+                    message: `Insufficient stock for product: ${product.name}`,
+                    available: product.stockQuantity,
+                    requested: item.quantity
+                });
+            }
+
+            const mainImage = product.images.find(img => img.isMain);
             const processedItem = {
                 product: product._id,
                 quantity: item.quantity,
                 price: product.price,
                 productSnapshot: {
-                    name: product.name,
+                    name: product.brand + ' ' + product.model,
                     brand: product.brand,
                     model: product.model,
                     category: product.category,
-                    image: product.images[0],
+                    image: mainImage ? mainImage.url : product.images[0]?.url,
                     specifications: product.specifications
                 }
             };
+
+            // Update stock quantity
+            product.stockQuantity -= item.quantity;
+            await product.save();
 
             processedItems.push(processedItem);
             subtotal += product.price * item.quantity;
@@ -585,6 +629,16 @@ exports.createGuestOrder = async (req, res) => {
                 select: 'name images price'
             }
         ]);
+
+        // Send order confirmation email
+        await sendOrderConfirmationEmail({
+            ...order.toObject(),
+            user: {
+                fullName: user.fullName,
+                email: user.email
+            },
+            shippingAddress
+        });
 
         res.status(201).json({
             message: isNewUser 

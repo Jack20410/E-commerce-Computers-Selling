@@ -14,8 +14,25 @@ const register = async (req, res) => {
     console.log('Registration request:', {
       email,
       fullName,
-      address
+      address,
     });
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    // Validate address
+    if (!address.street || !address.ward || !address.district || !address.city) {
+      return res.status(400).json({
+        success: false,
+        message: 'All address fields (street, ward, district, city) are required'
+      });
+    }
 
     // Kiểm tra email đã tồn tại
     const existingUser = await User.findOne({ email: email.toLowerCase() });
