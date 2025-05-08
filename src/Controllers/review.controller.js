@@ -44,3 +44,16 @@ exports.getRatingSummary = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
   }
 };
+
+// Lấy tất cả review mới nhất cho testimonials
+exports.getAllReviews = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 6;
+    const reviews = await Review.find({})
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    res.json({ success: true, data: reviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+  }
+};
