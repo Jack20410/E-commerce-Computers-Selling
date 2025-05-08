@@ -164,8 +164,15 @@ const productService = {
   /**
    * Search products
    */
-  searchProducts: async (query, page = 1, limit = 10) => {
-    const res = await fetch(`/api/products/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+  searchProducts: async (query, page = 1, limit = 10, minPrice, maxPrice) => {
+    const params = new URLSearchParams({
+      query,
+      page,
+      limit,
+      ...(minPrice ? { minPrice } : {}),
+      ...(maxPrice ? { maxPrice } : {}),
+    });
+    const res = await fetch(`/api/products/search?${params.toString()}`);
     if (!res.ok) throw new Error('Failed to fetch search results');
     return res.json();
   },
@@ -297,7 +304,21 @@ const productService = {
       console.error('Error in deleteProductImage:', error);
       throw error.response?.data || error;
     }
-  }
+  },
+  /**
+   * Get all specifications for a specific category
+   */
+  getSpecificationsByCategory: async (category) => {
+    try {
+      const response = await api.get(`/api/products/category/${category}/specifications`);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch specifications');
+      }
+      return response.data.data || {};
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default productService;

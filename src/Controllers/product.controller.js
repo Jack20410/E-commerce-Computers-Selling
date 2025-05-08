@@ -348,6 +348,11 @@ exports.getProductsByCategory = async (req, res) => {
     if (req.query.brand) {
       filter.brand = req.query.brand;
     }
+    if (req.query.minPrice || req.query.maxPrice) {
+      filter.price = {};
+      if (req.query.minPrice) filter.price.$gte = parseFloat(req.query.minPrice);
+      if (req.query.maxPrice) filter.price.$lte = parseFloat(req.query.maxPrice);
+    }
 
     const products = await Product.find(filter)
       .sort(sort)
@@ -401,12 +406,20 @@ exports.searchProducts = async (req, res) => {
       return res.json({ products: [], pagination: { current: 1, pages: 0, total: 0, perPage: limit } });
     }
 
+    const minPrice = parseFloat(req.query.minPrice);
+    const maxPrice = parseFloat(req.query.maxPrice);
+
     const filter = {
       $or: [
         { name: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
       ]
     };
+    if (!isNaN(minPrice) || !isNaN(maxPrice)) {
+      filter.price = {};
+      if (!isNaN(minPrice)) filter.price.$gte = minPrice;
+      if (!isNaN(maxPrice)) filter.price.$lte = maxPrice;
+    }
 
     const products = await Product.find(filter)
       .skip(skip)
@@ -679,5 +692,37 @@ exports.deleteProductImage = async (req, res) => {
     });
   } catch (error) {
     handleError(error, res);
+  }
+};
+
+// Get all unique specifications for a category
+exports.getSpecificationsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+    const products = await Product.find({ category });
+
+    // Collect unique values for each specification key
+    const specMap = {};
+    products.forEach(product => {
+      if (product.specifications) {
+        Object.entries(product.specifications).forEach(([key, value]) => {
+          if (!specMap[key]) specMap[key] = new Set();
+          specMap[key].add(value);
+        });
+      }
+    });
+
+    // Convert sets to arrays and sort
+    const result = {};
+    Object.entries(specMap).forEach(([key, set]) => {
+      result[key] = Array.from(set).sort();
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch specifications', error: error.message });
   }
 };

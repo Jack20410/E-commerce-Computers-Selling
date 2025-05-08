@@ -12,7 +12,8 @@ const {
   uploadImages,
   addProductImages,
   deleteProductImage,
-  getSimilarProducts
+  getSimilarProducts,
+  getSpecificationsByCategory
 } = require('../Controllers/product.controller');
 
 // Middleware to validate MongoDB ObjectId
@@ -39,8 +40,11 @@ router.route('/')
   .get(getProducts)
   .post(uploadImages, createProduct);
 
+  
 // Get products by category
 router.get('/category/:category', getProductsByCategory);
+
+
 
 // Get all brands for a category
 router.get('/category/:category/brands', async (req, res) => {
@@ -56,6 +60,9 @@ router.get('/category/:category/brands', async (req, res) => {
 
 // Get similar products in same category (excluding current product)
 router.get('/similar/:category/:productId', getSimilarProducts);
+
+// Fix: Use the destructured function directly
+// router.get('/category/:category/specifications', getSpecificationsByCategory);
 
 // Get, update, delete product by ID
 router.route('/:id')
