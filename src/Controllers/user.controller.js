@@ -31,7 +31,7 @@ const userController = {
   // Cập nhật thông tin profile
   updateProfile: async (req, res) => {
     try {
-      const { fullName, address } = req.body;
+      const { fullName } = req.body;
       const user = await User.findById(req.user.id);
       
       if (!user) {
@@ -41,20 +41,19 @@ const userController = {
         });
       }
 
-      if (fullName) user.fullName = fullName;
-      
-      if (address) {
-        // Nếu chưa có địa chỉ nào, đặt địa chỉ mới làm mặc định
-        const isFirstAddress = user.addresses.length === 0;
-        address.isDefault = isFirstAddress;
-        
-        user.addresses.push(address);
+      if (!fullName) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng nhập tên người dùng'
+        });
       }
 
+      user.fullName = fullName;
       await user.save();
+      
       res.json({
         success: true,
-        message: 'Cập nhật thông tin thành công',
+        message: 'Cập nhật tên thành công',
         user: user.toObject({ getters: true, virtuals: true })
       });
     } catch (error) {

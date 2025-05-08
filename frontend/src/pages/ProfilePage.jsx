@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import axios from 'axios';
+import { FaEdit, FaTrash, FaPlus, FaStar } from 'react-icons/fa';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
   const isGoogleUser = !!user?.googleId;
   const { 
     loading, 
@@ -27,6 +28,7 @@ const ProfilePage = () => {
     fullName: '',
     email: '',
     address: {
+      name: '',
       street: '',
       ward: '',
       district: '',
@@ -48,11 +50,23 @@ const ProfilePage = () => {
   });
 
   const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [addresses, setAddresses] = useState([]);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
   const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    name: '',
+    street: '',
+    ward: '',
+    district: '',
+    city: '',
+    isDefault: false
+  });
 
   // Kiểm tra authentication và khởi tạo dữ liệu
   useEffect(() => {
@@ -100,72 +114,64 @@ const ProfilePage = () => {
     clearMessages();
   }, [activeTab]);
 
-  // Fetch provinces on component mount
+  // Fetch addresses on component mount
   useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/address/provinces');
-        setProvinces(response.data || []);
-      } catch (error) {
-        console.error('Error fetching provinces:', error);
-        setProvinces([]);
-      }
-    };
+    fetchAddresses();
     fetchProvinces();
   }, []);
 
-  // Fetch districts when province changes
-  useEffect(() => {
-    const fetchDistricts = async () => {
-      if (selectedProvince) {
-        try {
-          const response = await axios.get(`http://localhost:3001/api/address/districts/${selectedProvince}`);
-          setDistricts(response.data || []);
-          setWards([]); // Reset wards when district changes
-          setPersonalInfo(prev => ({
-            ...prev,
-            address: {
-              ...prev.address,
-              district: '',
-              ward: ''
-            }
-          }));
-        } catch (error) {
-          console.error('Error fetching districts:', error);
-          setDistricts([]);
+  const fetchAddresses = async () => {
+    try {
+      console.log('Fetching addresses with token:', token);
+      const response = await axios.get(
+        'http://localhost:3001/api/address/user-addresses',
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      } else {
-        setDistricts([]);
-      }
-    };
-    fetchDistricts();
-  }, [selectedProvince]);
+      );
+      console.log('Addresses response:', response.data);
+      setAddresses(response.data);
+    } catch (error) {
+      console.error('Error fetching addresses:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
+    }
+  };
 
-  // Fetch wards when district changes
-  useEffect(() => {
-    const fetchWards = async () => {
-      if (selectedDistrict) {
-        try {
-          const response = await axios.get(`http://localhost:3001/api/address/wards/${selectedDistrict}`);
-          setWards(response.data || []);
-          setPersonalInfo(prev => ({
-            ...prev,
-            address: {
-              ...prev.address,
-              ward: ''
-            }
-          }));
-        } catch (error) {
-          console.error('Error fetching wards:', error);
-          setWards([]);
-        }
-      } else {
-        setWards([]);
-      }
-    };
-    fetchWards();
-  }, [selectedDistrict]);
+  const fetchProvinces = async () => {
+    try {
+      const response = await axios.get('/api/address/provinces');
+      setProvinces(response.data);
+    } catch (error) {
+      console.error('Error fetching provinces:', error);
+    }
+  };
 
+  const fetchDistricts = async (provinceCode) => {
+    try {
+      const response = await axios.get(`/api/address/districts/${provinceCode}`);
+      setDistricts(response.data);
+    } catch (error) {
+      console.error('Error fetching districts:', error);
+    }
+  };
+
+  const fetchWards = async (districtCode) => {
+    try {
+      const response = await axios.get(`/api/address/wards/${districtCode}`);
+      setWards(response.data);
+    } catch (error) {
+      console.error('Error fetching wards:', error);
+    }
+  };
+
+  // Handle personal info change
   const handlePersonalInfoChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('.')) {
@@ -185,6 +191,7 @@ const ProfilePage = () => {
     }
   };
 
+  // Validate password
   const validatePassword = (password) => {
     const minLength = 6;
     const hasLetter = /[a-zA-Z]/.test(password);
@@ -202,6 +209,7 @@ const ProfilePage = () => {
     return errors;
   };
 
+  // Handle password change
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({
@@ -243,25 +251,21 @@ const ProfilePage = () => {
     }
   };
 
+  // Handle update profile
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    // Lấy tên từ code trước khi gửi lên server
-    const wardObj = wards.find(w => String(w.code) === String(personalInfo.address.ward));
-    const districtObj = districts.find(d => String(d.code) === String(personalInfo.address.district));
-    const provinceObj = provinces.find(p => String(p.code) === String(personalInfo.address.city));
-    const addressToSend = {
-      ...personalInfo.address,
-      ward: wardObj ? wardObj.name : '',
-      district: districtObj ? districtObj.name : '',
-      city: provinceObj ? provinceObj.name : ''
-    };
     try {
       await updateProfile({
-        fullName: personalInfo.fullName,
-        address: addressToSend
+        fullName: personalInfo.fullName
       });
+      console.log('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert('Có lỗi xảy ra khi cập nhật thông tin');
+      }
     }
   };
 
@@ -403,42 +407,201 @@ const ProfilePage = () => {
   const handleProvinceChange = (e) => {
     const provinceCode = e.target.value;
     setSelectedProvince(provinceCode);
-    const province = provinces.find(p => String(p.code) === String(provinceCode));
-    setPersonalInfo(prev => ({
-      ...prev,
-      address: {
-        ...prev.address,
-        city: provinceCode, // Lưu code
+    fetchDistricts(provinceCode);
+    if (isAddingAddress) {
+      setNewAddress(prev => ({
+        ...prev,
+        city: provinceCode,
         district: '',
         ward: ''
-      }
-    }));
+      }));
+    } else if (editingAddress) {
+      setEditingAddress(prev => ({
+        ...prev,
+        city: provinceCode,
+        district: '',
+        ward: ''
+      }));
+    }
   };
 
   const handleDistrictChange = (e) => {
     const districtCode = e.target.value;
     setSelectedDistrict(districtCode);
-    const district = districts.find(d => String(d.code) === String(districtCode));
-    setPersonalInfo(prev => ({
-      ...prev,
-      address: {
-        ...prev.address,
-        district: districtCode, // Lưu code
+    fetchWards(districtCode);
+    if (isAddingAddress) {
+      setNewAddress(prev => ({
+        ...prev,
+        district: districtCode,
         ward: ''
-      }
-    }));
+      }));
+    } else if (editingAddress) {
+      setEditingAddress(prev => ({
+        ...prev,
+        district: districtCode,
+        ward: ''
+      }));
+    }
   };
 
   const handleWardChange = (e) => {
     const wardCode = e.target.value;
-    const ward = wards.find(w => String(w.code) === String(wardCode));
-    setPersonalInfo(prev => ({
-      ...prev,
-      address: {
-        ...prev.address,
-        ward: wardCode // Lưu code
+    if (isAddingAddress) {
+      setNewAddress(prev => ({
+        ...prev,
+        ward: wardCode
+      }));
+    } else if (editingAddress) {
+      setEditingAddress(prev => ({
+        ...prev,
+        ward: wardCode
+      }));
+    }
+  };
+
+  const handleAddAddress = async (e) => {
+    e.preventDefault();
+    setIsAddressLoading(true);
+    try {
+      // Lấy tên từ code trước khi gửi lên server
+      const wardObj = wards.find(w => String(w.code) === String(newAddress.ward));
+      const districtObj = districts.find(d => String(d.code) === String(newAddress.district));
+      const provinceObj = provinces.find(p => String(p.code) === String(newAddress.city));
+      
+      const addressToSend = {
+        ...newAddress,
+        ward: wardObj ? wardObj.name : '',
+        district: districtObj ? districtObj.name : '',
+        city: provinceObj ? provinceObj.name : ''
+      };
+
+      console.log('Sending address data:', addressToSend);
+      console.log('Token:', token);
+
+      const response = await axios.post(
+        'http://localhost:3001/api/address/add', 
+        addressToSend,
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Response:', response.data);
+      await fetchAddresses();
+      setIsAddingAddress(false);
+      setNewAddress({
+        name: '',
+        street: '',
+        ward: '',
+        district: '',
+        city: '',
+        isDefault: false
+      });
+    } catch (error) {
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert('Có lỗi xảy ra khi thêm địa chỉ');
       }
-    }));
+    } finally {
+      setIsAddressLoading(false);
+    }
+  };
+
+  const handleUpdateAddress = async (e) => {
+    e.preventDefault();
+    setIsAddressLoading(true);
+    try {
+      // Lấy tên từ code trước khi gửi lên server
+      const wardObj = wards.find(w => String(w.code) === String(editingAddress.ward));
+      const districtObj = districts.find(d => String(d.code) === String(editingAddress.district));
+      const provinceObj = provinces.find(p => String(p.code) === String(editingAddress.city));
+      
+      const addressToSend = {
+        ...editingAddress,
+        ward: wardObj ? wardObj.name : '',
+        district: districtObj ? districtObj.name : '',
+        city: provinceObj ? provinceObj.name : ''
+      };
+
+      console.log('Sending update data:', addressToSend);
+      console.log('Token:', token);
+
+      const response = await axios.put(
+        `http://localhost:3001/api/address/update/${editingAddress._id}`,
+        addressToSend,
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Response:', response.data);
+      await fetchAddresses();
+      setEditingAddress(null);
+    } catch (error) {
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert('Có lỗi xảy ra khi cập nhật địa chỉ');
+      }
+    } finally {
+      setIsAddressLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
+    
+    setIsAddressLoading(true);
+    try {
+      console.log('Deleting address:', addressId);
+      console.log('Token:', token);
+
+      const response = await axios.delete(
+        `http://localhost:3001/api/address/delete/${addressId}`,
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Response:', response.data);
+      await fetchAddresses();
+    } catch (error) {
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert('Có lỗi xảy ra khi xóa địa chỉ');
+      }
+    } finally {
+      setIsAddressLoading(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -523,49 +686,18 @@ const ProfilePage = () => {
 
             {/* Personal Information Form */}
             {activeTab === 'profile' && (
-              <form onSubmit={handleUpdateProfile} className="space-y-6">
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    id="fullName"
-                    value={personalInfo.fullName}
-                    onChange={handlePersonalInfoChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    id="email"
-                    value={personalInfo.email}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-gray-50"
-                    disabled
-                  />
-                </div>
-
-                {/* Address */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900">Address</h3>
-                  
+              <div className="space-y-8">
+                {/* Basic Info Form */}
+                <form onSubmit={handleUpdateProfile} className="space-y-6">
                   <div>
-                    <label htmlFor="street" className="block text-sm font-medium text-gray-700">
-                      Street
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                      Full Name
                     </label>
                     <input
                       type="text"
-                      name="address.street"
-                      id="street"
-                      value={personalInfo.address.street}
+                      name="fullName"
+                      id="fullName"
+                      value={personalInfo.fullName}
                       onChange={handlePersonalInfoChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                       required
@@ -573,80 +705,83 @@ const ProfilePage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                      City/Province
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email
                     </label>
-                    <select
-                      id="city"
-                      value={personalInfo.address.city}
-                      onChange={handleProvinceChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                      required
-                    >
-                      <option value="">Select City/Province</option>
-                      {Array.isArray(provinces) && provinces.map(province => (
-                        <option key={province.code} value={String(province.code)}>
-                          {province.name}
-                        </option>
-                      ))}
-                    </select>
+                    <input
+                      type="email"
+                      name="email"
+                      id="email"
+                      value={personalInfo.email}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-gray-50"
+                      disabled
+                    />
                   </div>
 
                   <div>
-                    <label htmlFor="district" className="block text-sm font-medium text-gray-700">
-                      District
-                    </label>
-                    <select
-                      id="district"
-                      value={personalInfo.address.district}
-                      onChange={handleDistrictChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                      required
-                      disabled={!personalInfo.address.city}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                        loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                     >
-                      <option value="">Select District</option>
-                      {Array.isArray(districts) && districts.map(district => (
-                        <option key={district.code} value={String(district.code)}>
-                          {district.name}
-                        </option>
-                      ))}
-                    </select>
+                      {loading ? 'Updating...' : 'Update Info'}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Address Management Section */}
+                <div className="border-t pt-8">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-medium text-gray-900">My Addresses</h3>
+                    <button
+                      onClick={() => setIsAddingAddress(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <FaPlus className="mr-2" />
+                      Add New Address
+                    </button>
                   </div>
 
-                  <div>
-                    <label htmlFor="ward" className="block text-sm font-medium text-gray-700">
-                      Ward
-                    </label>
-                    <select
-                      id="ward"
-                      value={personalInfo.address.ward}
-                      onChange={handleWardChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                      required
-                      disabled={!personalInfo.address.district}
-                    >
-                      <option value="">Select Ward</option>
-                      {Array.isArray(wards) && wards.map(ward => (
-                        <option key={ward.code} value={String(ward.code)}>
-                          {ward.name}
-                        </option>
-                      ))}
-                    </select>
+                  {/* Address List */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {addresses.map((address) => (
+                      <div
+                        key={address._id}
+                        className={`relative p-4 border rounded-lg ${
+                          address.isDefault ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        }`}
+                      >
+                        {address.isDefault && (
+                          <div className="absolute top-2 right-2 text-blue-500">
+                            <FaStar />
+                          </div>
+                        )}
+                        <h3 className="font-medium text-lg">{address.name}</h3>
+                        <p className="text-gray-600">{address.street}</p>
+                        <p className="text-gray-600">
+                          {address.ward}, {address.district}, {address.city}
+                        </p>
+                        <div className="mt-4 flex justify-end space-x-2">
+                          <button
+                            onClick={() => setEditingAddress(address)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAddress(address._id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                      loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                  >
-                    {loading ? 'Updating...' : 'Update Info'}
-                  </button>
-                </div>
-              </form>
+              </div>
             )}
 
             {/* Change Password Form */}
@@ -770,6 +905,152 @@ const ProfilePage = () => {
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* Address Form Modal */}
+            {(isAddingAddress || editingAddress) && (
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                  <h3 className="text-lg font-medium mb-4">
+                    {isAddingAddress ? 'Add New Address' : 'Edit Address'}
+                  </h3>
+                  <form onSubmit={isAddingAddress ? handleAddAddress : handleUpdateAddress} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Address Name</label>
+                      <input
+                        type="text"
+                        value={isAddingAddress ? newAddress.name : editingAddress.name}
+                        onChange={(e) => {
+                          if (isAddingAddress) {
+                            setNewAddress(prev => ({ ...prev, name: e.target.value }));
+                          } else {
+                            setEditingAddress(prev => ({ ...prev, name: e.target.value }));
+                          }
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Street</label>
+                      <input
+                        type="text"
+                        value={isAddingAddress ? newAddress.street : editingAddress.street}
+                        onChange={(e) => {
+                          if (isAddingAddress) {
+                            setNewAddress(prev => ({ ...prev, street: e.target.value }));
+                          } else {
+                            setEditingAddress(prev => ({ ...prev, street: e.target.value }));
+                          }
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    {/* City/Province */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">City/Province</label>
+                      <select
+                        value={isAddingAddress ? newAddress.city : editingAddress.city}
+                        onChange={handleProvinceChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select City/Province</option>
+                        {provinces.map(province => (
+                          <option key={province.code} value={province.code}>
+                            {province.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* District */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">District</label>
+                      <select
+                        value={isAddingAddress ? newAddress.district : editingAddress.district}
+                        onChange={handleDistrictChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                        disabled={!((isAddingAddress ? newAddress.city : editingAddress.city))}
+                      >
+                        <option value="">Select District</option>
+                        {districts.map(district => (
+                          <option key={district.code} value={district.code}>
+                            {district.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Ward */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Ward</label>
+                      <select
+                        value={isAddingAddress ? newAddress.ward : editingAddress.ward}
+                        onChange={handleWardChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                        disabled={!((isAddingAddress ? newAddress.district : editingAddress.district))}
+                      >
+                        <option value="">Select Ward</option>
+                        {wards.map(ward => (
+                          <option key={ward.code} value={ward.code}>
+                            {ward.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isDefault"
+                        checked={isAddingAddress ? newAddress.isDefault : editingAddress.isDefault}
+                        onChange={(e) => {
+                          if (isAddingAddress) {
+                            setNewAddress(prev => ({ ...prev, isDefault: e.target.checked }));
+                          } else {
+                            setEditingAddress(prev => ({ ...prev, isDefault: e.target.checked }));
+                          }
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="isDefault" className="ml-2 block text-sm text-gray-900">
+                        Set as default address
+                      </label>
+                    </div>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isAddingAddress) {
+                            setIsAddingAddress(false);
+                            setNewAddress({
+                              name: '',
+                              street: '',
+                              ward: '',
+                              district: '',
+                              city: '',
+                              isDefault: false
+                            });
+                          } else {
+                            setEditingAddress(null);
+                          }
+                        }}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAddressLoading}
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        {isAddressLoading ? (isAddingAddress ? 'Adding...' : 'Updating...') : (isAddingAddress ? 'Add Address' : 'Update Address')}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             )}
           </div>
         </div>

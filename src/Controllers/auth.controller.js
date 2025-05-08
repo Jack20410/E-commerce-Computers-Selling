@@ -39,6 +39,7 @@ const register = async (req, res) => {
       fullName,
       password: hashedPassword,
       addresses: [{
+        name: address.name,
         street: address.street,
         ward: address.ward,
         district: address.district,
@@ -72,7 +73,7 @@ const register = async (req, res) => {
           id: user._id,
           email: user.email,
           fullName: user.fullName,
-          defaultAddress: user.defaultAddress
+          addresses: user.addresses
         }
       }
     });
@@ -201,7 +202,11 @@ const createGuestUser = async (req, res) => {
       fullName,
       isGuest: true,
       addresses: [{
-        ...address,
+        name: address.name,
+        street: address.street,
+        ward: address.ward,
+        district: address.district,
+        city: address.city,
         isDefault: true
       }]
     });
@@ -224,7 +229,7 @@ const createGuestUser = async (req, res) => {
           id: user._id,
           email: user.email,
           fullName: user.fullName,
-          defaultAddress: user.defaultAddress,
+          addresses: user.addresses,
           isGuest: true,
           guestId: user.guestId
         }

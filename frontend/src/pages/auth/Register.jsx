@@ -11,6 +11,7 @@ const Register = () => {
     fullName: '',
     email: '',
     address: {
+      name: '',
       street: '',
       ward: '',
       district: '',
@@ -169,10 +170,12 @@ const Register = () => {
     const provinceObj = provinces.find(p => String(p.code) === String(selectedProvince));
 
     const addressToSend = {
-      ...formData.address,
+      name: formData.address.name,
+      street: formData.address.street,
       ward: wardObj ? wardObj.name : '',
       district: districtObj ? districtObj.name : '',
-      city: provinceObj ? provinceObj.name : ''
+      city: provinceObj ? provinceObj.name : '',
+      isDefault: true // Địa chỉ đầu tiên luôn là mặc định
     };
 
     try {
@@ -267,6 +270,22 @@ const Register = () => {
               {/* Address */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-900">Address</h3>
+                {/* Address Name */}
+                <div>
+                  <label htmlFor="addressName" className="block text-sm font-medium text-gray-700">
+                    Address Name
+                  </label>
+                  <input
+                    type="text"
+                    name="address.name"
+                    id="addressName"
+                    value={formData.address.name}
+                    onChange={handleChange}
+                    placeholder="e.g., Home, Office, etc."
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    required
+                  />
+                </div>
                 {/* City/Province */}
                 <div>
                   <label htmlFor="city" className="block text-sm font-medium text-gray-700">

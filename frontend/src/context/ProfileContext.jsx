@@ -78,10 +78,22 @@ export const ProfileProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.put('/users/update-profile', data);
+      console.log('Sending profile update request:', data);
+      const response = await api.patch('/users/update-profile', { fullName: data.fullName }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Profile update response:', response.data);
       setSuccess(response.data.message);
       return response.data.user;
     } catch (err) {
+      console.error('Profile update error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       setError(err.response?.data?.message || 'Có lỗi xảy ra');
       throw err;
     } finally {

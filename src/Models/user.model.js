@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const { provinces, districts, wards } = require('vietnam-provinces');
 
 const addressSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Address name is required'],
+    trim: true
+  },
   isDefault: {
     type: Boolean,
     default: false
