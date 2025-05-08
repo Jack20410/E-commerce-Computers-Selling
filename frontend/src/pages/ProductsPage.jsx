@@ -11,13 +11,18 @@ function useQuery() {
 const ProductsPage = () => {
   const navigate = useNavigate();
   const { category } = useParams();
-  const queryParam = useQuery().get('query') || '';
+  const query = useQuery();
+  const queryParam = query.get('query') || '';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sort, setSort] = useState('');
   const [brands, setBrands] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0, perPage: 10 });
+
+  // Get page from query string
+  const page = parseInt(query.get('page')) || 1;
 
   useEffect(() => {
     // Fetch brands for the current category
@@ -36,29 +41,34 @@ const ProductsPage = () => {
     };
     fetchBrands();
   }, [category]);
-  
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setError(null);
       try {
-        // If there is a search query, use the search API
         if (queryParam) {
-          const response = await productService.searchProducts(queryParam);
+          // Search API with pagination
+          const response = await productService.searchProducts(queryParam, page, pagination.perPage);
           setProducts(response.products || []);
+          setPagination(response.pagination || { current: 1, pages: 1, total: 0, perPage: 10 });
         } else {
           const params = {
             sort: sort || undefined,
-            brand: selectedBrand || undefined
+            brand: selectedBrand || undefined,
+            page,
+            limit: pagination.perPage
           };
 
           let response;
           if (category) {
             response = await productService.getProductsByCategory(category, params);
             setProducts(response.data);
+            setPagination(response.pagination || { current: 1, pages: 1, total: 0, perPage: 10 });
           } else {
             response = await productService.getProducts(params);
             setProducts(response.data);
+            setPagination(response.pagination || { current: 1, pages: 1, total: 0, perPage: 10 });
           }
         }
       } catch (err) {
@@ -70,10 +80,16 @@ const ProductsPage = () => {
     };
 
     fetchProducts();
-  }, [category, sort, selectedBrand, queryParam]);
+  }, [category, sort, selectedBrand, queryParam, page]);
 
   const handleProductClick = (productId) => {
     navigate(`/products/${productId}`);
+  };
+
+  const handlePageChange = (newPage) => {
+    // Update the page in the query string
+    query.set('page', newPage);
+    navigate({ search: query.toString() });
   };
 
   return (
@@ -150,6 +166,34 @@ const ProductsPage = () => {
             </div>
           ))}
         </div>
+        {/* Pagination Controls */}
+        {pagination.pages > 1 && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => handlePageChange(pagination.current - 1)}
+              disabled={pagination.current === 1}
+              className="px-4 py-2 mx-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            {[...Array(pagination.pages)].map((_, idx) => (
+              <button
+                key={idx + 1}
+                onClick={() => handlePageChange(idx + 1)}
+                className={`px-4 py-2 mx-1 rounded ${pagination.current === idx + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(pagination.current + 1)}
+              disabled={pagination.current === pagination.pages}
+              className="px-4 py-2 mx-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

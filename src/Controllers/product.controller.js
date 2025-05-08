@@ -328,32 +328,49 @@ exports.searchProducts = async (req, res) => {
     if (typeof search !== 'string') search = '';
     search = search.trim();
 
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     if (!search) {
-      return res.json({ products: [] });
+      return res.json({ products: [], pagination: { current: 1, pages: 0, total: 0, perPage: limit } });
     }
 
-    const products = await Product.find({
+    const filter = {
       $or: [
         { name: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
       ]
-    });
+    };
 
-    // Map products to include all fields needed by ProductCard
+    const products = await Product.find(filter)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Product.countDocuments(filter);
+
     const mappedProducts = products.map(product => ({
       id: product._id,
       name: product.name,
-      model: product.model, // <-- add this line
+      model: product.model,
       price: product.price,
       image: product.images && product.images.length > 0 ? product.images[0].url : null,
       category: product.category,
       stock: product.stock,
       brand: product.brand,
       images: product.images,
-      // add any other fields your ProductCard needs
     }));
 
-    res.json({ products: mappedProducts });
+    res.json({
+      products: mappedProducts,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total,
+        perPage: limit
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching search results' });

@@ -164,8 +164,8 @@ const productService = {
   /**
    * Search products
    */
-  searchProducts: async (query) => {
-    const res = await fetch(`/api/products/search?query=${encodeURIComponent(query)}`);
+  searchProducts: async (query, page = 1, limit = 10) => {
+    const res = await fetch(`/api/products/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error('Failed to fetch search results');
     return res.json();
   },
