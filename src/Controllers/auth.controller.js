@@ -73,7 +73,8 @@ const register = async (req, res) => {
           id: user._id,
           email: user.email,
           fullName: user.fullName,
-          addresses: user.addresses
+          addresses: user.addresses,
+          role: user.role
         }
       }
     });
@@ -131,7 +132,8 @@ const login = async (req, res) => {
           email: user.email,
           fullName: user.fullName,
           defaultAddress: user.defaultAddress,
-          isEmailVerified: user.isEmailVerified
+          isEmailVerified: user.isEmailVerified,
+          role: user.role
         }
       }
     });

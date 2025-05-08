@@ -49,14 +49,15 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Middleware kiểm tra role admin
-const requireAdmin = (req, res, next) => {
-  if (!req.user || !req.user.hasRole('admin')) {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied. Admin privileges required.'
-    });
+const requireAdmin = async (req, res, next) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+    next();
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error' });
   }
-  next();
 };
 
 // Middleware cho phép truy cập nếu đã xác thực hoặc là guest

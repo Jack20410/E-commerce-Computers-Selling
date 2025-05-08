@@ -9,6 +9,7 @@ const productRoutes = require('./Routes/product.route');
 const authRoutes = require('./Routes/auth.route');
 const userRoutes = require('./Routes/user.route');
 const addressRoutes = require('./Routes/address.route');
+const orderRoutes = require('./Routes/order.route');
 const passport = require('./Config/passport');
 
 // Initialize express app
@@ -44,6 +45,7 @@ app.use('/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/users', userRoutes);
 app.use('/api/address', addressRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
