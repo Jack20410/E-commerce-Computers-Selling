@@ -51,7 +51,7 @@ const sendWelcomeEmail = async (user) => {
       html: `
         <h2>Welcome to Our Store!</h2>
         <p>Dear ${user.fullName},</p>
-        <p>Thank you for creating an account with Our Store!</p>
+        <p>Thank you for shopping with us! We have created an account for you to track your orders and enjoy our services.</p>
         <p>Here are your account details:</p>
         <ul>
           <li>Email: ${user.email}</li>
@@ -59,7 +59,14 @@ const sendWelcomeEmail = async (user) => {
         </ul>
         <p>For security reasons, please change your password when you first log in.<br>
         You can do this by going to your Profile Settings after logging in.</p>
-        <p>If you didn't create this account, please contact our support team immediately.</p>
+        <p>With this account, you can:</p>
+        <ul>
+          <li>Track your order status</li>
+          <li>View your order history</li>
+          <li>Manage your addresses</li>
+          <li>Earn and use loyalty points</li>
+        </ul>
+        <p>If you didn't place an order with us, please contact our support team immediately.</p>
         <p>Best regards,<br>The Store Team</p>
       `
     };

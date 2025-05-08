@@ -111,6 +111,13 @@ const login = async (req, res) => {
       });
     }
 
+    // Nếu là guest user, chuyển thành regular user
+    if (user.isGuest) {
+      user.isGuest = false;
+      user.passwordChangeRequired = true; // Yêu cầu đổi mật khẩu ở lần đăng nhập đầu
+      await user.save();
+    }
+
     // Cập nhật thời gian đăng nhập cuối
     user.lastLogin = new Date();
     await user.save();
@@ -133,7 +140,9 @@ const login = async (req, res) => {
           fullName: user.fullName,
           defaultAddress: user.defaultAddress,
           isEmailVerified: user.isEmailVerified,
-          role: user.role
+          role: user.role,
+          isGuest: user.isGuest,
+          passwordChangeRequired: user.passwordChangeRequired
         }
       }
     });
@@ -192,9 +201,38 @@ const createGuestUser = async (req, res) => {
     let user = await User.findOne({ email: email.toLowerCase() });
     
     if (user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email already registered. Please login.'
+      // Nếu user đã tồn tại và là guest, cập nhật thông tin
+      if (user.isGuest) {
+        user.fullName = fullName;
+        // Thêm địa chỉ mới nếu chưa tồn tại
+        const addressExists = user.addresses.some(addr => 
+          addr.street === address.street &&
+          addr.ward === address.ward &&
+          addr.district === address.district &&
+          addr.city === address.city
+        );
+
+        if (!addressExists) {
+          user.addresses.push({
+            ...address,
+            isDefault: user.addresses.length === 0
+          });
+        }
+        await user.save();
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: user.isGuest ? 'Guest account updated successfully' : 'Email already registered. Please login.',
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            fullName: user.fullName,
+            addresses: user.addresses,
+            isGuest: user.isGuest
+          }
+        }
       });
     }
 
@@ -204,36 +242,23 @@ const createGuestUser = async (req, res) => {
       fullName,
       isGuest: true,
       addresses: [{
-        name: address.name,
-        street: address.street,
-        ward: address.ward,
-        district: address.district,
-        city: address.city,
+        ...address,
         isDefault: true
       }]
     });
 
     await user.save();
 
-    // Tạo JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
     res.status(201).json({
       success: true,
       message: 'Guest account created successfully',
       data: {
-        token,
         user: {
           id: user._id,
           email: user.email,
           fullName: user.fullName,
           addresses: user.addresses,
-          isGuest: true,
-          guestId: user.guestId
+          isGuest: true
         }
       }
     });

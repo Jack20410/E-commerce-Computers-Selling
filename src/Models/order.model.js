@@ -95,6 +95,8 @@ const orderSchema = new mongoose.Schema({
 
 // Tính tổng tiền sau khi áp dụng điểm loyalty
 orderSchema.methods.calculateFinalAmount = function() {
+    // 1 điểm = 1,000 VND
+    // Ví dụ: 5 điểm = 5,000 VND
     const loyaltyDiscount = this.loyaltyPointsUsed * 1000;
     this.totalAmount = this.subtotal - loyaltyDiscount;
     return this.totalAmount;
@@ -132,7 +134,8 @@ orderSchema.pre('save', async function(next) {
 
 // Tính điểm loyalty (10% tổng giá trị đơn hàng)
 orderSchema.methods.calculateLoyaltyPoints = function() {
-    // 10% của tổng giá trị đơn hàng, 1 point = 1,000 VND
+    // 10% của tổng giá trị đơn hàng, bỏ 3 số 0
+    // Ví dụ: đơn hàng 500,000 VND = 50 điểm (= 50,000 VND)
     const pointsEarned = Math.floor((this.totalAmount * 0.1) / 1000);
     this.loyaltyPointsEarned = pointsEarned;
     return pointsEarned;
@@ -148,7 +151,9 @@ orderSchema.virtual('lastStatus').get(function() {
 
 // Virtual field để chuyển đổi loyalty points sang tiền
 orderSchema.virtual('loyaltyPointsValue').get(function() {
-    return this.loyaltyPointsEarned * 1000; // 1 point = 1,000 VND
+    // 1 điểm = 1,000 VND
+    // Ví dụ: 50 điểm = 50,000 VND
+    return this.loyaltyPointsEarned * 1000;
 });
 
 // Xóa tất cả các indexes cũ và tạo lại

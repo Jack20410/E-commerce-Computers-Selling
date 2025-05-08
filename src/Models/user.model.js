@@ -76,7 +76,8 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function() {
-      return !this.googleId; // Password chỉ required nếu không có googleId
+      // Password chỉ required khi không phải là guest user và không có googleId
+      return !this.isGuest && !this.googleId;
     }
   },
   googleId: {

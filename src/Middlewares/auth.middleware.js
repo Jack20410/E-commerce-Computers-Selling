@@ -83,6 +83,36 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
+// Middleware xác thực guest user bằng email
+const authenticateGuest = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required for guest authentication'
+      });
+    }
+
+    // Tìm user với email (có thể là guest hoặc registered user)
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      // Nếu tìm thấy user, attach vào request
+      req.guestUser = user;
+    }
+    
+    next();
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Guest authentication error',
+      error: error.message
+    });
+  }
+};
+
 // Middleware xử lý authentication với Google
 const handleGoogleAuth = passport.authenticate('google', {
   scope: ['profile', 'email']
@@ -121,6 +151,7 @@ module.exports = {
   authenticateToken,
   requireAdmin,
   optionalAuth,
+  authenticateGuest,
   handleGoogleAuth,
   handleGoogleCallback
 }; 
