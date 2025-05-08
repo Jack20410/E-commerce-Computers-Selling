@@ -10,7 +10,6 @@ router.patch('/admin/:orderId/status', authenticateToken, requireAdmin, orderCon
 // User routes
 router.post('/', authenticateToken, orderController.createOrder);
 router.get('/my-orders', authenticateToken, orderController.getOrdersByUser);
-router.post('/:orderId/cancel', authenticateToken, orderController.cancelOrder);
 router.get('/:orderId', authenticateToken, orderController.getOrderById);
 
 module.exports = router; 

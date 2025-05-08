@@ -116,16 +116,13 @@ orderSchema.methods.isValidStatusTransition = function(newStatus) {
 // Tự động cập nhật lịch sử trạng thái và kiểm tra tính hợp lệ
 orderSchema.pre('save', async function(next) {
     try {
-        if (this.isModified('currentStatus')) {
-            // Nếu là đơn hàng mới, cho phép trạng thái pending
-            if (!this.isNew && !this.isValidStatusTransition(this.currentStatus)) {
-                throw new Error(`Invalid status transition from ${this.statusHistory[this.statusHistory.length - 1].status} to ${this.currentStatus}`);
-            }
-
-            this.statusHistory.push({
+        // Chỉ thêm vào history khi là đơn hàng mới
+        if (this.isNew) {
+            this.statusHistory = [{
                 status: this.currentStatus,
-                timestamp: new Date()
-            });
+                timestamp: new Date(),
+                note: 'Đơn hàng mới được tạo'
+            }];
         }
         next();
     } catch (error) {

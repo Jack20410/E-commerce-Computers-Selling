@@ -164,7 +164,7 @@ exports.createOrder = async (req, res) => {
         }
 
         // Get user and validate shipping address
-        const user = await User.findById(req.user._id);
+        const user = await User.findById(req.user._id).populate('addresses');
         const shippingAddress = user.addresses.id(shippingAddressId);
         if (!shippingAddress) {
             return res.status(400).json({ message: 'Invalid shipping address' });
@@ -200,7 +200,7 @@ exports.createOrder = async (req, res) => {
                     brand: product.brand,
                     model: product.model,
                     category: product.category,
-                    image: product.images[0], // Lấy ảnh đầu tiên làm ảnh chính
+                    image: product.images[0],
                     specifications: product.specifications
                 }
             };
@@ -209,7 +209,7 @@ exports.createOrder = async (req, res) => {
             subtotal += product.price * item.quantity;
         }
 
-        // Create new order
+        // Create new order with initial status history
         const order = new Order({
             user: req.user._id,
             items: processedItems,
@@ -217,7 +217,13 @@ exports.createOrder = async (req, res) => {
             subtotal,
             loyaltyPointsUsed,
             paymentMethod,
-            totalAmount: subtotal - (loyaltyPointsUsed * 1000) // 1 point = 1000 VND
+            currentStatus: 'pending',
+            totalAmount: subtotal - (loyaltyPointsUsed * 1000),
+            statusHistory: [{
+                status: 'pending',
+                timestamp: new Date(),
+                note: 'Đơn hàng mới được tạo'
+            }]
         });
 
         // Calculate loyalty points earned
@@ -226,7 +232,18 @@ exports.createOrder = async (req, res) => {
         // Save the order
         await order.save();
 
-        // Return the created order
+        // Populate the order with related data
+        await order.populate([
+            {
+                path: 'user',
+                select: 'fullName email addresses'
+            },
+            {
+                path: 'items.product',
+                select: 'name images price'
+            }
+        ]);
+
         res.status(201).json({
             message: 'Order created successfully',
             order: {
@@ -236,17 +253,11 @@ exports.createOrder = async (req, res) => {
                     fullName: user.fullName,
                     email: user.email
                 },
-                shippingAddress: {
-                    _id: shippingAddress._id,
-                    name: shippingAddress.name,
-                    street: shippingAddress.street,
-                    ward: shippingAddress.ward,
-                    district: shippingAddress.district,
-                    city: shippingAddress.city
-                },
+                shippingAddress: shippingAddress,
                 totalAmount: order.totalAmount,
                 loyaltyPointsEarned: order.loyaltyPointsEarned,
                 currentStatus: order.currentStatus,
+                statusHistory: order.statusHistory,
                 items: order.items,
                 createdAt: order.createdAt,
                 paymentMethod: order.paymentMethod
@@ -317,76 +328,46 @@ exports.updateOrderStatus = async (req, res) => {
         // Kiểm tra tính hợp lệ của trạng thái mới
         if (!order.isValidStatusTransition(status)) {
             return res.status(400).json({
-                message: `Invalid status transition from ${order.currentStatus} to ${status}`
+                message: `Invalid status transition from ${order.currentStatus} to ${status}. Allowed transitions are: pending → confirmed/cancelled, confirmed → shipping/cancelled, shipping → delivered/cancelled`
             });
         }
 
-        // Cập nhật trạng thái
+        // Cập nhật trạng thái và thêm vào history
         order.currentStatus = status;
-        if (note) {
-            order.statusHistory[order.statusHistory.length - 1].note = note;
-        }
+        order.statusHistory.push({
+            status,
+            timestamp: new Date(),
+            note: note || `Trạng thái đơn hàng được cập nhật sang ${status}`
+        });
 
         await order.save();
 
+        // Populate order data
+        await order.populate([
+            {
+                path: 'user',
+                select: 'fullName email'
+            },
+            {
+                path: 'items.product',
+                select: 'name images price'
+            }
+        ]);
+
         res.json({
             message: 'Order status updated successfully',
-            order: await order.populate(['user', 'items.product', 'shippingAddress'])
+            order: {
+                _id: order._id,
+                currentStatus: order.currentStatus,
+                statusHistory: order.statusHistory,
+                updatedAt: order.updatedAt
+            }
         });
     } catch (error) {
+        console.error('Error updating order status:', error);
         res.status(500).json({
             message: 'Error updating order status',
             error: error.message
         });
     }
 };
-
-// Cancel order
-exports.cancelOrder = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const { note } = req.body;
-
-        const order = await Order.findById(orderId);
-        if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
-        }
-
-        // Check if user has permission to cancel this order
-        if (req.user.role !== 'admin' && order.user.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Access denied' });
-        }
-
-        // Only allow cancellation of pending or confirmed orders
-        if (!['pending', 'confirmed'].includes(order.currentStatus)) {
-            return res.status(400).json({
-                message: 'Cannot cancel order. Order is already in progress or completed'
-            });
-        }
-
-        // Update status to cancelled
-        order.currentStatus = 'cancelled';
-        order.statusHistory.push({
-            status: 'cancelled',
-            timestamp: new Date(),
-            note: note || `Order cancelled by ${req.user.role === 'admin' ? 'admin' : 'user'}`
-        });
-
-        await order.save();
-
-        res.json({
-            message: 'Order cancelled successfully',
-            order: {
-                _id: order._id,
-                currentStatus: order.currentStatus,
-                statusHistory: order.statusHistory
-            }
-        });
-    } catch (error) {
-        console.error('Error cancelling order:', error);
-        res.status(500).json({
-            message: 'Error cancelling order',
-            error: error.message
-        });
-    }
-}; 
