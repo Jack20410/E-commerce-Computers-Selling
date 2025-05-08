@@ -292,7 +292,6 @@ const productService = {
    */
   deleteProductImage: async (productId, imageId) => {
     try {
-      console.log('Deleting image:', { productId, imageId });
       const response = await api.delete(`/api/products/${productId}/image`, {
         data: { imageId }
       });

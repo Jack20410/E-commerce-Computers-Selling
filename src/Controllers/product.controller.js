@@ -645,12 +645,6 @@ exports.deleteProductImage = async (req, res) => {
       });
     }
 
-    console.log('Found image to delete:', {
-      imageId,
-      imageUrl: image.url,
-      category: product.category
-    });
-
     const filename = getFilenameFromUrl(image.url);
     if (!filename) {
       return res.status(400).json({
@@ -660,15 +654,9 @@ exports.deleteProductImage = async (req, res) => {
       });
     }
 
-    console.log('Attempting to delete file:', {
-      category: product.category.toLowerCase(),
-      filename,
-      fullUrl: image.url
-    });
 
     const wasMain = image.isMain;
     const deleteResult = await deleteProductImages(product.category.toLowerCase(), [filename]);
-    console.log('File deletion result:', deleteResult);
 
     // Remove the image from the product
     product.images = product.images.filter(img => img._id.toString() !== imageId);

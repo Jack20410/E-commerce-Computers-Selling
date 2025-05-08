@@ -89,15 +89,15 @@ const ProductCard = ({ product }) => {
       onClick={handleClick}
       className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl border border-gray-100 cursor-pointer group"
     >
-      <div className="relative">
+      <div className="relative w-full aspect-square overflow-hidden">
         {mainImage ? (
           <img
             src={getImageUrl(mainImage.url)}
             alt={product.model}
-            className=" transition-all duration-300 group-hover:scale-105"
+            className="w-full h-full object-contain transition-all duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400">
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
             <img
               src={getPlaceholderImage(product.category)}
               alt="No Image"
@@ -114,27 +114,27 @@ const ProductCard = ({ product }) => {
           </span>
         )}
       </div>
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
         {/* Brand Badge */}
         {product.brand && (
           <span className="inline-block bg-gray-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded mb-1">
             {product.brand}
           </span>
         )}
-        <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
           {product.name || product.model}
         </h3>
-        <div className="text-blue-600 font-extrabold text-lg mb-2">
+        <div className="text-blue-600 font-extrabold text-base sm:text-lg mb-2">
           {product.price.toLocaleString('vi-VN')}₫
         </div>
-        <div className="mt-auto flex justify-between items-center pt-4">
+        <div className="mt-auto flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 pt-3">
           <span className={`text-xs font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
             {product.stock > 0 ? `In Stock: ${product.stock}` : 'Out of Stock'}
           </span>
           <button
             onClick={handleAddToCart}
             disabled={product.stock === 0 || isAdding}
-            className={`inline-flex items-center space-x-1 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+            className={`inline-flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
               product.stock === 0
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 : isAdding
@@ -144,7 +144,7 @@ const ProductCard = ({ product }) => {
           >
             {isAdding ? (
               <>
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-3 w-3 sm:h-4 sm:w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -152,7 +152,7 @@ const ProductCard = ({ product }) => {
               </>
             ) : (
               <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <span>Add to Cart</span>

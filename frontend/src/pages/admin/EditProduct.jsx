@@ -130,12 +130,6 @@ const EditProduct = () => {
       console.error('Failed to find image with ID:', imageId);
       return;
     }
-
-    console.log('Deleting image:', {
-      id: imageToDelete._id,
-      url: imageToDelete.url,
-      filename: getFilenameFromUrl(imageToDelete.url)
-    });
     
     try {
       // Make the API call to delete the image immediately
@@ -304,8 +298,6 @@ const EditProduct = () => {
             filename: getFilenameFromUrl(img.url)
           }));
         
-        console.log('Sending deleted images:', deletedImages);
-        
         deletedImages.forEach(img => {
           productData.append('deletedImages[]', img._id);
           productData.append('deletedImageUrls[]', img.url);
@@ -330,12 +322,6 @@ const EditProduct = () => {
         const isMain = remainingImages.length === 0 && index === 0;
         productData.append('newImageMain[]', isMain ? 'true' : 'false');
       });
-
-      // Log FormData contents for debugging
-      console.log('Updating product with FormData:');
-      for (let pair of productData.entries()) {
-        console.log(pair[0], ':', pair[1]);
-      }
 
       const result = await productService.updateProduct(id, productData);
 

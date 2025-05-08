@@ -25,7 +25,7 @@ const specificationFields = {
         { name: 'threads', label: 'Threads', type: 'number' },
         { name: 'baseSpeed', label: 'Base Speed', type: 'text' },
         { name: 'boostSpeed', label: 'Boost Speed', type: 'text' },
-        { name: 'cache', label: 'Cache', type: 'text' },
+        { name: 'graphic', label: 'Graphic', type: 'text' },
         { name: 'tdp', label: 'TDP', type: 'text' }
     ],
     graphicsCard: [

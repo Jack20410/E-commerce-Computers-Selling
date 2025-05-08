@@ -12,6 +12,7 @@ const Navbar = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const cartPreviewRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
   const handleSearch = () => {
@@ -25,10 +26,46 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
+      setScrollY(window.scrollY);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Add body scroll lock when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      // Store current scroll position
+      const scrollPos = window.scrollY;
+      document.body.setAttribute('data-scroll-position', scrollPos.toString());
+      // Apply fixed positioning to body
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollPos}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restore scroll position
+      const scrollPos = document.body.getAttribute('data-scroll-position');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollPos) {
+        window.scrollTo(0, parseInt(scrollPos, 10));
+        document.body.removeAttribute('data-scroll-position');
+      }
+    }
+    
+    return () => {
+      // Clean up
+      const scrollPos = document.body.getAttribute('data-scroll-position');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollPos) {
+        window.scrollTo(0, parseInt(scrollPos, 10));
+        document.body.removeAttribute('data-scroll-position');
+      }
+    };
+  }, [isMenuOpen]);
 
   // Handle click outside cart preview
   useEffect(() => {
@@ -127,7 +164,7 @@ const Navbar = () => {
                   TechStation
                 </span>
               </div>
-              <div className="hidden md:block ml-10">
+              <div className="hidden xl:block ml-10">
                 <div className="flex space-x-8">
                   <a href="/" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 hover:scale-105 transition-all duration-200">Home</a>
                   <div className="relative group">
@@ -171,7 +208,7 @@ const Navbar = () => {
             </div>
 
             {/* Search, Auth, and Cart */}
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden xl:flex items-center space-x-6">
               {/* Search bar */}
       <div className="relative group">
         {/* Search icon */}
@@ -276,7 +313,22 @@ const Navbar = () => {
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+            <div className="xl:hidden flex items-center space-x-4">
+              {/* Mobile Cart Button */}
+              <Link
+                to="/cart"
+                className="relative text-gray-700 hover:text-blue-600 transition-all duration-200 hover:scale-105"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {getCartItemsCount() > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transform transition-transform duration-200 hover:scale-110">
+                    {getCartItemsCount()}
+                  </span>
+                )}
+              </Link>
+              
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-700 hover:text-blue-600 focus:outline-none transition-all duration-200 p-2 rounded-lg hover:bg-blue-50"
@@ -296,25 +348,55 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Navigation Menu */}
-        <div className={`md:hidden fixed inset-0 z-40 transform transition-all duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div 
+          className={`xl:hidden fixed inset-0 z-50 ${isMenuOpen ? 'visible' : 'invisible'}`}
+        >
           {/* Overlay */}
           <div 
-            className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
+            className={`fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setIsMenuOpen(false)}
           />
           
           {/* Menu Content */}
-          <div className="relative w-[85%] max-w-sm h-full bg-white shadow-xl overflow-y-auto">
+          <div 
+            className={`fixed top-0 left-0 w-[85%] max-w-sm h-full bg-white shadow-xl overflow-y-auto transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          >
             <div className="px-4 py-6 space-y-6">
+              {/* Menu Header with Close Button */}
+              <div className="flex items-center justify-between">
+                <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  TechStation
+                </div>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
               {/* Mobile Search */}
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                      setIsMenuOpen(false);
+                    }
+                  }}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                 />
-                <div className="absolute left-3 top-3.5">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute left-3 top-3.5" onClick={() => {
+                  handleSearch();
+                  setIsMenuOpen(false);
+                }}>
+                  <svg className="h-5 w-5 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -442,6 +524,24 @@ const Navbar = () => {
                     <span>Motherboard</span>
                   </Link>
                   <Link
+                    to="/products/category/storage"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span>Storage</span>
+                  </Link>
+                  <Link
+                    to="/products/category/memory"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                    <span>Memory</span>
+                  </Link>
+                  <Link
                     to="/products/category/monitor"
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
                   >
@@ -471,6 +571,17 @@ const Navbar = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                   </svg>
                   <span>Deals</span>
+                </Link>
+
+                {/* Cart Link for Mobile */}
+                <Link
+                  to="/cart"
+                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>Cart {getCartItemsCount() > 0 && `(${getCartItemsCount()})`}</span>
                 </Link>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { ProfileProvider } from './context/ProfileContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import ScrollToTop from './components/layout/ScrollToTop';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
@@ -23,6 +24,7 @@ import EditProduct from './pages/admin/EditProduct';
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <ProfileProvider>
           <CartProvider>

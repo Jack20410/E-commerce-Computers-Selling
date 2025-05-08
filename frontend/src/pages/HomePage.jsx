@@ -61,7 +61,7 @@ const HomePage = () => {
               </p>
             </div>
             
-            <div className="mt-12 grid gap-8 lg:grid-cols-3">
+            <div className="mt-12 grid gap-8 grid-cols-2 lg:grid-cols-3">
               {/* Testimonial 1 */}
               <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
                 <div className="flex items-center">

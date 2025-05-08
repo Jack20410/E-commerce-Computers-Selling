@@ -99,7 +99,7 @@ const categorySpecs = {
     threads: { type: Number, required: true },
     baseSpeed: { type: String, required: true },
     boostSpeed: { type: String, required: true },
-    graphic:{ String, required: true },
+    graphic: { type: String, required: true },
     tdp: { type: String, required: true },
   },
   graphicsCard: {

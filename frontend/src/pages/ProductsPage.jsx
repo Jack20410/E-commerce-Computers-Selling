@@ -151,7 +151,7 @@ const ProductsPage = () => {
         </title>
         <meta name="description" content="Browse our selection of computers and accessories" />
       </Helmet>
-      <div className="container mx-auto px-4 py-8 flex">
+      <div className="container mx-auto container mx-auto px-2 sm:px-4 md:px-6 lg:px-10 xl:px-12 py-8 flex">
         {/* Sidebar Filter */}
         <aside className="w-64 mr-8">
           {/* Brand Filter */}
@@ -269,7 +269,7 @@ const ProductsPage = () => {
             <p className="text-center text-gray-500">No products found.</p>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
             {products.map(product => (
               <div 
                 key={product.id || product._id} 
@@ -281,7 +281,7 @@ const ProductsPage = () => {
             ))}
           </div>
           {/* Pagination Controls */}
-          {pagination.pages > 1 && (
+          {(
             <div className="flex justify-center mt-8">
               <button
                 onClick={() => handlePageChange(pagination.current - 1)}
