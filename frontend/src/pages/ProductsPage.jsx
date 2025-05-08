@@ -154,77 +154,94 @@ const ProductsPage = () => {
       <div className="container mx-auto container mx-auto px-2 sm:px-4 md:px-6 lg:px-10 xl:px-12 py-8 flex">
         {/* Sidebar Filter */}
         <aside className="w-64 mr-8">
-          {/* Brand Filter */}
-          <div className="mb-6">
-            <h2 className="font-bold mb-2">BRAND</h2>
-            <div style={{ maxHeight: 200, overflowY: 'auto' }}>
-              {brands.map(brand => (
-                <label key={brand} className="flex items-center mb-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedBrand === brand}
-                    onChange={() => setSelectedBrand(selectedBrand === brand ? '' : brand)}
-                    className="mr-2"
-                  />
-                  {brand}
-                </label>
-              ))}
-            </div>
-          </div>
-          {/* Price Range Filter */}
-          <div className="mb-6">
-            <h2 className="font-bold mb-2">PRICE RANGE (VNĐ)</h2>
-            {/* Checkbox Price Ranges */}
-            {PRICE_RANGES.map(range => (
-              <label key={range.value} className="flex items-center mb-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedPriceRange === range.value}
-                  onChange={() => handleCheckboxChange(range.value)}
-                  className="mr-2"
-                />
-                {range.label}
-              </label>
-            ))}
-            {/* Price Range Slider and Min-Max Input */}
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Min"
-                  value={minPriceInput}
-                  onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
-                  className="border border-gray-300 rounded px-2 py-1 w-24"
-                />
-                <span>-</span>
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Max"
-                  value={maxPriceInput}
-                  onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 w-24"
-                />
+          <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
+            {/* Brand Filter */}
+            {category && (
+              <div className="mb-8">
+                <h2 className="font-bold mb-3 text-lg text-blue-700 tracking-wide">BRAND</h2>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {brands.map(brand => (
+                    <label
+                      key={brand}
+                      className={`flex items-center px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-blue-50 ${
+                        selectedBrand === brand ? 'bg-blue-100' : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedBrand === brand}
+                        onChange={() => setSelectedBrand(selectedBrand === brand ? '' : brand)}
+                        className="mr-2 accent-blue-600 w-4 h-4"
+                      />
+                      <span className="capitalize text-gray-700">{brand}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={50000000}
-                step={1000000}
-                value={minPriceInput || 0}
-                onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
-                className="w-full mt-2"
-              />
-              <input
-                type="range"
-                min={0}
-                max={150000000}
-                step={1000000}
-                value={maxPriceInput || 0}
-                onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
-                className="w-full mt-2"
-              />
+            )}
+            {/* Price Range Filter */}
+            <div>
+              <h2 className="font-bold mb-3 text-lg text-blue-700 tracking-wide">PRICE RANGE (VNĐ)</h2>
+              <div className="space-y-2">
+                {PRICE_RANGES.map(range => (
+                  <label
+                    key={range.value}
+                    className={`flex items-center px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-blue-50 ${
+                      selectedPriceRange === range.value ? 'bg-blue-100' : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPriceRange === range.value}
+                      onChange={() => handleCheckboxChange(range.value)}
+                      className="mr-2 accent-blue-600 w-4 h-4"
+                    />
+                    <span className="text-gray-700">{range.label}</span>
+                  </label>
+                ))}
+              </div>
+              {/* Price Range Slider and Min-Max Input */}
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Min"
+                    value={minPriceInput}
+                    onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
+                    className="border border-gray-300 rounded-lg px-2 py-1 w-20 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                  <span className="text-gray-400">-</span>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Max"
+                    value={maxPriceInput}
+                    onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
+                    className="border border-gray-300 rounded-lg px-2 py-1 w-20 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={50000000}
+                    step={1000000}
+                    value={minPriceInput || 0}
+                    onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
+                    className="w-full accent-blue-600"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={150000000}
+                    step={1000000}
+                    value={maxPriceInput || 0}
+                    onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </aside>
@@ -241,7 +258,18 @@ const ProductsPage = () => {
             {!queryParam && (
               <div className="flex gap-4">
                 {/* Brand Dropdown */}
-                
+                {/* {category && (
+                  <select
+                    value={selectedBrand}
+                    onChange={e => setSelectedBrand(e.target.value)}
+                    className="border border-gray-300 rounded px-3 py-2 text-sm"
+                  >
+                    <option value="">All Brands</option>
+                    {brands.map(brand => (
+                      <option key={brand} value={brand}>{brand}</option>
+                    ))}
+                  </select>
+                )} */}
                 {/* Sort Dropdown */}
                 <select
                   value={sort}
