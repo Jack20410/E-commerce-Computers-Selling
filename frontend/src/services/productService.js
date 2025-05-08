@@ -174,7 +174,15 @@ const productService = {
     });
     const res = await fetch(`/api/products/search?${params.toString()}`);
     if (!res.ok) throw new Error('Failed to fetch search results');
-    return res.json();
+    const data = await res.json();
+    // Map lại id -> _id cho mỗi sản phẩm
+    if (Array.isArray(data.products)) {
+      data.products = data.products.map(p => ({
+        ...p,
+        _id: p._id || p.id, // Ưu tiên _id, fallback sang id
+      }));
+    }
+    return data;
   },
 
   /**

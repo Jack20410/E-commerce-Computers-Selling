@@ -692,7 +692,7 @@ const ProductDetailPage = () => {
                 <input
                   type="text"
                   className="w-full border-b border-gray-300 focus:border-blue-500 outline-none px-2 py-2 text-sm"
-                  placeholder="Viết bình luận..."
+                  placeholder="Write a comment..."
                   value={reviewForm.userName ? reviewForm.comment : ''}
                   onFocus={() => setShowReviewForm(true)}
                   onChange={e => {
@@ -730,14 +730,14 @@ const ProductDetailPage = () => {
                         className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 disabled:opacity-60 text-sm"
                         disabled={reviewLoading}
                       >
-                        {reviewLoading ? 'Đang gửi...' : 'Gửi'}
+                        {reviewLoading ? 'Đang gửi...' : 'Send'}
                       </button>
                       <button
                         type="button"
                         className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded hover:bg-gray-300 text-sm"
                         onClick={() => { setShowReviewForm(false); setReviewForm({ ...reviewForm, comment: '' }); }}
                       >
-                        Hủy
+                        Cancel
                       </button>
                     </div>
                     {reviewError && <div className="text-red-500 text-sm mt-1">{reviewError}</div>}
@@ -793,7 +793,7 @@ const ProductDetailPage = () => {
               {reviews.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-400">
                   <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-5a4 4 0 10-8 0 4 4 0 008 0zm6 8v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a6 6 0 0112 0v2a2 2 0 002 2h2a2 2 0 002-2v-2a6 6 0 00-12 0" /></svg>
-                  <span>Chưa có bình luận nào cho sản phẩm này.</span>
+                  <span>There are no comments for this product yet.</span>
                 </div>
               )}
             </div>
