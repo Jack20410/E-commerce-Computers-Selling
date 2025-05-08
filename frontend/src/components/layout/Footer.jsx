@@ -25,12 +25,12 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-900">Shop</h3>
             <ul className="text-gray-600 space-y-2">
-              <li><a href="#" className="hover:text-gray-900">Pre-built PCs</a></li>
-              <li><a href="#" className="hover:text-gray-900">Laptops</a></li>
-              <li><a href="#" className="hover:text-gray-900">CPUs</a></li>
-              <li><a href="#" className="hover:text-gray-900">Graphics Cards</a></li>
-              <li><a href="#" className="hover:text-gray-900">Motherboards</a></li>
-              <li><a href="#" className="hover:text-gray-900">Storage</a></li>
+              <li><a href="/products/category/pc" className="hover:text-gray-900">Pre-built PCs</a></li>
+              <li><a href="/products/category/laptop" className="hover:text-gray-900">Laptops</a></li>
+              <li><a href="/products/category/cpu" className="hover:text-gray-900">CPUs</a></li>
+              <li><a href="/products/category/graphicsCard" className="hover:text-gray-900">Graphics Cards</a></li>
+              <li><a href="/products/category/motherboard" className="hover:text-gray-900">Motherboards</a></li>
+              <li><a href="/products/category/storage" className="hover:text-gray-900">Storage</a></li>
             </ul>
           </div>
           

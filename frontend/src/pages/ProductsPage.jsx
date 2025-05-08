@@ -19,7 +19,7 @@ const ProductsPage = () => {
   const [sort, setSort] = useState('');
   const [brands, setBrands] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
-  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0, perPage: 10 });
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0, perPage: 9 });
 
   // Get page from query string
   const page = parseInt(query.get('page')) || 1;
@@ -104,7 +104,7 @@ const ProductsPage = () => {
         </title>
         <meta name="description" content="Browse our selection of computers and accessories" />
       </Helmet>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-[250px] py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">
             {queryParam
@@ -155,7 +155,7 @@ const ProductsPage = () => {
           <p className="text-center text-gray-500">No products found.</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map(product => (
             <div 
               key={product.id || product._id} 
@@ -167,7 +167,7 @@ const ProductsPage = () => {
           ))}
         </div>
         {/* Pagination Controls */}
-        {pagination.pages > 1 && (
+        {(
           <div className="flex justify-center mt-8">
             <button
               onClick={() => handlePageChange(pagination.current - 1)}
