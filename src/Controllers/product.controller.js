@@ -192,23 +192,87 @@ exports.updateProduct = async (req, res) => {
       const deletedImages = Array.isArray(req.body.deletedImages) 
         ? req.body.deletedImages 
         : [req.body.deletedImages];
+      
+      const deletedImageUrls = Array.isArray(req.body.deletedImageUrls) 
+        ? req.body.deletedImageUrls 
+        : req.body.deletedImageUrls ? [req.body.deletedImageUrls] : [];
+      
+      const deletedImageFilenames = Array.isArray(req.body.deletedImageFilenames) 
+        ? req.body.deletedImageFilenames 
+        : req.body.deletedImageFilenames ? [req.body.deletedImageFilenames] : [];
 
-      for (const imageId of deletedImages) {
-        const image = product.images.find(img => img._id.toString() === imageId);
+      console.log('Processing deleted images:', {
+        deletedImages,
+        deletedImageUrls,
+        deletedImageFilenames,
+        category: product.category,
+        totalImages: product.images.length,
+        productId: product._id.toString(),
+        imageIds: product.images.map(img => img._id.toString())
+      });
+
+      // First, collect all images to be deleted
+      const imagesToDelete = [];
+      
+      // Try to find images using all available identifiers
+      for (let i = 0; i < deletedImages.length; i++) {
+        const imageId = deletedImages[i];
+        const imageUrl = i < deletedImageUrls.length ? deletedImageUrls[i] : null;
+        const filename = i < deletedImageFilenames.length ? deletedImageFilenames[i] : null;
+        
+        // Try to find the image by ID, URL, or filename
+        const image = product.images.find(img => 
+          img._id.toString() === imageId.toString() || 
+          (imageUrl && img.url === imageUrl) ||
+          (filename && img.url.endsWith(filename))
+        );
+        
         if (image) {
-          const filename = getFilenameFromUrl(image.url);
-          await deleteProductImages(product.category, [filename]);
+          console.log('Found image to delete:', {
+            imageId,
+            foundImageId: image._id.toString(),
+            imageUrl: image.url,
+            filename: getFilenameFromUrl(image.url),
+            category: product.category
+          });
+          imagesToDelete.push(image);
+        } else {
+          console.log('Image not found:', {
+            searchId: imageId,
+            searchUrl: imageUrl,
+            searchFilename: filename,
+            availableIds: product.images.map(img => img._id.toString()),
+            imageUrls: product.images.map(img => img.url)
+          });
         }
       }
 
-      product.images = product.images.filter(
-        img => !deletedImages.includes(img._id.toString())
-      );
+      // Then delete the files and remove images from the product
+      for (const image of imagesToDelete) {
+        const filename = getFilenameFromUrl(image.url);
+        if (filename) {
+          console.log('Attempting to delete file:', {
+            category: product.category.toLowerCase(), 
+            filename,
+            fullUrl: image.url
+          });
+          await deleteProductImages(product.category.toLowerCase(), [filename]);
+        }
+        
+        // Remove the image from the product's images array
+        product.images = product.images.filter(img => img._id.toString() !== image._id.toString());
+      }
 
       // If we deleted the main image, set the first remaining image as main
       if (product.images.length > 0 && !product.images.some(img => img.isMain)) {
         product.images[0].isMain = true;
+        console.log('Set new main image:', product.images[0]._id);
       }
+
+      // Update order of remaining images
+      product.images.forEach((img, index) => {
+        img.order = index;
+      });
     }
 
     // Handle new images
@@ -413,9 +477,15 @@ exports.deleteProduct = async (req, res) => {
       });
     }
 
+    // Delete all associated images
     if (product.images && product.images.length > 0) {
-      const filenames = product.images.map(url => getFilenameFromUrl(url));
-      await deleteProductImages(product.category, filenames);
+      const filenames = product.images
+        .map(img => getFilenameFromUrl(img.url))
+        .filter(filename => filename !== null);
+        
+      if (filenames.length > 0) {
+        await deleteProductImages(product.category, filenames);
+      }
     }
 
     await product.deleteOne();
@@ -531,12 +601,12 @@ exports.addProductImages = async (req, res) => {
 exports.deleteProductImage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { imageUrl } = req.body;
+    const { imageId } = req.body;
 
-    if (!imageUrl) {
+    if (!imageId) {
       return res.status(400).json({
         success: false,
-        message: 'Image URL is required'
+        message: 'Image ID is required'
       });
     }
 
@@ -548,27 +618,59 @@ exports.deleteProductImage = async (req, res) => {
       });
     }
 
-    const filename = getFilenameFromUrl(imageUrl);
-    if (!filename) {
-      return res.status(400).json({
+    // Try to find the image by its ID
+    let image = product.images.find(img => img._id.toString() === imageId);
+    
+    if (!image) {
+      return res.status(404).json({
         success: false,
-        message: 'Invalid image URL'
+        message: 'Image not found',
+        details: {
+          searchId: imageId,
+          availableIds: product.images.map(img => img._id.toString())
+        }
       });
     }
 
-    const wasMain = product.images.find(img => img.url === imageUrl)?.isMain;
-    product.images = product.images.filter(img => img.url !== imageUrl);
+    console.log('Found image to delete:', {
+      imageId,
+      imageUrl: image.url,
+      category: product.category
+    });
 
+    const filename = getFilenameFromUrl(image.url);
+    if (!filename) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid image URL',
+        details: { url: image.url }
+      });
+    }
+
+    console.log('Attempting to delete file:', {
+      category: product.category.toLowerCase(),
+      filename,
+      fullUrl: image.url
+    });
+
+    const wasMain = image.isMain;
+    const deleteResult = await deleteProductImages(product.category.toLowerCase(), [filename]);
+    console.log('File deletion result:', deleteResult);
+
+    // Remove the image from the product
+    product.images = product.images.filter(img => img._id.toString() !== imageId);
+
+    // If we deleted the main image, set the first remaining image as main
     if (wasMain && product.images.length > 0) {
       product.images[0].isMain = true;
     }
 
+    // Update order of remaining images
     product.images.forEach((img, index) => {
       img.order = index;
     });
 
     await product.save();
-    await deleteProductImages(product.category, [filename]);
 
     res.status(200).json({
       success: true,

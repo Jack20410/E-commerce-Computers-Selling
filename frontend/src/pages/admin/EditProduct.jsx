@@ -118,7 +118,7 @@ const EditProduct = () => {
     })));
   };
 
-  const handleDeleteExistingImage = (imageId) => {
+  const handleDeleteExistingImage = async (imageId) => {
     // Prevent deleting if it's the last image
     if (existingImages.length - deletedImageIds.length <= 1 && newImages.length === 0) {
       setMessage({ text: 'At least one image is required', type: 'error' });
@@ -126,19 +126,52 @@ const EditProduct = () => {
     }
     
     const imageToDelete = existingImages.find(img => img._id === imageId);
-    if (!imageToDelete) return;
-
-    // If deleting main image, set first remaining image as main
-    if (imageToDelete.isMain) {
-      const remainingImages = existingImages.filter(img => 
-        !deletedImageIds.includes(img._id) && img._id !== imageId
-      );
-      if (remainingImages.length > 0) {
-        handleSetMainImage(remainingImages[0]._id);
-      }
+    if (!imageToDelete) {
+      console.error('Failed to find image with ID:', imageId);
+      return;
     }
+
+    console.log('Deleting image:', {
+      id: imageToDelete._id,
+      url: imageToDelete.url,
+      filename: getFilenameFromUrl(imageToDelete.url)
+    });
     
-    setDeletedImageIds(prev => [...prev, imageId]);
+    try {
+      // Make the API call to delete the image immediately
+      setSaveLoading(true);
+      await productService.deleteProductImage(id, imageId);
+      
+      // Remove the image from local state
+      setExistingImages(prev => prev.filter(img => img._id !== imageId));
+      
+      // If deleted image was main, set first remaining as main
+      if (imageToDelete.isMain) {
+        const remainingImages = existingImages.filter(img => 
+          img._id !== imageId && !deletedImageIds.includes(img._id)
+        );
+        if (remainingImages.length > 0) {
+          handleSetMainImage(remainingImages[0]._id);
+        }
+      }
+      
+      setMessage({ text: 'Image deleted successfully', type: 'success' });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      setMessage({ 
+        text: error.message || 'Failed to delete image', 
+        type: 'error' 
+      });
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  // Helper function to extract filename from URL
+  const getFilenameFromUrl = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    return parts[parts.length - 1];
   };
 
   const moveImage = (index, direction) => {
@@ -267,12 +300,19 @@ const EditProduct = () => {
           .filter(img => deletedImageIds.includes(img._id))
           .map(img => ({
             _id: img._id,
-            url: img.url
+            url: img.url,
+            filename: getFilenameFromUrl(img.url)
           }));
+        
+        console.log('Sending deleted images:', deletedImages);
         
         deletedImages.forEach(img => {
           productData.append('deletedImages[]', img._id);
           productData.append('deletedImageUrls[]', img.url);
+          // Also append the filename extracted from URL - this is the most reliable identifier
+          if (img.filename) {
+            productData.append('deletedImageFilenames[]', img.filename);
+          }
         });
       }
 

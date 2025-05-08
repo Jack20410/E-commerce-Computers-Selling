@@ -67,20 +67,96 @@ const deleteProductImages = async (category, filenames) => {
       filenames = [filenames];
     }
 
+    console.log('Starting deleteProductImages:', {
+      category,
+      filenames
+    });
+
+    // Get absolute path to uploads directory
+    const uploadsPath = path.resolve(__dirname, '../uploads');
+    console.log('Base uploads directory:', uploadsPath);
+
+    // Get absolute path to category directory
+    const categoryPath = path.join(uploadsPath, category);
+    console.log('Category directory:', categoryPath);
+
+    // Check if category directory exists
+    if (!fs.existsSync(categoryPath)) {
+      console.error('Category directory does not exist:', categoryPath);
+      return false;
+    }
+
+    // List directory contents before deletion
+    const beforeContents = fs.readdirSync(categoryPath);
+    console.log('Directory contents before deletion:', {
+      directory: categoryPath,
+      files: beforeContents
+    });
+
     const results = await Promise.all(
       filenames.map(async (filename) => {
-        const filepath = path.join(uploadsDir, category, filename);
-        if (fs.existsSync(filepath)) {
-          await fs.promises.unlink(filepath);
-          return true;
+        // Get absolute path to file
+        const filepath = path.join(categoryPath, filename);
+        console.log('Processing file:', {
+          filename,
+          fullPath: filepath
+        });
+
+        try {
+          // Check if file exists
+          const exists = fs.existsSync(filepath);
+          console.log('File exists check:', {
+            filename,
+            exists,
+            path: filepath
+          });
+
+          if (exists) {
+            // Try to delete the file
+            await fs.promises.unlink(filepath);
+            console.log('Successfully deleted file:', filepath);
+            return true;
+          } else {
+            console.log('File not found:', {
+              filename,
+              searchPath: filepath,
+              availableFiles: beforeContents
+            });
+            return false;
+          }
+        } catch (err) {
+          console.error('Error deleting file:', {
+            filename,
+            filepath,
+            error: err.message,
+            stack: err.stack
+          });
+          return false;
         }
-        return false;
       })
     );
 
-    return results.every(result => result);
+    // List directory contents after deletion
+    const afterContents = fs.readdirSync(categoryPath);
+    console.log('Directory contents after deletion:', {
+      directory: categoryPath,
+      files: afterContents,
+      deletedFiles: beforeContents.filter(f => !afterContents.includes(f))
+    });
+
+    const success = results.every(result => result);
+    console.log('Delete operation completed:', {
+      success,
+      results,
+      deletedCount: results.filter(r => r).length
+    });
+
+    return success;
   } catch (error) {
-    console.error('Error deleting files:', error);
+    console.error('Error in deleteProductImages:', {
+      error: error.message,
+      stack: error.stack
+    });
     return false;
   }
 };
@@ -98,8 +174,47 @@ const getImageUrls = (category, filenames) => {
 
 // Function to extract filename from URL
 const getFilenameFromUrl = (url) => {
-  if (!url) return null;
-  return url.split('/').pop();
+  if (!url) {
+    console.log('getFilenameFromUrl: URL is null or empty');
+    return null;
+  }
+
+  console.log('Processing URL:', url);
+  
+  try {
+    // Remove the domain part if present (e.g., http://localhost:3001)
+    const cleanUrl = url.replace(/^https?:\/\/[^\/]+/, '');
+    console.log('Cleaned URL:', cleanUrl);
+    
+    // Split the remaining path
+    const parts = cleanUrl.split('/').filter(Boolean); // Remove empty strings
+    console.log('URL parts:', parts);
+    
+    // URL format should be uploads/category/filename
+    // We need at least 3 parts: "uploads", "category", "filename"
+    if (parts.length < 3 || parts[0] !== 'uploads') {
+      console.log('Invalid URL format:', {
+        partsLength: parts.length,
+        firstPart: parts[0]
+      });
+      return null;
+    }
+    
+    // Get the filename (last part of the URL)
+    const filename = parts[parts.length - 1];
+    console.log('Extracted filename:', filename);
+    
+    // More flexible validation - look for any pattern that resembles a product ID followed by a hash
+    // This regex matches something like: 681a4ff9e732259cf5b1cfdf-3e1c927cc0ff85d9.png
+    if (!filename.match(/^[a-f0-9]+-[a-f0-9]+\.[a-zA-Z]+$/)) {
+      console.log('Warning: Filename does not match expected format, but will try to use it anyway:', filename);
+    }
+    
+    return filename;
+  } catch (error) {
+    console.error('Error processing URL:', error);
+    return null;
+  }
 };
 
 module.exports = {

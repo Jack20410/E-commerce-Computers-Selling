@@ -65,7 +65,10 @@ router.route('/:id')
 
 // Manage product images
 router.route('/:id/images')
-  .post(validateObjectId, uploadImages, addProductImages)
+  .post(validateObjectId, uploadImages, addProductImages);
+
+// Manage single image
+router.route('/:id/image')
   .delete(validateObjectId, deleteProductImage);
 
 // Update product stock

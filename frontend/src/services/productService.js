@@ -283,10 +283,11 @@ const productService = {
   /**
    * Delete a product image
    */
-  deleteProductImage: async (id, imageUrl) => {
+  deleteProductImage: async (productId, imageId) => {
     try {
-      const response = await api.delete(`/api/products/${id}/images`, {
-        data: { imageUrl }
+      console.log('Deleting image:', { productId, imageId });
+      const response = await api.delete(`/api/products/${productId}/image`, {
+        data: { imageId }
       });
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to delete image');
