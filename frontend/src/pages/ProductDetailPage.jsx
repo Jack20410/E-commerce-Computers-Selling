@@ -288,6 +288,8 @@ const ProductDetailPage = () => {
   const [reviewError, setReviewError] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState('');
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  const REVIEWS_PER_PAGE = 5;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -441,7 +443,7 @@ const ProductDetailPage = () => {
         rating: reviewForm.rating,
         comment: reviewForm.comment
       });
-      setReviewSuccess('Cảm ơn bạn đã đánh giá!');
+      setReviewSuccess('Thanks for reviewing!');
       setReviewForm({ userName: '', rating: 5, comment: '' });
       setShowReviewForm(false);
       // Reload lại review và summary
@@ -740,7 +742,7 @@ const ProductDetailPage = () => {
                         required
                       >
                         {[5,4,3,2,1].map(star => (
-                          <option key={star} value={star}>{star} sao</option>
+                          <option key={star} value={star}>{star} star</option>
                         ))}
                       </select>
                     </div>
@@ -768,53 +770,65 @@ const ProductDetailPage = () => {
             </div>
             {/* Danh sách bình luận */}
             <div className="space-y-6">
-              {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
-                <div
-                  key={review._id}
-                  className="flex items-start gap-3 bg-gray-50 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-100"
-                >
-                  <img
-                    src={review.userAvatar || 'https://www.gravatar.com/avatar/?d=mp'}
-                    alt={review.userName}
-                    className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                  />
-                  <div className="flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 mb-1">
-                      <span className="font-semibold text-gray-900 text-base mr-2">{review.userName || 'Ẩn danh'}</span>
-                      <div className="flex items-center gap-2">
-                        <RatingStars rating={review.rating} />
-                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString('vi-VN')}</span>
-                      </div>
-                    </div>
-                    <div className="text-gray-700 text-sm whitespace-pre-line break-words">{review.comment}</div>
-                  </div>
-                </div>
-              ))}
-              {reviews.length > 3 && (
-                <div className="flex justify-center mt-4">
-                  <button
-                    className="flex items-center gap-2 px-5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-full shadow transition-all border border-blue-200"
-                    onClick={() => setShowAllReviews(v => !v)}
-                  >
-                    {showAllReviews ? (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>
-                        Show less reviews
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                        Show more reviews
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
               {reviews.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-400">
                   <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-5a4 4 0 10-8 0 4 4 0 008 0zm6 8v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a6 6 0 0112 0v2a2 2 0 002 2h2a2 2 0 002-2v-2a6 6 0 00-12 0" /></svg>
                   <span>There are no comments for this product yet.</span>
                 </div>
+              )}
+              {reviews.length > 0 && (
+                <>
+                  {reviews.slice((currentReviewPage-1)*REVIEWS_PER_PAGE, currentReviewPage*REVIEWS_PER_PAGE).map((review) => (
+                    <div
+                      key={review._id}
+                      className="flex items-start gap-3 bg-gray-50 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-100"
+                    >
+                      <img
+                        src={review.userAvatar || 'https://www.gravatar.com/avatar/?d=mp'}
+                        alt={review.userName}
+                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                      />
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 mb-1">
+                          <span className="font-semibold text-gray-900 text-base mr-2">{review.userName || 'Ẩn danh'}</span>
+                          <div className="flex items-center gap-2">
+                            <RatingStars rating={review.rating} />
+                            <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                        </div>
+                        <div className="text-gray-700 text-sm whitespace-pre-line break-words">{review.comment}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Pagination */}
+                  {reviews.length > REVIEWS_PER_PAGE && (
+                    <div className="flex justify-center mt-4 gap-2">
+                      <button
+                        className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-blue-100 disabled:opacity-50"
+                        onClick={() => setCurrentReviewPage(p => Math.max(1, p-1))}
+                        disabled={currentReviewPage === 1}
+                      >
+                        Trước
+                      </button>
+                      {Array.from({length: Math.ceil(reviews.length / REVIEWS_PER_PAGE)}, (_, i) => i+1).map(page => (
+                        <button
+                          key={page}
+                          className={`px-3 py-1 rounded ${currentReviewPage === page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'}`}
+                          onClick={() => setCurrentReviewPage(page)}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      <button
+                        className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-blue-100 disabled:opacity-50"
+                        onClick={() => setCurrentReviewPage(p => Math.min(Math.ceil(reviews.length / REVIEWS_PER_PAGE), p+1))}
+                        disabled={currentReviewPage === Math.ceil(reviews.length / REVIEWS_PER_PAGE)}
+                      >
+                        Sau
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
