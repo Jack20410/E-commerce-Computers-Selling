@@ -13,8 +13,10 @@ const reviewService = {
   },
   // Thêm hàm tạo mới đánh giá
   async createReview(data) {
-    console.log('Gửi đánh giá:', data);
-    const res = await api.post('/api/reviews', data);
+    // Nếu không có rating thì không truyền lên
+    const payload = { ...data };
+    if (!payload.rating) delete payload.rating;
+    const res = await api.post('/api/reviews', payload);
     return res.data;
   },
   // Lấy review của user cho 1 sản phẩm trong 1 đơn hàng

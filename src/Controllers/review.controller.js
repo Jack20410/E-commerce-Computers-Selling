@@ -4,18 +4,17 @@ const Review = require('../Models/review.model');
 exports.createReview = async (req, res) => {
   try {
     const { productId, userName, rating, comment, orderId } = req.body;
-    console.log('API nhận đánh giá:', { productId, userName, rating, comment, orderId });
-    if (!productId || !rating) {
+    if (!productId || !userName || !comment) {
       return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc' });
     }
     const review = new Review({
       productId,
       orderId,
       userName,
-      rating,
       comment,
       createdAt: new Date()
     });
+    if (rating) review.rating = rating;
     await review.save();
     // Emit review update via websocket
     const websocketService = require('../services/websocket.service');
@@ -31,7 +30,12 @@ exports.getReviewsByProduct = async (req, res) => {
   try {
     const { productId } = req.params;
     const reviews = await Review.find({ productId }).sort({ createdAt: -1 });
-    res.json({ success: true, data: reviews });
+    // Thêm purchaseVerified: true nếu có orderId
+    const reviewsWithPurchase = reviews.map(r => ({
+      ...r.toObject(),
+      purchaseVerified: !!r.orderId
+    }));
+    res.json({ success: true, data: reviewsWithPurchase });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
   }

@@ -16,9 +16,12 @@ const HomePage = () => {
     // Lấy 6 review mới nhất toàn hệ thống
     const fetchTestimonials = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/reviews/all?limit=6');
+        const res = await fetch('http://localhost:3001/api/reviews/all?limit=6'); // lấy nhiều hơn 6 để lọc
         const data = await res.json();
-        setTestimonials(data.data || []);
+        const filtered = (data.data || [])
+          .filter(r => (r.rating >= 4) && (r.orderId || r.purchaseVerified))
+          .slice(0, 6); // lấy 6 review đầu tiên thỏa mãn
+        setTestimonials(filtered);
       } catch (err) {
         setTestimonials([]);
       }

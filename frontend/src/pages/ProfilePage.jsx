@@ -1323,7 +1323,7 @@ const ProfilePage = () => {
                                               </div>
                                             </form>
                                           ) : (
-                                            <div className="bg-gradient-to-r from-green-100 to-blue-100 border border-green-300 rounded-xl p-4 shadow flex items-start gap-4">
+                                            <div className="border border-green-400 bg-green-100 rounded-lg p-4 shadow flex items-start gap-4">
                                               <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                   <span className="font-semibold text-blue-700">{itemReviews[reviewKey].userName}</span>
@@ -1337,21 +1337,20 @@ const ProfilePage = () => {
                                                   ))}
                                                 </div>
                                                 <div className="text-gray-700 text-base whitespace-pre-line break-words">{itemReviews[reviewKey].comment}</div>
-                                                {/* Nếu là review của user hiện tại thì cho phép sửa/xoá */}
                                                 {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
                                                   <div className="flex gap-2 mt-3">
                                                     <button
                                                       className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500"
                                                       onClick={() => startEditReview(reviewKey)}
                                                     >
-                                                      Sửa
+                                                      Edit
                                                     </button>
                                                     <button
                                                       className="px-3 py-1 rounded bg-red-500 text-white text-sm font-medium hover:bg-red-600"
                                                       onClick={() => handleDeleteReview(itemReviews[reviewKey]._id, reviewKey)}
                                                       disabled={editReviewLoading}
                                                     >
-                                                      Xoá
+                                                      Delete
                                                     </button>
                                                   </div>
                                                 )}
@@ -1364,7 +1363,7 @@ const ProfilePage = () => {
                                           className="mt-2 px-4 py-1 rounded bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 shadow"
                                           onClick={() => openReviewModal(order._id, productId)}
                                         >
-                                          Đánh giá
+                                          Review
                                         </button>
                                       )}
                                     </div>
@@ -1505,7 +1504,7 @@ const ProfilePage = () => {
                           </div>
                         </form>
                       ) : (
-                        <div className="bg-gradient-to-r from-green-100 to-blue-100 border border-green-300 rounded-xl p-4 shadow flex items-start gap-4">
+                        <div className="border border-green-400 bg-green-100 rounded-lg p-4 shadow flex items-start gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-semibold text-blue-700">{itemReviews[reviewKey].userName}</span>
@@ -1519,7 +1518,6 @@ const ProfilePage = () => {
                               ))}
                             </div>
                             <div className="text-gray-700 text-base whitespace-pre-line break-words">{itemReviews[reviewKey].comment}</div>
-                            {/* Nếu là review của user hiện tại thì cho phép sửa/xoá */}
                             {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
                               <div className="flex gap-2 mt-3">
                                 <button
@@ -1588,7 +1586,7 @@ const ProfilePage = () => {
                           className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition disabled:opacity-60 text-sm shadow"
                           disabled={reviewLoadingMap[reviewKey]}
                         >
-                          {reviewLoadingMap[reviewKey] ? 'Đang gửi...' : 'Gửi đánh giá'}
+                          {reviewLoadingMap[reviewKey] ? 'Đang gửi...' : 'Send review'}
                         </button>
                         {reviewErrorMap[reviewKey] && <div className="text-red-500 text-sm">{reviewErrorMap[reviewKey]}</div>}
                         {reviewSuccessMap[reviewKey] && <div className="text-green-600 text-sm">{reviewSuccessMap[reviewKey]}</div>}

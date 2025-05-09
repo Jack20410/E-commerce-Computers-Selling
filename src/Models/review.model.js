@@ -5,7 +5,7 @@ const reviewSchema = new mongoose.Schema({
   orderId: { type: String }, // Đánh giá theo từng đơn hàng
   userId: { type: String }, // Không bắt buộc nếu không cần đăng nhập
   userName: { type: String },
-  rating: { type: Number, required: true, min: 1, max: 5 },
+  rating: { type: Number, min: 1, max: 5 },
   comment: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
