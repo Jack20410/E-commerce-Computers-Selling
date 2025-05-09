@@ -14,11 +14,11 @@ const OrderStatusBadge = ({ status }) => {
   };
 
   const statusText = {
-    pending: 'Chờ xác nhận',
-    confirmed: 'Đã xác nhận',
-    shipping: 'Đang giao hàng',
-    delivered: 'Đã giao hàng',
-    cancelled: 'Đã hủy'
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    shipping: 'Shipping',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled'
   };
 
   return (
@@ -216,7 +216,7 @@ const OrdersPage = () => {
                     <div className="text-sm">
                       <span className="text-gray-500">Date: </span>
                       <span className="text-gray-700">
-                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(order.createdAt).toLocaleDateString('en-US')}
                       </span>
                     </div>
                   </div>
@@ -295,13 +295,13 @@ const OrdersPage = () => {
                 <div className="px-4 py-3 border-t">
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-gray-900">Lịch sử trạng thái</h4>
+                      <h4 className="text-sm font-medium text-gray-900">Status History</h4>
                       <button
                         onClick={() => setSelectedOrder(order)}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={getStatusTransitions(order.currentStatus).length === 0}
                       >
-                        Cập nhật trạng thái
+                        Update Status
                       </button>
                     </div>
                     
@@ -318,25 +318,26 @@ const OrdersPage = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
                               <span className="text-sm font-medium text-gray-900">
-                                {status.status === 'pending' && 'Chờ xác nhận'}
-                                {status.status === 'confirmed' && 'Đã xác nhận'}
-                                {status.status === 'shipping' && 'Đang giao hàng'}
-                                {status.status === 'delivered' && 'Đã giao hàng'}
-                                {status.status === 'cancelled' && 'Đã hủy'}
+                                {status.status === 'pending' && 'Pending'}
+                                {status.status === 'confirmed' && 'Confirmed'}
+                                {status.status === 'shipping' && 'Shipping'}
+                                {status.status === 'delivered' && 'Delivered'}
+                                {status.status === 'cancelled' && 'Cancelled'}
                               </span>
                               <span className="text-sm text-gray-500">
-                                {new Date(status.timestamp).toLocaleString('vi-VN', {
+                                {new Date(status.timestamp).toLocaleString('en-US', {
                                   year: 'numeric',
                                   month: '2-digit',
                                   day: '2-digit',
                                   hour: '2-digit',
-                                  minute: '2-digit'
+                                  minute: '2-digit',
+                                  hour12: true
                                 })}
                               </span>
                             </div>
                             {status.note && (
                               <p className="mt-1 text-sm text-gray-600">
-                                Ghi chú: {status.note}
+                                Note: {status.note}
                               </p>
                             )}
                           </div>
