@@ -397,26 +397,20 @@ exports.updateOrderStatus = async (req, res) => {
 
         await order.save();
 
-        // Emit WebSocket event to notify user
-        websocketService.emitOrderStatusUpdate(
-            order.user._id.toString(),
-            order._id.toString(),
-            status
-        );
-
-        // Populate order data
-        await order.populate([
-            {
-                path: 'user',
-                select: 'fullName email'
-            },
-            {
-                path: 'items.product',
-                select: 'name images price'
-            }
-        ]);
+        // Emit WebSocket event to notify user - wrapped in try-catch
+        try {
+            websocketService.emitOrderStatusUpdate(
+                order.user._id.toString(),
+                order._id.toString(),
+                status
+            );
+        } catch (wsError) {
+            console.error('WebSocket error:', wsError);
+            // Continue execution even if WebSocket fails
+        }
 
         res.json({
+            success: true,
             message: 'Order status updated successfully',
             order: {
                 _id: order._id,
@@ -428,6 +422,7 @@ exports.updateOrderStatus = async (req, res) => {
     } catch (error) {
         console.error('Error updating order status:', error);
         res.status(500).json({
+            success: false,
             message: 'Error updating order status',
             error: error.message
         });

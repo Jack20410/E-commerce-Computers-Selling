@@ -750,54 +750,57 @@ const ProfilePage = () => {
 
             {/* Personal Information Form */}
             {activeTab === 'profile' && (
-              <div className="space-y-8">
-                {/* Basic Info Form */}
-                <form onSubmit={handleUpdateProfile} className="space-y-6">
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="fullName"
-                      id="fullName"
-                      value={personalInfo.fullName}
-                      onChange={handlePersonalInfoChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Basic Info Form - Left Column */}
+                <div className="space-y-6 max-w-md">
+                  <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
+                  <form onSubmit={handleUpdateProfile} className="space-y-6">
+                    <div>
+                      <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        id="fullName"
+                        value={personalInfo.fullName}
+                        onChange={handlePersonalInfoChange}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      value={personalInfo.email}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-gray-50"
-                      disabled
-                    />
-                  </div>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        value={personalInfo.email}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-gray-50"
+                        disabled
+                      />
+                    </div>
 
-                  <div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                        loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                    >
-                      {loading ? 'Updating...' : 'Update Info'}
-                    </button>
-                  </div>
-                </form>
+                    <div>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                          loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                      >
+                        {loading ? 'Updating...' : 'Update Info'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
 
-                {/* Address Management Section */}
-                <div className="border-t pt-8">
-                  <div className="flex justify-between items-center mb-6">
+                {/* Address Management Section - Right Column */}
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium text-gray-900">My Addresses</h3>
                     <button
                       onClick={() => setIsAddingAddress(true)}
@@ -809,7 +812,7 @@ const ProfilePage = () => {
                   </div>
 
                   {/* Address List */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4">
                     {addresses.map((address) => (
                       <div
                         key={address._id}
@@ -850,87 +853,91 @@ const ProfilePage = () => {
 
             {/* Change Password Form */}
             {!isGoogleUser && activeTab === 'change-password' && (
-              <form onSubmit={handleChangePassword} className="space-y-6">
-                {passwordErrors.general && (
-                  <div className="p-3 bg-red-50 text-red-500 rounded-md text-sm">
-                    {passwordErrors.general}
+              <div className="flex justify-center">
+                <form onSubmit={handleChangePassword} className="space-y-6 w-full max-w-md bg-white p-8 rounded-xl shadow-sm">
+                  <h3 className="text-lg font-medium text-gray-900 text-center mb-6">Change Password</h3>
+                  
+                  {passwordErrors.general && (
+                    <div className="p-3 bg-red-50 text-red-500 rounded-md text-sm">
+                      {passwordErrors.general}
+                    </div>
+                  )}
+
+                  <div>
+                    <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      id="currentPassword"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        passwordErrors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                      } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                      required
+                    />
+                    {passwordErrors.currentPassword && (
+                      <p className="mt-1 text-sm text-red-500">{passwordErrors.currentPassword}</p>
+                    )}
                   </div>
-                )}
 
-                <div>
-                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    id="currentPassword"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      passwordErrors.currentPassword ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    required
-                  />
-                  {passwordErrors.currentPassword && (
-                    <p className="mt-1 text-sm text-red-500">{passwordErrors.currentPassword}</p>
-                  )}
-                </div>
+                  <div>
+                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="newPassword"
+                      id="newPassword"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
+                      } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                      required
+                    />
+                    {passwordErrors.newPassword && (
+                      <p className="mt-1 text-sm text-red-500">{passwordErrors.newPassword}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    id="newPassword"
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    required
-                  />
-                  {passwordErrors.newPassword && (
-                    <p className="mt-1 text-sm text-red-500">{passwordErrors.newPassword}</p>
-                  )}
-                </div>
+                  <div>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      id="confirmPassword"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                      } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                      required
+                    />
+                    {passwordErrors.confirmPassword && (
+                      <p className="mt-1 text-sm text-red-500">{passwordErrors.confirmPassword}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    id="confirmPassword"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    required
-                  />
-                  {passwordErrors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-500">{passwordErrors.confirmPassword}</p>
-                  )}
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading || Object.values(passwordErrors).some(error => error !== '')}
-                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                      loading || Object.values(passwordErrors).some(error => error !== '')
-                        ? 'bg-blue-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                  >
-                    {loading ? 'Updating...' : 'Change Password'}
-                  </button>
-                </div>
-              </form>
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={loading || Object.values(passwordErrors).some(error => error !== '')}
+                      className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                        loading || Object.values(passwordErrors).some(error => error !== '')
+                          ? 'bg-blue-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    >
+                      {loading ? 'Updating...' : 'Change Password'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             )}
 
             {/* Address Form Modal */}
