@@ -7,6 +7,7 @@ import { FaEdit, FaTrash, FaPlus, FaStar } from 'react-icons/fa';
 import orderService from '../services/orderService';
 import websocketService from '../services/websocket.service';
 import { formatVND } from '../utils/currencyFormatter';
+import reviewService from '../services/reviewService';
 
 const OrderStatusBadge = ({ status }) => {
   const statusColors = {
@@ -18,11 +19,11 @@ const OrderStatusBadge = ({ status }) => {
   };
 
   const statusText = {
-    pending: 'Chờ xác nhận',
-    confirmed: 'Đã xác nhận',
-    shipping: 'Đang giao hàng',
-    delivered: 'Đã giao hàng',
-    cancelled: 'Đã hủy'
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    shipping: 'Shipping',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled'
   };
 
   return (
@@ -104,6 +105,21 @@ const ProfilePage = () => {
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Thêm state lưu review cho từng item
+  const [itemReviews, setItemReviews] = useState({}); // key: orderId+productId
+  const [reviewForms, setReviewForms] = useState({}); // key: orderId+productId
+  const [reviewLoadingMap, setReviewLoadingMap] = useState({});
+  const [reviewErrorMap, setReviewErrorMap] = useState({});
+  const [reviewSuccessMap, setReviewSuccessMap] = useState({});
+
+  // Thêm state quản lý modal đánh giá
+  const [reviewModal, setReviewModal] = useState({ open: false, orderId: null, productId: null });
+
+  // Thêm state cho edit review
+  const [editingReviewKey, setEditingReviewKey] = useState(null);
+  const [editReviewForm, setEditReviewForm] = useState({ rating: 5, comment: '' });
+  const [editReviewLoading, setEditReviewLoading] = useState(false);
 
   // Kiểm tra authentication và khởi tạo dữ liệu
   useEffect(() => {
@@ -277,12 +293,12 @@ const ProfilePage = () => {
       if (name === 'confirmPassword' && value !== passwordData.newPassword) {
         setPasswordErrors(prev => ({
           ...prev,
-          confirmPassword: 'Mật khẩu xác nhận không khớp'
+          confirmPassword: 'Password confirmation does not match'
         }));
       } else if (name === 'newPassword' && value !== passwordData.confirmPassword) {
         setPasswordErrors(prev => ({
           ...prev,
-          confirmPassword: 'Mật khẩu xác nhận không khớp'
+          confirmPassword: 'Password confirmation does not match'
         }));
       }
     }
@@ -301,7 +317,7 @@ const ProfilePage = () => {
       if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
-        alert('Có lỗi xảy ra khi cập nhật thông tin');
+        alert('An error occurred while updating your information');
       }
     }
   };
@@ -325,7 +341,7 @@ const ProfilePage = () => {
     if (!passwordData.currentPassword) {
       setPasswordErrors(prev => ({
         ...prev,
-        currentPassword: 'Vui lòng nhập mật khẩu hiện tại'
+        currentPassword: 'Please enter your current password'
       }));
       return;
     }
@@ -344,7 +360,7 @@ const ProfilePage = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordErrors(prev => ({
         ...prev,
-        confirmPassword: 'Mật khẩu xác nhận không khớp'
+        confirmPassword: 'Password confirmation does not match'
       }));
       return;
     }
@@ -385,12 +401,12 @@ const ProfilePage = () => {
             if (error.response.data.message.includes('current password')) {
               setPasswordErrors(prev => ({
                 ...prev,
-                currentPassword: 'Mật khẩu hiện tại không đúng'
+                currentPassword: 'Current password is incorrect'
               }));
             } else if (error.response.data.message.includes('password strength')) {
               setPasswordErrors(prev => ({
                 ...prev,
-                newPassword: 'Mật khẩu mới không đủ mạnh'
+                newPassword: 'New password is not strong enough'
               }));
             } else {
               setPasswordErrors(prev => ({
@@ -402,19 +418,19 @@ const ProfilePage = () => {
           case 401:
             setPasswordErrors(prev => ({
               ...prev,
-              general: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại'
+              general: 'Session expired. Please log in again.'
             }));
             break;
           default:
             setPasswordErrors(prev => ({
               ...prev,
-              general: 'Có lỗi xảy ra khi đổi mật khẩu'
+              general: 'An error occurred while changing password'
             }));
         }
       } else {
         setPasswordErrors(prev => ({
           ...prev,
-          general: 'Không thể kết nối đến server'
+          general: 'Cannot connect to server'
         }));
       }
     }
@@ -526,7 +542,7 @@ const ProfilePage = () => {
       if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
-        alert('Có lỗi xảy ra khi thêm địa chỉ');
+        alert('An error occurred while adding address');
       }
     } finally {
       setIsAddressLoading(false);
@@ -576,7 +592,7 @@ const ProfilePage = () => {
       if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
-        alert('Có lỗi xảy ra khi cập nhật địa chỉ');
+        alert('An error occurred while updating address');
       }
     } finally {
       setIsAddressLoading(false);
@@ -613,7 +629,7 @@ const ProfilePage = () => {
       if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
-        alert('Có lỗi xảy ra khi xóa địa chỉ');
+        alert('An error occurred while deleting address');
       }
     } finally {
       setIsAddressLoading(false);
@@ -669,6 +685,120 @@ const ProfilePage = () => {
       fetchOrders();
     }
   }, [isAuthenticated, activeTab, token]);
+
+  // Hàm fetch review cho từng item
+  const fetchItemReview = async (orderId, productId, userName) => {
+    try {
+      const review = await reviewService.getUserReview(productId, userName, orderId);
+      setItemReviews(prev => ({ ...prev, [`${orderId}_${productId}`]: review }));
+    } catch {
+      setItemReviews(prev => ({ ...prev, [`${orderId}_${productId}`]: null }));
+    }
+  };
+
+  // Khi orders thay đổi, fetch review cho từng item nếu Delivered
+  useEffect(() => {
+    if (!orders || !user) return;
+    orders.forEach(order => {
+      if (order.currentStatus === 'delivered') {
+        order.items.forEach(item => {
+          fetchItemReview(order._id, item.product, user.fullName || user.email);
+        });
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, user]);
+
+  // Hàm submit review cho item
+  const handleItemReviewSubmit = async (orderId, productId) => {
+    const form = reviewForms[`${orderId}_${productId}`] || {};
+    const userName = (form.userName || user.fullName || user.email || '').trim();
+    const rating = form.rating || 5;
+    const comment = form.comment || '';
+    if (!userName) {
+      setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: 'Vui lòng nhập tên của bạn' }));
+      return;
+    }
+    setReviewLoadingMap(prev => ({ ...prev, [`${orderId}_${productId}`]: true }));
+    setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: '' }));
+    setReviewSuccessMap(prev => ({ ...prev, [`${orderId}_${productId}`]: '' }));
+    try {
+      await reviewService.createReview({
+        productId,
+        orderId,
+        userName,
+        rating,
+        comment
+      });
+      setReviewSuccessMap(prev => ({ ...prev, [`${orderId}_${productId}`]: 'Đánh giá thành công!' }));
+      fetchItemReview(orderId, productId, userName);
+      setReviewForms(prev => ({ ...prev, [`${orderId}_${productId}`]: { userName: '', rating: 5, comment: '' } }));
+    } catch (err) {
+      setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: err.message || 'Gửi đánh giá thất bại' }));
+    } finally {
+      setReviewLoadingMap(prev => ({ ...prev, [`${orderId}_${productId}`]: false }));
+    }
+  };
+
+  // Hàm mở modal đánh giá
+  const openReviewModal = (orderId, productId) => {
+    setReviewModal({ open: true, orderId, productId });
+  };
+  // Hàm đóng modal đánh giá
+  const closeReviewModal = () => {
+    setReviewModal({ open: false, orderId: null, productId: null });
+  };
+
+  // Hàm bắt đầu sửa review
+  const startEditReview = (reviewKey) => {
+    setEditingReviewKey(reviewKey);
+    setEditReviewForm({
+      rating: itemReviews[reviewKey]?.rating || 5,
+      comment: itemReviews[reviewKey]?.comment || ''
+    });
+  };
+  // Huỷ sửa
+  const cancelEditReview = () => {
+    setEditingReviewKey(null);
+    setEditReviewForm({ rating: 5, comment: '' });
+  };
+  // Lưu sửa
+  const handleEditReviewSubmit = async (reviewId, reviewKey) => {
+    setEditReviewLoading(true);
+    try {
+      const updated = await reviewService.updateReview(reviewId, {
+        rating: editReviewForm.rating,
+        comment: editReviewForm.comment
+      });
+      setItemReviews(prev => ({
+        ...prev,
+        [reviewKey]: updated.data
+      }));
+      setEditingReviewKey(null);
+      setEditReviewForm({ rating: 5, comment: '' });
+      closeReviewModal();
+    } catch (err) {
+      alert('Cập nhật đánh giá thất bại!');
+    } finally {
+      setEditReviewLoading(false);
+    }
+  };
+  // Xoá review
+  const handleDeleteReview = async (reviewId, reviewKey) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xoá đánh giá này?')) return;
+    setEditReviewLoading(true);
+    try {
+      await reviewService.deleteReview(reviewId);
+      setItemReviews(prev => ({ ...prev, [reviewKey]: null }));
+      setEditingReviewKey(null);
+      setEditReviewForm({ rating: 5, comment: '' });
+      closeReviewModal();
+    } catch (err) {
+      alert('Xoá đánh giá thất bại!');
+    } finally {
+      setEditReviewLoading(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -744,7 +874,7 @@ const ProfilePage = () => {
             )}
             {isFirstLogin && (
               <div className="mb-4 p-3 bg-yellow-50 text-yellow-600 rounded-md">
-                Đây là lần đăng nhập đầu tiên của bạn. Vui lòng đổi mật khẩu để tiếp tục.
+                This is your first login. Please change your password to continue.
               </div>
             )}
 
@@ -1101,7 +1231,7 @@ const ProfilePage = () => {
                   </div>
                 ) : orders.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">Bạn chưa có đơn hàng nào</p>
+                    <p className="text-gray-500">You have no orders yet</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1113,56 +1243,158 @@ const ProfilePage = () => {
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <p className="text-sm text-gray-500">
-                              Mã đơn hàng: {order._id}
+                              Order ID: {order._id}
                             </p>
                             <p className="text-sm text-gray-500">
-                              Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                              Order Date: {new Date(order.createdAt).toLocaleDateString('en-US')}
                             </p>
                           </div>
                           <OrderStatusBadge status={order.currentStatus} />
                         </div>
 
                         <div className="space-y-4">
-                          {order.items.map((item) => (
-                            <div key={item._id} className="flex items-center space-x-4">
-                              <img
-                                src={`http://localhost:3001${item.productSnapshot.image}`}
-                                alt={item.productSnapshot.name}
-                                className="w-20 h-20 object-cover rounded"
-                              />
-                              <div className="flex-1">
-                                <h4 className="font-medium">{item.productSnapshot.name}</h4>
-                                <p className="text-sm text-gray-500">
-                                  Số lượng: {item.quantity}
-                                </p>
-                                <p className="text-sm font-medium">
-                                  {formatVND(item.price * item.quantity)}
-                                </p>
+                          {order.items.map((item) => {
+                            const productId = item.product;
+                            const reviewKey = `${order._id}_${productId}`;
+                            const hasReview = !!itemReviews[reviewKey];
+                            return (
+                              <div key={item._id} className="flex items-center space-x-4">
+                                <img
+                                  src={`http://localhost:3001${item.productSnapshot.image}`}
+                                  alt={item.productSnapshot.name}
+                                  className="w-20 h-20 object-cover rounded"
+                                />
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{item.productSnapshot.name}</h4>
+                                  <p className="text-sm text-gray-500">
+                                    Quantity: {item.quantity}
+                                  </p>
+                                  <p className="text-sm font-medium">
+                                    {formatVND(item.price * item.quantity)}
+                                  </p>
+                                  {order.currentStatus === 'delivered' && (
+                                    <div className="mt-2">
+                                      {hasReview ? (
+                                        <>
+                                          {editingReviewKey === reviewKey ? (
+                                            <form
+                                              onSubmit={e => {
+                                                e.preventDefault();
+                                                handleEditReviewSubmit(itemReviews[reviewKey]._id, reviewKey);
+                                              }}
+                                              className="flex flex-col gap-3"
+                                            >
+                                              <div className="flex items-center gap-1">
+                                                {[1,2,3,4,5].map(star => (
+                                                  <button
+                                                    type="button"
+                                                    key={star}
+                                                    className="focus:outline-none"
+                                                    onClick={() => setEditReviewForm(prev => ({ ...prev, rating: star }))}
+                                                  >
+                                                    <svg className={`w-6 h-6 ${star <= (editReviewForm.rating) ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                                  </button>
+                                                ))}
+                                              </div>
+                                              <textarea
+                                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                                                placeholder="Viết bình luận..."
+                                                value={editReviewForm.comment}
+                                                onChange={e => setEditReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                                                required
+                                                rows={3}
+                                              />
+                                              <div className="flex gap-2 items-center">
+                                                <button
+                                                  type="submit"
+                                                  className="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 disabled:opacity-60"
+                                                  disabled={editReviewLoading}
+                                                >
+                                                  {editReviewLoading ? 'Đang lưu...' : 'Lưu'}
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                                  onClick={cancelEditReview}
+                                                  disabled={editReviewLoading}
+                                                >
+                                                  Huỷ
+                                                </button>
+                                              </div>
+                                            </form>
+                                          ) : (
+                                            <div className="bg-gradient-to-r from-green-100 to-blue-100 border border-green-300 rounded-xl p-4 shadow flex items-start gap-4">
+                                              <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                  <span className="font-semibold text-blue-700">{itemReviews[reviewKey].userName}</span>
+                                                  <span className="text-xs text-gray-400">
+                                                    {itemReviews[reviewKey].createdAt ? new Date(itemReviews[reviewKey].createdAt).toLocaleDateString('vi-VN') : ""}
+                                                  </span>
+                                                </div>
+                                                <div className="flex items-center gap-1 mb-2">
+                                                  {[1,2,3,4,5].map(star => (
+                                                    <svg key={star} className={`w-5 h-5 ${star <= itemReviews[reviewKey].rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                                  ))}
+                                                </div>
+                                                <div className="text-gray-700 text-base whitespace-pre-line break-words">{itemReviews[reviewKey].comment}</div>
+                                                {/* Nếu là review của user hiện tại thì cho phép sửa/xoá */}
+                                                {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
+                                                  <div className="flex gap-2 mt-3">
+                                                    <button
+                                                      className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500"
+                                                      onClick={() => startEditReview(reviewKey)}
+                                                    >
+                                                      Sửa
+                                                    </button>
+                                                    <button
+                                                      className="px-3 py-1 rounded bg-red-500 text-white text-sm font-medium hover:bg-red-600"
+                                                      onClick={() => handleDeleteReview(itemReviews[reviewKey]._id, reviewKey)}
+                                                      disabled={editReviewLoading}
+                                                    >
+                                                      Xoá
+                                                    </button>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <button
+                                          className="mt-2 px-4 py-1 rounded bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 shadow"
+                                          onClick={() => openReviewModal(order._id, productId)}
+                                        >
+                                          Đánh giá
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         <div className="mt-4 pt-4 border-t">
                           <div className="flex justify-between items-center">
                             <div>
                               <p className="text-sm text-gray-500">
-                                Phương thức thanh toán: {
+                                Payment method: {
                                   {
-                                    cod: 'Thanh toán khi nhận hàng',
-                                    banking: 'Chuyển khoản ngân hàng',
-                                    momo: 'Ví MoMo'
+                                    cod: 'Cash on Delivery',
+                                    banking: 'Bank Transfer',
+                                    momo: 'MoMo Wallet'
                                   }[order.paymentMethod]
                                 }
                               </p>
                               {order.loyaltyPointsEarned > 0 && (
                                 <p className="text-sm text-green-600">
-                                  Điểm tích lũy: +{order.loyaltyPointsEarned} điểm
+                                  Points earned: +{order.loyaltyPointsEarned}
                                 </p>
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="text-sm text-gray-500">Tổng tiền</p>
+                              <p className="text-sm text-gray-500">Total</p>
                               <p className="text-lg font-bold text-blue-600">
                                 {formatVND(order.totalAmount)}
                               </p>
@@ -1172,12 +1404,12 @@ const ProfilePage = () => {
 
                         {/* Status History */}
                         <div className="mt-4 pt-4 border-t">
-                          <h4 className="font-medium mb-2">Lịch sử trạng thái</h4>
+                          <h4 className="font-medium mb-2">Status History</h4>
                           <div className="space-y-2">
                             {order.statusHistory.map((status, index) => (
                               <div key={index} className="flex items-center text-sm">
                                 <div className="w-32">
-                                  {new Date(status.timestamp).toLocaleString('vi-VN')}
+                                  {new Date(status.timestamp).toLocaleString('en-US')}
                                 </div>
                                 <OrderStatusBadge status={status.status} />
                                 {status.note && (
@@ -1196,6 +1428,179 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal đánh giá sản phẩm */}
+      {reviewModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative animate-fadeIn">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
+              onClick={closeReviewModal}
+            >
+              ×
+            </button>
+            {/* Lấy thông tin order và item */}
+            {(() => {
+              const order = orders.find(o => o._id === reviewModal.orderId);
+              if (!order) return null;
+              const item = order.items.find(i => i.product === reviewModal.productId);
+              if (!item) return null;
+              const reviewKey = `${order._id}_${item.product}`;
+              const hasReview = !!itemReviews[reviewKey];
+              return (
+                <div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <img src={`http://localhost:3001${item.productSnapshot.image}`} alt={item.productSnapshot.name} className="w-16 h-16 object-cover rounded" />
+                    <div>
+                      <h4 className="font-semibold text-lg">{item.productSnapshot.name}</h4>
+                      <p className="text-gray-500 text-sm">{formatVND(item.price * item.quantity)}</p>
+                    </div>
+                  </div>
+                  {hasReview ? (
+                    <>
+                      {editingReviewKey === reviewKey ? (
+                        <form
+                          onSubmit={e => {
+                            e.preventDefault();
+                            handleEditReviewSubmit(itemReviews[reviewKey]._id, reviewKey);
+                          }}
+                          className="flex flex-col gap-3"
+                        >
+                          <div className="flex items-center gap-1">
+                            {[1,2,3,4,5].map(star => (
+                              <button
+                                type="button"
+                                key={star}
+                                className="focus:outline-none"
+                                onClick={() => setEditReviewForm(prev => ({ ...prev, rating: star }))}
+                              >
+                                <svg className={`w-6 h-6 ${star <= (editReviewForm.rating) ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                              </button>
+                            ))}
+                          </div>
+                          <textarea
+                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                            placeholder="Viết bình luận..."
+                            value={editReviewForm.comment}
+                            onChange={e => setEditReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                            required
+                            rows={3}
+                          />
+                          <div className="flex gap-2 items-center">
+                            <button
+                              type="submit"
+                              className="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 disabled:opacity-60"
+                              disabled={editReviewLoading}
+                            >
+                              {editReviewLoading ? 'Đang lưu...' : 'Lưu'}
+                            </button>
+                            <button
+                              type="button"
+                              className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                              onClick={cancelEditReview}
+                              disabled={editReviewLoading}
+                            >
+                              Huỷ
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="bg-gradient-to-r from-green-100 to-blue-100 border border-green-300 rounded-xl p-4 shadow flex items-start gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-blue-700">{itemReviews[reviewKey].userName}</span>
+                              <span className="text-xs text-gray-400">
+                                {itemReviews[reviewKey].createdAt ? new Date(itemReviews[reviewKey].createdAt).toLocaleDateString('vi-VN') : ""}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 mb-2">
+                              {[1,2,3,4,5].map(star => (
+                                <svg key={star} className={`w-5 h-5 ${star <= itemReviews[reviewKey].rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                              ))}
+                            </div>
+                            <div className="text-gray-700 text-base whitespace-pre-line break-words">{itemReviews[reviewKey].comment}</div>
+                            {/* Nếu là review của user hiện tại thì cho phép sửa/xoá */}
+                            {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
+                              <div className="flex gap-2 mt-3">
+                                <button
+                                  className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500"
+                                  onClick={() => startEditReview(reviewKey)}
+                                >
+                                  Sửa
+                                </button>
+                                <button
+                                  className="px-3 py-1 rounded bg-red-500 text-white text-sm font-medium hover:bg-red-600"
+                                  onClick={() => handleDeleteReview(itemReviews[reviewKey]._id, reviewKey)}
+                                  disabled={editReviewLoading}
+                                >
+                                  Xoá
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <form
+                      onSubmit={async e => {
+                        e.preventDefault();
+                        await handleItemReviewSubmit(order._id, item.product);
+                        // Nếu gửi thành công thì đóng modal
+                        if (!reviewErrorMap[reviewKey]) {
+                          closeReviewModal();
+                        }
+                      }}
+                      className="flex flex-col gap-3"
+                    >
+                      <input
+                        type="text"
+                        className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                        placeholder="Tên của bạn"
+                        value={reviewForms[reviewKey]?.userName || user.fullName || ''}
+                        onChange={e => setReviewForms(prev => ({ ...prev, [reviewKey]: { ...prev[reviewKey], userName: e.target.value } }))}
+                        required
+                        style={{ minWidth: 120 }}
+                      />
+                      <div className="flex items-center gap-1">
+                        {[1,2,3,4,5].map(star => (
+                          <button
+                            type="button"
+                            key={star}
+                            className="focus:outline-none"
+                            onClick={() => setReviewForms(prev => ({ ...prev, [reviewKey]: { ...prev[reviewKey], rating: star } }))}
+                          >
+                            <svg className={`w-6 h-6 ${star <= (reviewForms[reviewKey]?.rating || 5) ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                        placeholder="Viết bình luận..."
+                        value={reviewForms[reviewKey]?.comment || ''}
+                        onChange={e => setReviewForms(prev => ({ ...prev, [reviewKey]: { ...prev[reviewKey], comment: e.target.value } }))}
+                        required
+                        rows={3}
+                      />
+                      <div className="flex gap-2 items-center">
+                        <button
+                          type="submit"
+                          className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition disabled:opacity-60 text-sm shadow"
+                          disabled={reviewLoadingMap[reviewKey]}
+                        >
+                          {reviewLoadingMap[reviewKey] ? 'Đang gửi...' : 'Gửi đánh giá'}
+                        </button>
+                        {reviewErrorMap[reviewKey] && <div className="text-red-500 text-sm">{reviewErrorMap[reviewKey]}</div>}
+                        {reviewSuccessMap[reviewKey] && <div className="text-green-600 text-sm">{reviewSuccessMap[reviewKey]}</div>}
+                      </div>
+                    </form>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

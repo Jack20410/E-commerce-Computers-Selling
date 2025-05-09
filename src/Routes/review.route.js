@@ -6,5 +6,8 @@ router.post('/', reviewController.createReview);
 router.get('/product/:productId', reviewController.getReviewsByProduct);
 router.get('/summary/:productId', reviewController.getRatingSummary);
 router.get('/all', reviewController.getAllReviews);
+router.get('/product/:productId/user', reviewController.getUserReviewForProduct);
+router.put('/:id', reviewController.updateReview);
+router.delete('/:id', reviewController.deleteReview);
 
 module.exports = router;
