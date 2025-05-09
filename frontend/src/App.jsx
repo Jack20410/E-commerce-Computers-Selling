@@ -19,6 +19,8 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ProfilePage from './pages/ProfilePage';
 import OAuth2Redirect from './pages/auth/OAuth2Redirect';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderSuccessPage from './pages/OrderSuccessPage';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
@@ -78,6 +80,8 @@ function App() {
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>

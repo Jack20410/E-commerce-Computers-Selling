@@ -21,6 +21,12 @@ api.interceptors.request.use(
     console.log('Making request to:', config.url, config.method);
     console.log('Request data type:', config.data instanceof FormData ? 'FormData' : typeof config.data);
     
+    // Add token to request headers if it exists
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     // Don't set Content-Type for FormData - axios will set it automatically with boundary
     if (!(config.data instanceof FormData)) {
       config.headers['Content-Type'] = 'application/json';
@@ -66,6 +72,14 @@ api.interceptors.response.use(
       // If we have an error message in the response, use it
       if (error.response.data && error.response.data.message) {
         error.message = error.response.data.message;
+      }
+
+      // Handle 401 Unauthorized error
+      if (error.response.status === 401) {
+        // Clear local storage and reload page if token is invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
       }
     } else if (error.request) {
       // The request was made but no response was received

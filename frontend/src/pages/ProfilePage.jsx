@@ -1,14 +1,47 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import axios from 'axios';
 import { FaEdit, FaTrash, FaPlus, FaStar } from 'react-icons/fa';
+import orderService from '../services/orderService';
+import websocketService from '../services/websocket.service';
+import { formatVND } from '../utils/currencyFormatter';
+
+const OrderStatusBadge = ({ status }) => {
+  const statusColors = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-blue-100 text-blue-800',
+    shipping: 'bg-purple-100 text-purple-800',
+    delivered: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800'
+  };
+
+  const statusText = {
+    pending: 'Chờ xác nhận',
+    confirmed: 'Đã xác nhận',
+    shipping: 'Đang giao hàng',
+    delivered: 'Đã giao hàng',
+    cancelled: 'Đã hủy'
+  };
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
+      {statusText[status]}
+    </span>
+  );
+};
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user, token } = useAuth();
   const isGoogleUser = !!user?.googleId;
+  
+  // Get tab from URL query parameter
+  const queryParams = new URLSearchParams(location.search);
+  const tabFromUrl = queryParams.get('tab');
+
   const { 
     loading, 
     error, 
@@ -17,11 +50,10 @@ const ProfilePage = () => {
     updateProfile, 
     changePassword, 
     checkFirstLogin,
-    recoverPassword,
     clearMessages 
   } = useProfile();
 
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'profile');
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [personalInfo, setPersonalInfo] = useState({
@@ -49,7 +81,6 @@ const ProfilePage = () => {
     general: ''
   });
 
-  const [recoveryEmail, setRecoveryEmail] = useState('');
   const [addresses, setAddresses] = useState([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -67,6 +98,12 @@ const ProfilePage = () => {
     city: '',
     isDefault: false
   });
+
+  // New states for orders
+  const [orders, setOrders] = useState([]);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderError, setOrderError] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Kiểm tra authentication và khởi tạo dữ liệu
   useEffect(() => {
@@ -122,7 +159,8 @@ const ProfilePage = () => {
 
   const fetchAddresses = async () => {
     try {
-      console.log('Fetching addresses with token:', token);
+      if (!token) return;
+      
       const response = await axios.get(
         'http://localhost:3001/api/address/user-addresses',
         {
@@ -132,7 +170,6 @@ const ProfilePage = () => {
           }
         }
       );
-      console.log('Addresses response:', response.data);
       setAddresses(response.data);
     } catch (error) {
       console.error('Error fetching addresses:', {
@@ -383,27 +420,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleRecoverPassword = async (e) => {
-    e.preventDefault();
-    
-    if (!recoveryEmail) {
-      setError('Vui lòng nhập email');
-      return;
-    }
-
-    try {
-      await recoverPassword(recoveryEmail);
-      setSuccess('Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.');
-      setRecoveryEmail('');
-    } catch (error) {
-      if (error.response?.status === 404) {
-        setError('Email không tồn tại trong hệ thống');
-      } else {
-        setError(error.response?.data?.message || 'Có lỗi xảy ra khi khôi phục mật khẩu');
-      }
-    }
-  };
-
   const handleProvinceChange = (e) => {
     const provinceCode = e.target.value;
     setSelectedProvince(provinceCode);
@@ -604,6 +620,56 @@ const ProfilePage = () => {
     }
   };
 
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      // Connect to WebSocket when authenticated
+      websocketService.connect(token);
+      
+      // Subscribe to order updates
+      websocketService.subscribeToOrderUpdates((data) => {
+        if (data.userId === user?._id) {
+          // Update order in the list
+          setOrders(prevOrders => 
+            prevOrders.map(order => 
+              order._id === data.orderId 
+                ? { ...order, currentStatus: data.newStatus }
+                : order
+            )
+          );
+        }
+      });
+
+      // Cleanup on unmount
+      return () => {
+        websocketService.unsubscribeFromOrderUpdates();
+        websocketService.disconnect();
+      };
+    }
+  }, [isAuthenticated, user, token]);
+
+  // Fetch orders
+  const fetchOrders = async () => {
+    if (!token) return;
+    
+    setOrderLoading(true);
+    setOrderError(null);
+    try {
+      const response = await orderService.getMyOrders();
+      setOrders(response.data.orders);
+    } catch (error) {
+      setOrderError('Error fetching orders');
+      console.error(error);
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'my-orders' && token) {
+      fetchOrders();
+    }
+  }, [isAuthenticated, activeTab, token]);
+
   if (!isAuthenticated) {
     return null;
   }
@@ -648,21 +714,19 @@ const ProfilePage = () => {
                   Change Password
                 </button>
               )}
-              {!isGoogleUser && (
-                <button
-                  onClick={() => !isFirstLogin && setActiveTab('recover-password')}
-                  className={`${
-                    activeTab === 'recover-password'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } ${
-                    isFirstLogin ? 'opacity-50 cursor-not-allowed' : ''
-                  } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
-                  disabled={isFirstLogin}
-                >
-                  Recover Password
-                </button>
-              )}
+              <button
+                onClick={() => !isFirstLogin && setActiveTab('my-orders')}
+                className={`${
+                  activeTab === 'my-orders'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } ${
+                  isFirstLogin ? 'opacity-50 cursor-not-allowed' : ''
+                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                disabled={isFirstLogin}
+              >
+                My Orders
+              </button>
             </nav>
           </div>
 
@@ -869,44 +933,6 @@ const ProfilePage = () => {
               </form>
             )}
 
-            {/* Recover Password Form */}
-            {!isGoogleUser && activeTab === 'recover-password' && (
-              <form onSubmit={handleRecoverPassword} className="space-y-6">
-                <div>
-                  <label htmlFor="recoveryEmail" className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="recoveryEmail"
-                    id="recoveryEmail"
-                    value={recoveryEmail}
-                    onChange={(e) => setRecoveryEmail(e.target.value)}
-                    className={`mt-1 block w-full rounded-md border ${
-                      error ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    placeholder="Enter your email"
-                    required
-                  />
-                  {error && (
-                    <p className="mt-1 text-sm text-red-500">{error}</p>
-                  )}
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                      loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                  >
-                    {loading ? 'Sending...' : 'Send New Password'}
-                  </button>
-                </div>
-              </form>
-            )}
-
             {/* Address Form Modal */}
             {(isAddingAddress || editingAddress) && (
               <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
@@ -1050,6 +1076,114 @@ const ProfilePage = () => {
                     </div>
                   </form>
                 </div>
+              </div>
+            )}
+
+            {/* My Orders Content */}
+            {activeTab === 'my-orders' && (
+              <div className="space-y-6">
+                {orderError && (
+                  <div className="p-4 bg-red-50 text-red-700 rounded-md">
+                    {orderError}
+                  </div>
+                )}
+
+                {orderLoading ? (
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">Bạn chưa có đơn hàng nào</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div
+                        key={order._id}
+                        className="border rounded-lg p-4 hover:shadow-lg transition-shadow"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Mã đơn hàng: {order._id}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                            </p>
+                          </div>
+                          <OrderStatusBadge status={order.currentStatus} />
+                        </div>
+
+                        <div className="space-y-4">
+                          {order.items.map((item) => (
+                            <div key={item._id} className="flex items-center space-x-4">
+                              <img
+                                src={`http://localhost:3001${item.productSnapshot.image}`}
+                                alt={item.productSnapshot.name}
+                                className="w-20 h-20 object-cover rounded"
+                              />
+                              <div className="flex-1">
+                                <h4 className="font-medium">{item.productSnapshot.name}</h4>
+                                <p className="text-sm text-gray-500">
+                                  Số lượng: {item.quantity}
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {formatVND(item.price * item.quantity)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm text-gray-500">
+                                Phương thức thanh toán: {
+                                  {
+                                    cod: 'Thanh toán khi nhận hàng',
+                                    banking: 'Chuyển khoản ngân hàng',
+                                    momo: 'Ví MoMo'
+                                  }[order.paymentMethod]
+                                }
+                              </p>
+                              {order.loyaltyPointsEarned > 0 && (
+                                <p className="text-sm text-green-600">
+                                  Điểm tích lũy: +{order.loyaltyPointsEarned} điểm
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-500">Tổng tiền</p>
+                              <p className="text-lg font-bold text-blue-600">
+                                {formatVND(order.totalAmount)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Status History */}
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="font-medium mb-2">Lịch sử trạng thái</h4>
+                          <div className="space-y-2">
+                            {order.statusHistory.map((status, index) => (
+                              <div key={index} className="flex items-center text-sm">
+                                <div className="w-32">
+                                  {new Date(status.timestamp).toLocaleString('vi-VN')}
+                                </div>
+                                <OrderStatusBadge status={status.status} />
+                                {status.note && (
+                                  <span className="ml-2 text-gray-500">{status.note}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

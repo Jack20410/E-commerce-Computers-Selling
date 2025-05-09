@@ -4,6 +4,7 @@ const Product = require('../Models/product.model');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { sendWelcomeEmail, sendOrderConfirmationEmail } = require('../services/email.service');
+const websocketService = require('../services/websocket.service');
 
 // Get orders by user
 exports.getOrdersByUser = async (req, res) => {
@@ -374,7 +375,7 @@ exports.updateOrderStatus = async (req, res) => {
         const { orderId } = req.params;
         const { status, note } = req.body;
 
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).populate('user', '_id');
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
@@ -395,6 +396,13 @@ exports.updateOrderStatus = async (req, res) => {
         });
 
         await order.save();
+
+        // Emit WebSocket event to notify user
+        websocketService.emitOrderStatusUpdate(
+            order.user._id.toString(),
+            order._id.toString(),
+            status
+        );
 
         // Populate order data
         await order.populate([

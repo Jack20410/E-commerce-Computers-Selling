@@ -1,10 +1,11 @@
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import CartItem from '../components/cart/CartItem';
 import { formatVND } from '../utils/currencyFormatter';
 
 const CartPage = () => {
+  const navigate = useNavigate();
   const { cartItems, clearCart, getCartTotal } = useCart();
   
   // Simple tax calculation (for study purposes)
@@ -12,6 +13,10 @@ const CartPage = () => {
   const tax = subtotal * 0.08;
   const shipping = subtotal > 5000000 ? 0 : 50000; // Free shipping over 5M VND
   const orderTotal = subtotal + tax + shipping;
+
+  const handleCheckout = () => {
+    navigate('/checkout');
+  };
 
   return (
     <>
@@ -76,6 +81,7 @@ const CartPage = () => {
                 </div>
               </div>
               <button 
+                onClick={handleCheckout}
                 className={`w-full py-3 rounded-lg mt-6 transition-all duration-300 ${
                   cartItems.length === 0 
                     ? 'bg-gray-400 cursor-not-allowed' 
