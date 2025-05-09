@@ -5,6 +5,25 @@ import api from './api';
  */
 const productService = {
   /**
+   * Get all products without pagination
+   */
+  getAllProducts: async (params = {}) => {
+    try {
+      console.log('Fetching all products with params:', params);
+      const response = await api.get('/api/products/all', { params });
+      console.log('All products response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch all products');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error in getAllProducts:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
    * Get all products with optional filtering and pagination
    */
   getProducts: async (params = {}) => {

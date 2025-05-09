@@ -13,7 +13,8 @@ const {
   addProductImages,
   deleteProductImage,
   getSimilarProducts,
-  getSpecificationsByCategory
+  getSpecificationsByCategory,
+  getAllProducts
 } = require('../Controllers/product.controller');
 
 // Middleware to validate MongoDB ObjectId
@@ -31,6 +32,9 @@ const validateObjectId = (req, res, next) => {
 // API ROUTES (JSON Responses for React frontend)
 // All API routes are prefixed with /api
 // =====================================================================
+
+// Get all products without pagination
+router.get('/all', getAllProducts);
 
 // Search products
 router.get('/search', searchProducts);

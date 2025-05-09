@@ -714,3 +714,41 @@ exports.getSpecificationsByCategory = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch specifications', error: error.message });
   }
 };
+
+// Get all products without pagination
+exports.getAllProducts = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.category) filter.category = req.query.category;
+    if (req.query.brand) filter.brand = req.query.brand;
+    if (req.query.minPrice || req.query.maxPrice) {
+      filter.price = {};
+      if (req.query.minPrice) filter.price.$gte = parseFloat(req.query.minPrice);
+      if (req.query.maxPrice) filter.price.$lte = parseFloat(req.query.maxPrice);
+    }
+
+    let sort = {};
+    if (req.query.sort) {
+      const sortFields = req.query.sort.split(',');
+      sortFields.forEach(field => {
+        if (field.startsWith('-')) {
+          sort[field.substring(1)] = -1;
+        } else {
+          sort[field] = 1;
+        }
+      });
+    } else {
+      sort = { createdAt: -1 };
+    }
+
+    const products = await Product.find(filter).sort(sort);
+    
+    res.status(200).json({
+      success: true,
+      data: products,
+      total: products.length
+    });
+  } catch (error) {
+    handleError(error, res);
+  }
+};

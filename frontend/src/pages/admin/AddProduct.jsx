@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import specificationFields from '../../utils/specificationFields';
 import productService from '../../services/productService';
 
 const AddProduct = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     category: '',
     brand: '',
@@ -16,6 +20,13 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const handleBaseInputChange = (e) => {
     const { name, value } = e.target;
@@ -129,6 +140,11 @@ const AddProduct = () => {
         images: []
       });
       setImagePreviewUrls([]);
+      
+      // Redirect to admin products page after delay
+      setTimeout(() => {
+        navigate('/admin/products');
+      }, 2000);
       
     } catch (error) {
       console.error('Error adding product:', error);
@@ -340,6 +356,16 @@ const AddProduct = () => {
           )}
         </div>
 
+        {message.text && (
+        <div 
+          className={`mb-4 p-4 rounded ${
+            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}
+        >
+          {message.text}
+        </div>
+        )}
+
         <div className="flex gap-4">
           <button
             type="submit"
@@ -352,7 +378,7 @@ const AddProduct = () => {
           </button>
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => navigate('/admin/products')}
             className="px-6 py-2 bg-gray-300 hover:bg-gray-400 rounded"
           >
             Cancel

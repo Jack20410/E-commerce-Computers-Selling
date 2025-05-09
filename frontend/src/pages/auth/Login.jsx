@@ -44,9 +44,14 @@ const Login = () => {
       // Lưu thông tin user và token
       login(data.data);
       
-      // Chuyển về trang trước đó hoặc trang chủ
-      const from = location.state?.from || '/';
-      navigate(from, { replace: true });
+      // Check if user is admin and redirect accordingly
+      if (data.data.user.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        // Chuyển về trang trước đó hoặc trang chủ cho non-admin users
+        const from = location.state?.from || '/';
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       setError(err.message);
     } finally {

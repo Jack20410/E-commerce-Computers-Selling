@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import specificationFields from '../../utils/specificationFields';
 import productService from '../../services/productService';
 
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     category: '',
@@ -26,6 +28,13 @@ const EditProduct = () => {
   const [deletedImageIds, setDeletedImageIds] = useState([]);
   const [categoryHasChanged, setCategoryHasChanged] = useState(false);
   const [mainImageId, setMainImageId] = useState(null);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   // Fetch product data on component mount
   useEffect(() => {
@@ -328,7 +337,7 @@ const EditProduct = () => {
       setMessage({ text: 'Product updated successfully!', type: 'success' });
       
       setTimeout(() => {
-        navigate(`/products/${id}`);
+        navigate(`/admin/products`);
       }, 1500);
       
     } catch (error) {
@@ -650,7 +659,7 @@ const EditProduct = () => {
         >
           {message.text}
         </div>
-      )}
+        )}
 
         <div className="flex gap-4">
           <button
@@ -664,7 +673,7 @@ const EditProduct = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate(`/products/${id}`)}
+            onClick={() => navigate('/admin/products')}
             className="px-6 py-2 bg-gray-300 hover:bg-gray-400 rounded"
           >
             Cancel
