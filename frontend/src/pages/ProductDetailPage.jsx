@@ -6,6 +6,7 @@ import productService from '../services/productService';
 import reviewService from '../services/reviewService';
 import { formatVND } from '../utils/currencyFormatter';
 import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
+import WebSocketService from '../services/websocket.service';
 
 // Rating Stars Component
 const RatingStars = ({ rating = 0, totalRatings }) => (
@@ -354,23 +355,47 @@ const ProductDetailPage = () => {
   }, [product]);
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      if (product && product._id) {
-        try {
-          const [reviewsData, summaryData] = await Promise.all([
-            reviewService.getReviewsByProduct(product._id),
-            reviewService.getRatingSummary(product._id)
-          ]);
-          setReviews(reviewsData);
-          setRatingSummary(summaryData);
-        } catch (err) {
-          console.error('Lỗi lấy đánh giá:', err);
-          setReviews([]);
-          setRatingSummary({ total: 0, average: 0 });
-        }
+    if (!product || !product._id) return;
+    // Lấy token nếu có (nếu không có vẫn connect được vì backend chỉ check nếu cần userId)
+    const token = localStorage.getItem('token') || '';
+    WebSocketService.connect(token);
+    WebSocketService.joinProductRoom(product._id);
+    // Khi có review mới thì fetch lại reviews và rating
+    const handleReviewUpdate = (data) => {
+      if (data.productId === product._id) {
+        // Gọi lại fetchReviews
+        fetchReviews();
       }
     };
+    WebSocketService.subscribeToReviewUpdates(handleReviewUpdate);
+    return () => {
+      WebSocketService.leaveProductRoom(product._id);
+      WebSocketService.unsubscribeFromReviewUpdates();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product]);
+
+  // Đưa fetchReviews ra ngoài để có thể gọi lại khi có review realtime
+  const fetchReviews = async () => {
+    if (product && product._id) {
+      try {
+        const [reviewsData, summaryData] = await Promise.all([
+          reviewService.getReviewsByProduct(product._id),
+          reviewService.getRatingSummary(product._id)
+        ]);
+        setReviews(reviewsData);
+        setRatingSummary(summaryData);
+      } catch (err) {
+        setReviews([]);
+        setRatingSummary({ total: 0, average: 0 });
+      }
+    }
+  };
+
+  // Thay thế useEffect fetchReviews cũ bằng fetchReviews mới
+  useEffect(() => {
     fetchReviews();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
   const handleAddToCart = () => {
@@ -420,12 +445,7 @@ const ProductDetailPage = () => {
       setReviewForm({ userName: '', rating: 5, comment: '' });
       setShowReviewForm(false);
       // Reload lại review và summary
-      const [reviewsData, summaryData] = await Promise.all([
-        reviewService.getReviewsByProduct(product._id),
-        reviewService.getRatingSummary(product._id)
-      ]);
-      setReviews(reviewsData);
-      setRatingSummary(summaryData);
+      fetchReviews();
     } catch (err) {
       setReviewError(err.message || 'Gửi đánh giá thất bại');
     } finally {

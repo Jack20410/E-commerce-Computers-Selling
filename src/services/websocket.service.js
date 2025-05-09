@@ -38,6 +38,15 @@ class WebSocketService {
       console.log(`User connected: ${socket.userId}`);
       this.connectedUsers.set(socket.userId, socket);
 
+      // Join product room
+      socket.on('joinProductRoom', (productId) => {
+        socket.join(`product_${productId}`);
+      });
+      // Leave product room
+      socket.on('leaveProductRoom', (productId) => {
+        socket.leave(`product_${productId}`);
+      });
+
       socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.userId}`);
         this.connectedUsers.delete(socket.userId);
@@ -54,6 +63,13 @@ class WebSocketService {
         orderId,
         newStatus
       });
+    }
+  }
+
+  // Emit review update to all clients in a product room
+  emitReviewUpdate(productId, review) {
+    if (this.io) {
+      this.io.to(`product_${productId}`).emit('reviewUpdate', { productId, review });
     }
   }
 }

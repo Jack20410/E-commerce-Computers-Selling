@@ -15,6 +15,9 @@ exports.createReview = async (req, res) => {
       createdAt: new Date()
     });
     await review.save();
+    // Emit review update via websocket
+    const websocketService = require('../services/websocket.service');
+    websocketService.emitReviewUpdate(productId, review);
     res.status(201).json({ success: true, message: 'Đánh giá thành công', data: review });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
