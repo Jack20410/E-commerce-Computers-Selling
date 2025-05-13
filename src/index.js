@@ -12,6 +12,7 @@ const userRoutes = require('./Routes/user.route');
 const addressRoutes = require('./Routes/address.route');
 const orderRoutes = require('./Routes/order.route');
 const reviewRoutes = require('./Routes/review.route');
+const discountRoutes = require('./Routes/discount.route');
 const passport = require('./Config/passport');
 const websocketService = require('./services/websocket.service');
 
@@ -56,6 +57,7 @@ app.use('/users', userRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/discount', discountRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

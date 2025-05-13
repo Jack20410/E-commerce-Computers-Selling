@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { sendWelcomeEmail, sendOrderConfirmationEmail } = require('../services/email.service');
 const websocketService = require('../services/websocket.service');
+const Discount = require('../Models/discount.model');
 
 // Get orders by user
 exports.getOrdersByUser = async (req, res) => {
@@ -153,6 +154,7 @@ exports.createOrder = async (req, res) => {
             items,
             shippingAddressId,
             paymentMethod,
+            discountCode,
             loyaltyPointsUsed = 0
         } = req.body;
 
@@ -254,16 +256,37 @@ exports.createOrder = async (req, res) => {
             subtotal += product.price * item.quantity;
         }
 
+        // Xử lý mã giảm giá nếu có
+        let discountAmount = 0;
+        let discountCodeId = null;
+        let discount = null;
+        if (discountCode) {
+            discount = await Discount.findOne({ code: discountCode.toUpperCase() });
+            if (!discount) {
+                return res.status(404).json({ message: 'Invalid discount code' });
+            }
+            if (!discount.isValid()) {
+                return res.status(400).json({ 
+                    message: 'Discount code is not valid',
+                    reason: discount.currentUses >= discount.maxUses ? 'Usage limit reached' : 'Code is inactive'
+                });
+            }
+            discountAmount = subtotal * (discount.discountValue / 100);
+            discountCodeId = discount._id;
+        }
+
         // Create new order with initial status history
         const order = new Order({
             user: req.user._id,
             items: processedItems,
             shippingAddress: shippingAddressId,
             subtotal,
+            discountCode: discountCodeId,
+            discountAmount,
             loyaltyPointsUsed,
             paymentMethod,
             currentStatus: 'pending',
-            totalAmount: subtotal - (loyaltyPointsUsed * 1000),
+            totalAmount: subtotal - discountAmount - (loyaltyPointsUsed * 1000),
             statusHistory: [{
                 status: 'pending',
                 timestamp: new Date(),
@@ -276,6 +299,13 @@ exports.createOrder = async (req, res) => {
 
         // Save the order
         await order.save();
+
+        // Nếu có sử dụng mã giảm giá, cập nhật discount
+        if (discount) {
+            discount.currentUses += 1;
+            discount.orders.push(order._id);
+            await discount.save();
+        }
 
         // Populate the order with related data
         await order.populate([
@@ -315,7 +345,12 @@ exports.createOrder = async (req, res) => {
                 statusHistory: order.statusHistory,
                 items: order.items,
                 createdAt: order.createdAt,
-                paymentMethod: order.paymentMethod
+                paymentMethod: order.paymentMethod,
+                discount: discount ? {
+                    code: discount.code,
+                    discountValue: discount.discountValue,
+                    discountAmount: order.discountAmount
+                } : null
             }
         });
 

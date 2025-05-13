@@ -59,6 +59,15 @@ const orderSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    discountCode: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Discount'
+    },
+    discountAmount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     loyaltyPointsUsed: {
         type: Number,
         default: 0,
@@ -87,18 +96,17 @@ const orderSchema = new mongoose.Schema({
     statusHistory: [statusHistorySchema],
     emailSent: {
         type: Boolean,
-        default: false
+        default: true
     }
 }, {
     timestamps: true
 });
 
-// Tính tổng tiền sau khi áp dụng điểm loyalty
+// Tính tổng tiền sau khi áp dụng điểm loyalty và mã giảm giá
 orderSchema.methods.calculateFinalAmount = function() {
     // 1 điểm = 1,000 VND
-    // Ví dụ: 5 điểm = 5,000 VND
     const loyaltyDiscount = this.loyaltyPointsUsed * 1000;
-    this.totalAmount = this.subtotal - loyaltyDiscount;
+    this.totalAmount = this.subtotal - this.discountAmount - loyaltyDiscount;
     return this.totalAmount;
 };
 
