@@ -8,6 +8,9 @@ router.post('/guest', orderController.createGuestOrder);
 
 // Admin routes - đặt trước để tránh conflict với route params
 router.get('/admin/orders', authenticateToken, requireAdmin, orderController.getAllOrders);
+router.get('/admin/revenue', authenticateToken, requireAdmin, orderController.getRevenue);
+router.get('/admin/top-products', authenticateToken, requireAdmin, orderController.getTopSellingProducts);
+router.get('/admin/top-categories', authenticateToken, requireAdmin, orderController.getTopSellingCategories);
 router.patch('/admin/:orderId/status', authenticateToken, requireAdmin, orderController.updateOrderStatus);
 
 // User routes

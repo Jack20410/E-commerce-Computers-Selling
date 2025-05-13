@@ -709,3 +709,168 @@ exports.createGuestOrder = async (req, res) => {
         });
     }
 };
+
+// Get revenue statistics
+exports.getRevenue = async (req, res) => {
+    try {
+        const { type = 'month' } = req.query; // type có thể là: 'week', 'month', 'year'
+        const now = new Date();
+        let startDate, labels, format;
+
+        switch (type) {
+            case 'week':
+                // Lấy dữ liệu 7 ngày gần nhất
+                startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 6);
+                labels = Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date(startDate);
+                    date.setDate(date.getDate() + i);
+                    return date.toLocaleDateString('vi-VN', { weekday: 'short' });
+                });
+                format = '%Y-%m-%d';
+                break;
+
+            case 'month':
+                // Lấy dữ liệu 12 tháng gần nhất
+                startDate = new Date(now);
+                startDate.setMonth(startDate.getMonth() - 11);
+                labels = Array.from({ length: 12 }, (_, i) => {
+                    const date = new Date(startDate);
+                    date.setMonth(date.getMonth() + i);
+                    return date.toLocaleDateString('vi-VN', { month: 'short' });
+                });
+                format = '%Y-%m';
+                break;
+
+            case 'year':
+                // Lấy dữ liệu 5 năm gần nhất
+                startDate = new Date(now);
+                startDate.setFullYear(startDate.getFullYear() - 4);
+                labels = Array.from({ length: 5 }, (_, i) => {
+                    const date = new Date(startDate);
+                    date.setFullYear(date.getFullYear() + i);
+                    return date.getFullYear().toString();
+                });
+                format = '%Y';
+                break;
+
+            default:
+                return res.status(400).json({ message: 'Invalid type parameter' });
+        }
+
+        // Lấy tất cả đơn hàng đã hoàn thành trong khoảng thời gian
+        const orders = await Order.find({
+            currentStatus: 'delivered',
+            createdAt: { $gte: startDate }
+        });
+
+        // Tạo map để lưu doanh thu theo thời gian
+        const revenueMap = new Map();
+        labels.forEach(label => revenueMap.set(label, 0));
+
+        // Tính toán doanh thu
+        orders.forEach(order => {
+            let label;
+            const date = new Date(order.createdAt);
+
+            switch (type) {
+                case 'week':
+                    label = date.toLocaleDateString('vi-VN', { weekday: 'short' });
+                    break;
+                case 'month':
+                    label = date.toLocaleDateString('vi-VN', { month: 'short' });
+                    break;
+                case 'year':
+                    label = date.getFullYear().toString();
+                    break;
+            }
+
+            if (revenueMap.has(label)) {
+                revenueMap.set(label, revenueMap.get(label) + order.totalAmount);
+            }
+        });
+
+        // Chuyển đổi map thành mảng dữ liệu
+        const data = labels.map(label => ({
+            label,
+            revenue: revenueMap.get(label)
+        }));
+
+        res.json({
+            success: true,
+            data,
+            type,
+            startDate,
+            endDate: now
+        });
+
+    } catch (error) {
+        console.error('Error calculating revenue:', error);
+        res.status(500).json({
+            message: 'Error calculating revenue',
+            error: error.message
+        });
+    }
+};
+
+// API: Top selling products (Pie chart)
+exports.getTopSellingProducts = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 5;
+        // Lấy tất cả đơn hàng đã giao thành công
+        const orders = await Order.find({ currentStatus: 'delivered' });
+        // Gom nhóm sản phẩm và tính tổng số lượng bán ra
+        const productMap = new Map();
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const key = item.product.toString();
+                if (!productMap.has(key)) {
+                    productMap.set(key, {
+                        id: key,
+                        name: item.productSnapshot?.name || 'Unknown',
+                        category: item.productSnapshot?.category || '',
+                        image: item.productSnapshot?.image || '',
+                        sold: 0
+                    });
+                }
+                productMap.get(key).sold += item.quantity;
+            });
+        });
+        // Sắp xếp theo số lượng bán ra giảm dần
+        const topProducts = Array.from(productMap.values())
+            .sort((a, b) => b.sold - a.sold)
+            .slice(0, limit);
+        res.json({ success: true, data: topProducts });
+    } catch (error) {
+        console.error('Error fetching top selling products:', error);
+        res.status(500).json({ message: 'Error fetching top selling products', error: error.message });
+    }
+};
+
+// API: Top selling categories (Bar chart)
+exports.getTopSellingCategories = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 5;
+        // Lấy tất cả đơn hàng đã giao thành công
+        const orders = await Order.find({ currentStatus: 'delivered' });
+        // Gom nhóm theo category và tính tổng số lượng bán ra
+        const categoryMap = new Map();
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const cat = item.productSnapshot?.category || 'Unknown';
+                if (!categoryMap.has(cat)) {
+                    categoryMap.set(cat, { category: cat, sold: 0 });
+                }
+                categoryMap.get(cat).sold += item.quantity;
+            });
+        });
+        // Sắp xếp theo số lượng bán ra giảm dần
+        const topCategories = Array.from(categoryMap.values())
+            .sort((a, b) => b.sold - a.sold)
+            .slice(0, limit);
+        res.json({ success: true, data: topCategories });
+    } catch (error) {
+        console.error('Error fetching top selling categories:', error);
+        res.status(500).json({ message: 'Error fetching top selling categories', error: error.message });
+    }
+};

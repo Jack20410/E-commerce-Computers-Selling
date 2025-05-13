@@ -5,14 +5,15 @@ import SalesChart from '../../components/admin/SalesChart';
 import StatCard from '../../components/admin/StatCard';
 import TopProductsList from '../../components/admin/TopProductsList';
 import RecentOrdersTable from '../../components/admin/RecentOrdersTable';
+import productService from '../../services/productService';
+import orderService from '../../services/orderService';
+import userService from '../../services/userService';
+import BarChartTopCategories from '../../components/admin/BarChartTopCategories';
 
-// Sample data
+// Sample data for other stats
 const sampleData = {
   stats: {
-    totalOrders: 256,
     totalRevenue: 85749000, // 85,749,000 VND
-    totalProducts: 180,
-    totalCustomers: 348,
     monthlySales: [
       { month: 'Jan', sales: 12000000 },
       { month: 'Feb', sales: 15400000 },
@@ -44,20 +45,46 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [topProducts, setTopProducts] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
-  const [monthlySales, setMonthlySales] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [revenueType, setRevenueType] = useState('month');
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [topCategories, setTopCategories] = useState([]);
 
   useEffect(() => {
-    // In a real application, you would fetch this data from your API
-    // For now, we'll use the sample data
     const loadData = async () => {
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        setIsLoading(true);
         
-        setStats(sampleData.stats);
-        setTopProducts(sampleData.topProducts);
-        setRecentOrders(sampleData.recentOrders);
-        setMonthlySales(sampleData.stats.monthlySales);
+        // Fetch all data in parallel
+        const [productsResponse, ordersResponse, totalCustomers, recentOrdersData, revenueResponse, topProductsResponse, topCategoriesResponse] = await Promise.all([
+          productService.getAllProducts(),
+          orderService.getAllOrders(),
+          userService.getTotalCustomers(),
+          orderService.getRecentOrders(5),
+          orderService.getRevenue(revenueType),
+          orderService.getTopSellingProducts(5),
+          orderService.getTopSellingCategories(5)
+        ]);
+
+        // Update states with real data
+        setTotalProducts(productsResponse.data.length);
+        setTotalOrders(ordersResponse.orders.length);
+        setTotalCustomers(totalCustomers);
+        setRecentOrders(recentOrdersData);
+        setRevenueData(revenueResponse.data);
+        setTopProducts(topProductsResponse.data);
+        setTopCategories(topCategoriesResponse.data);
+
+        // Set other stats
+        setStats({
+          ...sampleData.stats,
+          totalProducts: productsResponse.data.length,
+          totalOrders: ordersResponse.orders.length,
+          totalCustomers: totalCustomers
+        });
+        
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -66,7 +93,7 @@ const Dashboard = () => {
     };
 
     loadData();
-  }, []);
+  }, [revenueType]);
 
   // Format currency
   const formatVND = (value) => {
@@ -74,6 +101,10 @@ const Dashboard = () => {
       style: 'currency', 
       currency: 'VND' 
     }).format(value);
+  };
+
+  const handleRevenueTypeChange = (type) => {
+    setRevenueType(type);
   };
 
   if (isLoading) {
@@ -116,7 +147,7 @@ const Dashboard = () => {
           {/* Total Orders Card */}
           <StatCard 
             title="Total Orders"
-            value={stats.totalOrders}
+            value={totalOrders}
             bgColor="bg-blue-100"
             icon={
               <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +171,7 @@ const Dashboard = () => {
           {/* Total Products Card */}
           <StatCard 
             title="Total Products"
-            value={stats.totalProducts}
+            value={totalProducts}
             bgColor="bg-indigo-100"
             icon={
               <svg className="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,7 +183,7 @@ const Dashboard = () => {
           {/* Total Customers Card */}
           <StatCard 
             title="Total Customers"
-            value={stats.totalCustomers}
+            value={totalCustomers}
             bgColor="bg-purple-100"
             icon={
               <svg className="h-6 w-6 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -164,9 +195,43 @@ const Dashboard = () => {
 
         {/* Sales Chart */}
         <div className="bg-white shadow-sm rounded-lg p-6 mb-8">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Sales Overview</h3>
-          <div className="h-64">
-            <SalesChart data={monthlySales} />
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Thống Kê Doanh Thu</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleRevenueTypeChange('week')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  revenueType === 'week'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Tuần
+              </button>
+              <button
+                onClick={() => handleRevenueTypeChange('month')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  revenueType === 'month'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Tháng
+              </button>
+              <button
+                onClick={() => handleRevenueTypeChange('year')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  revenueType === 'year'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Năm
+              </button>
+            </div>
+          </div>
+          <div className="h-80">
+            <SalesChart data={revenueData} type={revenueType} />
           </div>
         </div>
 
@@ -174,6 +239,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Top Products */}
           <TopProductsList products={topProducts} />
+          <BarChartTopCategories categories={topCategories} />
 
           {/* Recent Orders */}
           <RecentOrdersTable orders={recentOrders} formatCurrency={formatVND} />

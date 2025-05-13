@@ -1,120 +1,135 @@
-import { useRef, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Filler,
+  Title
+} from 'chart.js';
+import 'chart.js/auto';
 
-// Polyfill for roundRect if not available
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
-    if (typeof radius === 'number') {
-      radius = {tl: radius, tr: radius, br: radius, bl: radius};
-    } else {
-      radius = {
-        tl: radius[0] || 0,
-        tr: radius[1] || 0,
-        br: radius[2] || 0,
-        bl: radius[3] || 0
-      };
-    }
-    
-    this.beginPath();
-    this.moveTo(x + radius.tl, y);
-    this.lineTo(x + width - radius.tr, y);
-    this.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-    this.lineTo(x + width, y + height - radius.br);
-    this.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
-    this.lineTo(x + radius.bl, y + height);
-    this.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-    this.lineTo(x, y + radius.tl);
-    this.quadraticCurveTo(x, y, x + radius.tl, y);
-    this.closePath();
-    
-    return this;
+ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler, Title);
+
+const COLORS = {
+  border: 'rgba(59, 130, 246, 1)', // #3b82f6
+  point: 'rgba(99, 102, 241, 1)', // #6366f1
+  bg: 'rgba(59, 130, 246, 0.12)',
+  grid: '#e5e7eb',
+  font: '#1f2937',
+  tooltipBg: '#fff',
+  tooltipText: '#3b82f6',
+};
+
+const SalesChart = ({ data = [], type = 'month' }) => {
+  // Chuẩn hóa dữ liệu cho chartjs
+  const chartData = {
+    labels: data.map(item => item.label),
+    datasets: [
+      {
+        label: 'Doanh thu',
+        data: data.map(item => item.revenue),
+        fill: true,
+        borderColor: COLORS.border,
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const {ctx: c, chartArea} = chart;
+          if (!chartArea) return COLORS.bg;
+          const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(59,130,246,0.18)');
+          gradient.addColorStop(1, 'rgba(59,130,246,0.01)');
+          return gradient;
+        },
+        pointBackgroundColor: COLORS.point,
+        pointBorderColor: '#fff',
+        pointRadius: 6,
+        pointHoverRadius: 9,
+        pointHoverBackgroundColor: COLORS.border,
+        tension: 0.4,
+        borderWidth: 3,
+      },
+    ],
   };
-}
 
-const SalesChart = ({ data }) => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    if (!data || !canvasRef.current) return;
-
-    const ctx = canvasRef.current.getContext('2d');
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-
-    // Set canvas dimensions
-    const width = canvasRef.current.width;
-    const height = canvasRef.current.height;
-    const padding = 40;
-    const chartWidth = width - (padding * 2);
-    const chartHeight = height - (padding * 2);
-
-    // Find max value for scaling
-    const maxValue = Math.max(...data.map(item => item.sales));
-    const scaleFactor = chartHeight / maxValue;
-
-    // Draw background grid
-    ctx.strokeStyle = '#e5e7eb';
-    ctx.lineWidth = 1;
-
-    // Horizontal grid lines
-    const gridLines = 5;
-    for (let i = 0; i <= gridLines; i++) {
-      const y = padding + (chartHeight - (chartHeight / gridLines * i));
-      ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(width - padding, y);
-      ctx.stroke();
-      
-      // Draw value labels
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'right';
-      const value = Math.round((maxValue / gridLines) * i).toLocaleString();
-      ctx.fillText(value, padding - 10, y + 4);
-    }
-
-    // Draw bars
-    const barWidth = chartWidth / data.length * 0.6;
-    const barSpacing = chartWidth / data.length * 0.4 / 2;
-    
-    data.forEach((item, index) => {
-      const x = padding + (index * (barWidth + barSpacing * 2)) + barSpacing;
-      const barHeight = item.sales * scaleFactor;
-      const y = height - padding - barHeight;
-      
-      // Draw bar with gradient
-      const gradient = ctx.createLinearGradient(x, y, x, height - padding);
-      gradient.addColorStop(0, '#3b82f6');
-      gradient.addColorStop(1, '#60a5fa');
-      
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.roundRect(x, y, barWidth, barHeight, 4);
-      ctx.fill();
-      
-      // Draw month label
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(item.month, x + barWidth / 2, height - padding + 16);
-    });
-
-    // Add title
-    ctx.fillStyle = '#1f2937';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Monthly Sales', width / 2, 20);
-
-  }, [data]);
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      title: {
+        display: true,
+        text:
+          type === 'week'
+            ? 'Doanh Thu Theo Tuần'
+            : type === 'month'
+            ? 'Doanh Thu Theo Tháng'
+            : 'Doanh Thu Theo Năm',
+        color: COLORS.font,
+        font: { size: 20, weight: 'bold', family: 'Inter, sans-serif' },
+        padding: { bottom: 24 },
+      },
+      tooltip: {
+        backgroundColor: COLORS.tooltipBg,
+        titleColor: COLORS.tooltipText,
+        bodyColor: COLORS.font,
+        borderColor: COLORS.border,
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('vi-VN')} ₫`,
+        },
+        displayColors: false,
+        caretSize: 8,
+        cornerRadius: 8,
+        bodyFont: { family: 'Inter, sans-serif', size: 14 },
+        titleFont: { family: 'Inter, sans-serif', size: 14, weight: 'bold' },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          color: COLORS.grid,
+          drawOnChartArea: false,
+          drawTicks: false,
+        },
+        ticks: {
+          color: COLORS.font,
+          font: { family: 'Inter, sans-serif', size: 14 },
+        },
+      },
+      y: {
+        grid: {
+          color: COLORS.grid,
+          borderDash: [4, 4],
+        },
+        ticks: {
+          color: COLORS.font,
+          font: { family: 'Inter, sans-serif', size: 14 },
+          callback: (value) => value.toLocaleString('vi-VN') + ' ₫',
+        },
+      },
+    },
+    animation: {
+      duration: 1200,
+      easing: 'easeOutQuart',
+    },
+    elements: {
+      line: {
+        borderJoinStyle: 'round',
+      },
+      point: {
+        borderWidth: 3,
+        hoverBorderWidth: 4,
+      },
+    },
+  };
 
   return (
-    <div className="w-full h-full">
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={250}
-        className="w-full h-full"
-      />
+    <div className="w-full h-full relative">
+      <Line data={chartData} options={chartOptions} height={400} />
     </div>
   );
 };
