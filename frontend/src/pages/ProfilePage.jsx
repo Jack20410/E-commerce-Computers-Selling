@@ -703,7 +703,7 @@ const ProfilePage = () => {
     const rating = form.rating || 5;
     const comment = form.comment || '';
     if (!userName) {
-      setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: 'Vui lòng nhập tên của bạn' }));
+      setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: 'Please enter your name' }));
       return;
     }
     setReviewLoadingMap(prev => ({ ...prev, [`${orderId}_${productId}`]: true }));
@@ -717,11 +717,11 @@ const ProfilePage = () => {
         rating,
         comment
       });
-      setReviewSuccessMap(prev => ({ ...prev, [`${orderId}_${productId}`]: 'Đánh giá thành công!' }));
+      setReviewSuccessMap(prev => ({ ...prev, [`${orderId}_${productId}`]: 'Review submitted successfully!' }));
       fetchItemReview(orderId, productId, userName);
       setReviewForms(prev => ({ ...prev, [`${orderId}_${productId}`]: { userName: '', rating: 5, comment: '' } }));
     } catch (err) {
-      setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: err.message || 'Gửi đánh giá thất bại' }));
+      setReviewErrorMap(prev => ({ ...prev, [`${orderId}_${productId}`]: err.message || 'Failed to submit review' }));
     } finally {
       setReviewLoadingMap(prev => ({ ...prev, [`${orderId}_${productId}`]: false }));
     }
@@ -737,7 +737,8 @@ const ProfilePage = () => {
   };
 
   // Hàm bắt đầu sửa review
-  const startEditReview = (reviewKey) => {
+  const startEditReview = (reviewKey, orderId, productId) => {
+    setReviewModal({ open: true, orderId, productId });
     setEditingReviewKey(reviewKey);
     setEditReviewForm({
       rating: itemReviews[reviewKey]?.rating || 5,
@@ -765,14 +766,14 @@ const ProfilePage = () => {
       setEditReviewForm({ rating: 5, comment: '' });
       closeReviewModal();
     } catch (err) {
-      alert('Cập nhật đánh giá thất bại!');
+      alert('Failed to update review!');
     } finally {
       setEditReviewLoading(false);
     }
   };
   // Xoá review
   const handleDeleteReview = async (reviewId, reviewKey) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xoá đánh giá này?')) return;
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
     setEditReviewLoading(true);
     try {
       await reviewService.deleteReview(reviewId);
@@ -781,7 +782,7 @@ const ProfilePage = () => {
       setEditReviewForm({ rating: 5, comment: '' });
       closeReviewModal();
     } catch (err) {
-      alert('Xoá đánh giá thất bại!');
+      alert('Failed to delete review!');
     } finally {
       setEditReviewLoading(false);
     }
@@ -1263,87 +1264,42 @@ const ProfilePage = () => {
                                     <div className="mt-2">
                                       {hasReview ? (
                                         <>
-                                          {editingReviewKey === reviewKey ? (
-                                            <form
-                                              onSubmit={e => {
-                                                e.preventDefault();
-                                                handleEditReviewSubmit(itemReviews[reviewKey]._id, reviewKey);
-                                              }}
-                                              className="flex flex-col gap-3"
-                                            >
+                                          {/* Hiển thị review chuyên nghiệp */}
+                                          <div className="border border-gray-200 bg-white rounded-xl p-4 shadow-sm mb-2 max-w-xl">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+                                              <div className="flex items-center gap-2">
+                                                <span className="font-semibold text-blue-700 text-base">{itemReviews[reviewKey].userName}</span>
+                                                <span className="text-xs text-gray-400">{itemReviews[reviewKey].createdAt ? new Date(itemReviews[reviewKey].createdAt).toLocaleDateString('vi-VN') : ""}</span>
+                                              </div>
                                               <div className="flex items-center gap-1">
                                                 {[1,2,3,4,5].map(star => (
-                                                  <button
-                                                    type="button"
-                                                    key={star}
-                                                    className="focus:outline-none"
-                                                    onClick={() => setEditReviewForm(prev => ({ ...prev, rating: star }))}
+                                                  <svg 
+                                                    key={star} 
+                                                    className={`w-5 h-5 ${star <= itemReviews[reviewKey].rating ? 'text-yellow-400' : 'text-gray-300'}`} 
+                                                    fill="currentColor" 
+                                                    viewBox="0 0 20 20"
                                                   >
-                                                    <svg className={`w-6 h-6 ${star <= (editReviewForm.rating) ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                                  </button>
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                  </svg>
                                                 ))}
                                               </div>
-                                              <textarea
-                                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-                                                placeholder="Viết bình luận..."
-                                                value={editReviewForm.comment}
-                                                onChange={e => setEditReviewForm(prev => ({ ...prev, comment: e.target.value }))}
-                                                required
-                                                rows={3}
-                                              />
-                                              <div className="flex gap-2 items-center">
-                                                <button
-                                                  type="submit"
-                                                  className="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 disabled:opacity-60"
-                                                  disabled={editReviewLoading}
-                                                >
-                                                  {editReviewLoading ? 'Đang lưu...' : 'Lưu'}
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                                  onClick={cancelEditReview}
-                                                  disabled={editReviewLoading}
-                                                >
-                                                  Huỷ
-                                                </button>
-                                              </div>
-                                            </form>
-                                          ) : (
-                                            <div className="border border-green-400 bg-green-100 rounded-lg p-4 shadow flex items-start gap-4">
-                                              <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                  <span className="font-semibold text-blue-700">{itemReviews[reviewKey].userName}</span>
-                                                  <span className="text-xs text-gray-400">
-                                                    {itemReviews[reviewKey].createdAt ? new Date(itemReviews[reviewKey].createdAt).toLocaleDateString('vi-VN') : ""}
-                                                  </span>
-                                                </div>
-                                                <div className="flex items-center gap-1 mb-2">
-                                                  {[1,2,3,4,5].map(star => (
-                                                    <svg key={star} className={`w-5 h-5 ${star <= itemReviews[reviewKey].rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                                  ))}
-                                                </div>
-                                                <div className="text-gray-700 text-base whitespace-pre-line break-words">{itemReviews[reviewKey].comment}</div>
-                                                {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
-                                                  <div className="flex gap-2 mt-3">
-                                                    <button
-                                                      className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500"
-                                                      onClick={() => startEditReview(reviewKey)}
-                                                    >
-                                                      Edit
-                                                    </button>
-                                                    <button
-                                                      className="px-3 py-1 rounded bg-red-500 text-white text-sm font-medium hover:bg-red-600"
-                                                      onClick={() => handleDeleteReview(itemReviews[reviewKey]._id, reviewKey)}
-                                                      disabled={editReviewLoading}
-                                                    >
-                                                      Delete
-                                                    </button>
-                                                  </div>
-                                                )}
-                                              </div>
                                             </div>
-                                          )}
+                                            <div className="text-gray-800 text-base whitespace-pre-line break-words mb-2 px-1">
+                                              {itemReviews[reviewKey].comment}
+                                            </div>
+                                            {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
+                                              <div className="flex gap-2 mt-2">
+                                                <button
+                                                  className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500 disabled:opacity-60"
+                                                  onClick={() => startEditReview(reviewKey, order._id, productId)}
+                                                  disabled={itemReviews[reviewKey].edited}
+                                                  title={itemReviews[reviewKey].edited ? 'You only have once time to edit' : ''}
+                                                >
+                                                  Edit
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
                                         </>
                                       ) : (
                                         <button
@@ -1466,7 +1422,7 @@ const ProfilePage = () => {
                           </div>
                           <textarea
                             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-                            placeholder="Viết bình luận..."
+                            placeholder="Write your comment..."
                             value={editReviewForm.comment}
                             onChange={e => setEditReviewForm(prev => ({ ...prev, comment: e.target.value }))}
                             required
@@ -1478,7 +1434,7 @@ const ProfilePage = () => {
                               className="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 disabled:opacity-60"
                               disabled={editReviewLoading}
                             >
-                              {editReviewLoading ? 'Đang lưu...' : 'Lưu'}
+                              {editReviewLoading ? 'Saving...' : 'Save'}
                             </button>
                             <button
                               type="button"
@@ -1486,7 +1442,7 @@ const ProfilePage = () => {
                               onClick={cancelEditReview}
                               disabled={editReviewLoading}
                             >
-                              Huỷ
+                              Cancel
                             </button>
                           </div>
                         </form>
@@ -1499,26 +1455,16 @@ const ProfilePage = () => {
                                 {itemReviews[reviewKey].createdAt ? new Date(itemReviews[reviewKey].createdAt).toLocaleDateString('vi-VN') : ""}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1 mb-2">
-                              {[1,2,3,4,5].map(star => (
-                                <svg key={star} className={`w-5 h-5 ${star <= itemReviews[reviewKey].rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                              ))}
-                            </div>
                             <div className="text-gray-700 text-base whitespace-pre-line break-words">{itemReviews[reviewKey].comment}</div>
                             {(user.fullName === itemReviews[reviewKey].userName || user.email === itemReviews[reviewKey].userName) && (
                               <div className="flex gap-2 mt-3">
                                 <button
-                                  className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500"
-                                  onClick={() => startEditReview(reviewKey)}
+                                  className="px-3 py-1 rounded bg-yellow-400 text-white text-sm font-medium hover:bg-yellow-500 disabled:opacity-60"
+                                  onClick={() => startEditReview(reviewKey, order._id, productId)}
+                                  disabled={itemReviews[reviewKey].edited}
+                                  title={itemReviews[reviewKey].edited ? 'You only have once time to edit' : ''}
                                 >
-                                  Sửa
-                                </button>
-                                <button
-                                  className="px-3 py-1 rounded bg-red-500 text-white text-sm font-medium hover:bg-red-600"
-                                  onClick={() => handleDeleteReview(itemReviews[reviewKey]._id, reviewKey)}
-                                  disabled={editReviewLoading}
-                                >
-                                  Xoá
+                                  Edit
                                 </button>
                               </div>
                             )}
@@ -1538,14 +1484,19 @@ const ProfilePage = () => {
                       }}
                       className="flex flex-col gap-3"
                     >
+                      {/* Cảnh báo chỉ được sửa 1 lần */}
+                      <div className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-3 py-1 text-xs mb-1">
+                        You only have once time to edit
+                      </div>
                       <input
                         type="text"
                         className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-                        placeholder="Tên của bạn"
+                        placeholder="Your name"
                         value={reviewForms[reviewKey]?.userName || user.fullName || ''}
                         onChange={e => setReviewForms(prev => ({ ...prev, [reviewKey]: { ...prev[reviewKey], userName: e.target.value } }))}
                         required
                         style={{ minWidth: 120 }}
+                        readOnly
                       />
                       <div className="flex items-center gap-1">
                         {[1,2,3,4,5].map(star => (
@@ -1561,7 +1512,7 @@ const ProfilePage = () => {
                       </div>
                       <textarea
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-                        placeholder="Viết bình luận..."
+                        placeholder="Write your comment..."
                         value={reviewForms[reviewKey]?.comment || ''}
                         onChange={e => setReviewForms(prev => ({ ...prev, [reviewKey]: { ...prev[reviewKey], comment: e.target.value } }))}
                         required
@@ -1573,7 +1524,7 @@ const ProfilePage = () => {
                           className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition disabled:opacity-60 text-sm shadow"
                           disabled={reviewLoadingMap[reviewKey]}
                         >
-                          {reviewLoadingMap[reviewKey] ? 'Đang gửi...' : 'Send review'}
+                          {reviewLoadingMap[reviewKey] ? 'Sending...' : 'Send review'}
                         </button>
                         {reviewErrorMap[reviewKey] && <div className="text-red-500 text-sm">{reviewErrorMap[reviewKey]}</div>}
                         {reviewSuccessMap[reviewKey] && <div className="text-green-600 text-sm">{reviewSuccessMap[reviewKey]}</div>}

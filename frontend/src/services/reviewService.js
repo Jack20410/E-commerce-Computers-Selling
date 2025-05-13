@@ -26,8 +26,15 @@ const reviewService = {
   },
   // Sửa đánh giá
   async updateReview(id, data) {
-    const res = await api.put(`/api/reviews/${id}`, data);
-    return res.data;
+    try {
+      const res = await api.put(`/api/reviews/${id}`, data);
+      return res.data;
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw err;
+    }
   },
   // Xoá đánh giá
   async deleteReview(id) {
