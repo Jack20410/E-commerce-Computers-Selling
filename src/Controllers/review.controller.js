@@ -114,3 +114,16 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
   }
 };
+
+// Lấy 6 review 5 sao mới nhất cho testimonials
+exports.getTop5StarReviews = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 6;
+    const reviews = await Review.find({ rating: 5 })
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    res.json({ success: true, data: reviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+  }
+};

@@ -40,6 +40,11 @@ const reviewService = {
   async deleteReview(id) {
     const res = await api.delete(`/api/reviews/${id}`);
     return res.data;
+  },
+  // Lấy 6 review 5 sao mới nhất
+  async getTop5StarReviews(limit = 6) {
+    const res = await api.get(`/api/reviews/top-5star?limit=${limit}`);
+    return res.data.data;
   }
 };
 

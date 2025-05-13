@@ -21,7 +21,7 @@ const AdminNavbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Link to="/" className="text-white font-bold text-xl">
+              <Link to="/admin" className="text-white font-bold text-xl">
                 TechStation Admin
               </Link>
             </div>

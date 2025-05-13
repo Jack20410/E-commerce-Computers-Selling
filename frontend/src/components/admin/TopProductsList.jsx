@@ -26,79 +26,59 @@ const TopProductsList = ({ products = [] }) => {
     );
   }
 
-  // Rút gọn tên cho legend
-  const maxNameLength = 20;
-  const chartData = {
-    labels: products.map(p => truncate(p.name, maxNameLength) + ` (${p.sold} items)`),
-    datasets: [
-      {
-        data: products.map(p => p.sold),
-        backgroundColor: COLORS.slice(0, products.length),
-        borderColor: '#fff',
-        borderWidth: 2,
-        hoverOffset: 12,
-      },
-    ],
+  // Hàm định dạng tiền VND
+  const formatVND = (value) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0
+    }).format(value);
   };
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          color: '#1f2937',
-          font: { size: 14, family: 'Inter, sans-serif', weight: 'bold' },
-          padding: 18,
-          boxWidth: 24,
-          // Hiển thị legend gọn gàng
-          generateLabels: (chart) => {
-            const data = chart.data;
-            if (data.labels.length) {
-              return data.labels.map((label, i) => ({
-                text: label,
-                fillStyle: data.datasets[0].backgroundColor[i],
-                strokeStyle: '#fff',
-                lineWidth: 2,
-                hidden: isNaN(data.datasets[0].data[i]) || chart.getDatasetMeta(0).data[i].hidden,
-                index: i
-              }));
-            }
-            return [];
-          }
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => {
-            const p = products[ctx.dataIndex];
-            return ` ${p.name}: ${p.sold} sản phẩm`;
-          },
-        },
-        backgroundColor: '#fff',
-        titleColor: '#3b82f6',
-        bodyColor: '#1f2937',
-        borderColor: '#3b82f6',
-        borderWidth: 1,
-        padding: 14,
-        cornerRadius: 8,
-        caretSize: 8,
-        displayColors: true,
-      },
-      title: {
-        display: true,
-        text: 'Top Selling Products',
-        color: '#1f2937',
-        font: { size: 20, weight: 'bold', family: 'Inter, sans-serif' },
-        padding: { bottom: 18 },
-      },
-    },
-  };
+  // Rút gọn tên sản phẩm, có tooltip
+  const maxNameLength = 20;
+  const renderProductName = (name) => (
+    <span title={name} className="cursor-help">
+      {truncate(name, maxNameLength)}
+    </span>
+  );
 
   return (
-    <div className="bg-white shadow-sm rounded-lg p-6 flex flex-col items-center justify-center h-full min-h-[320px]">
-      <Pie data={chartData} options={chartOptions} style={{ maxHeight: 480 }} />
+    <div className="bg-white shadow-sm rounded-lg p-6 min-h-[320px]">
+      <h3 className="text-lg leading-6 font-bold text-gray-900 mb-6">Top Selling Products</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Image</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">STT</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Product Name</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Quantity Sold</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Revenue</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-100">
+            {products.map((p, idx) => (
+              <tr key={p.id || idx} className="hover:bg-blue-50 transition">
+                <td className="px-4 py-3 text-center">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 mx-auto flex items-center justify-center">
+                    <img
+                      src={`http://localhost:3001${p.image}`}
+                      alt={p.name}
+                      className="object-cover w-12 h-12"
+                      onError={e => { e.target.src = '/placeholder-image.jpg'; }}
+                    />
+                  </div>
+                </td>
+                <td className="px-4 py-3 font-bold text-blue-600 text-center">{idx + 1}</td>
+                <td className="px-4 py-3 font-medium text-gray-900">{renderProductName(p.name)}</td>
+                <td className="px-4 py-3 text-center text-gray-700">{p.sold}</td>
+                <td className="px-4 py-3 text-right text-green-600 font-semibold">{formatVND(p.revenue || 0)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -13,14 +13,11 @@ const HomePage = () => {
   const [testimonials, setTestimonials] = useState([]);
 
   useEffect(() => {
-    // Fetch 6 latest reviews from the system
+    // Lấy 6 review 5 sao mới nhất cho testimonials
     const fetchTestimonials = async () => {
       try {
-        const response = await reviewService.getReviewsByProduct('all', { limit: 6 });
-        const filtered = (response || [])
-          .filter(r => (r.rating >= 4) && (r.orderId || r.purchaseVerified))
-          .slice(0, 6); // Take first 6 reviews that meet criteria
-        setTestimonials(filtered);
+        const response = await reviewService.getTop5StarReviews(6);
+        setTestimonials(response || []);
       } catch (err) {
         console.error('Error fetching testimonials:', err);
         setTestimonials([]);

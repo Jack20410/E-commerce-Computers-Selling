@@ -46,8 +46,10 @@ const Dashboard = () => {
         setTopProducts(topProductsResponse.data);
         setTopCategories(topCategoriesResponse.data);
 
-        // Calculate total revenue from orders
-        const total = ordersResponse.orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        // Calculate total revenue from orders (only delivered)
+        const total = ordersResponse.orders
+          .filter(order => order.currentStatus === 'delivered')
+          .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
         setTotalRevenue(total);
         
         setIsLoading(false);
@@ -85,6 +87,10 @@ const Dashboard = () => {
   const handleRevenueTypeChange = (type) => {
     setRevenueType(type);
   };
+
+  // Tính tổng doanh thu và tổng số đơn hàng của khoảng thời gian đang xem
+  const totalRevenuePeriod = revenueData.reduce((sum, d) => sum + (d.revenue || 0), 0);
+  const totalOrdersPeriod = revenueData.reduce((sum, d) => sum + (d.orderCount || 0), 0);
 
   if (isLoading) {
     return (
@@ -198,6 +204,16 @@ const Dashboard = () => {
                 Month
               </button>
               <button
+                onClick={() => handleRevenueTypeChange('quarter')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  revenueType === 'quarter'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Quarter
+              </button>
+              <button
                 onClick={() => handleRevenueTypeChange('year')}
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   revenueType === 'year'
@@ -210,7 +226,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="h-80">
-            <SalesChart data={revenueData} type={revenueType} />
+            <SalesChart data={revenueData} type={revenueType} totalRevenuePeriod={totalRevenuePeriod} totalOrdersPeriod={totalOrdersPeriod} />
           </div>
         </div>
 

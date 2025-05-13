@@ -712,7 +712,7 @@ const ProductDetailPage = () => {
                 <input
                   type="text"
                   className="w-full border-b border-gray-300 focus:border-blue-500 outline-none px-2 py-2 text-sm"
-                  placeholder="Viết bình luận..."
+                  placeholder="Write Comment..."
                   value={reviewForm.comment}
                   onFocus={() => setShowReviewForm(true)}
                   onChange={e => {
@@ -728,7 +728,7 @@ const ProductDetailPage = () => {
                       <input
                         type="text"
                         className="border border-gray-300 rounded px-2 py-1 text-sm"
-                        placeholder="Tên của bạn"
+                        placeholder="Your Name"
                         value={reviewForm.userName}
                         onChange={e => setReviewForm(f => ({ ...f, userName: e.target.value }))}
                         required
@@ -741,14 +741,14 @@ const ProductDetailPage = () => {
                         className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 disabled:opacity-60 text-sm"
                         disabled={reviewLoading}
                       >
-                        {reviewLoading ? 'Đang gửi...' : 'Gửi bình luận'}
+                        {reviewLoading ? 'Đang gửi...' : 'Send'}
                       </button>
                       <button
                         type="button"
                         className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded hover:bg-gray-300 text-sm"
                         onClick={() => { setShowReviewForm(false); setReviewForm({ ...reviewForm, comment: '' }); }}
                       >
-                        Huỷ
+                        Cancel
                       </button>
                     </div>
                     {reviewError && <div className="text-red-500 text-sm mt-1">{reviewError}</div>}

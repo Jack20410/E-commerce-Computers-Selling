@@ -713,13 +713,13 @@ exports.createGuestOrder = async (req, res) => {
 // Get revenue statistics
 exports.getRevenue = async (req, res) => {
     try {
-        const { type = 'month' } = req.query; // type có thể là: 'week', 'month', 'year'
+        const { type = 'month' } = req.query; // type: 'week', 'month', 'year', 'quarter'
         const now = new Date();
-        let startDate, labels, format;
+        let startDate, labels;
 
         switch (type) {
             case 'week':
-                // Lấy dữ liệu 7 ngày gần nhất
+                // 7 ngày gần nhất
                 startDate = new Date(now);
                 startDate.setDate(startDate.getDate() - 6);
                 labels = Array.from({ length: 7 }, (_, i) => {
@@ -727,33 +727,49 @@ exports.getRevenue = async (req, res) => {
                     date.setDate(date.getDate() + i);
                     return date.toLocaleDateString('vi-VN', { weekday: 'short' });
                 });
-                format = '%Y-%m-%d';
                 break;
-
             case 'month':
-                // Lấy dữ liệu 12 tháng gần nhất
+                // 30 ngày gần nhất
+                startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 29);
+                labels = Array.from({ length: 30 }, (_, i) => {
+                    const date = new Date(startDate);
+                    date.setDate(date.getDate() + i);
+                    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                });
+                break;
+            case 'year':
+                // 12 tháng gần nhất
                 startDate = new Date(now);
                 startDate.setMonth(startDate.getMonth() - 11);
                 labels = Array.from({ length: 12 }, (_, i) => {
                     const date = new Date(startDate);
                     date.setMonth(date.getMonth() + i);
-                    return date.toLocaleDateString('vi-VN', { month: 'short' });
+                    return (
+                        (date.getMonth() + 1).toString().padStart(2, '0') + '/' + date.getFullYear()
+                    );
                 });
-                format = '%Y-%m';
                 break;
-
-            case 'year':
-                // Lấy dữ liệu 5 năm gần nhất
-                startDate = new Date(now);
-                startDate.setFullYear(startDate.getFullYear() - 4);
-                labels = Array.from({ length: 5 }, (_, i) => {
-                    const date = new Date(startDate);
-                    date.setFullYear(date.getFullYear() + i);
-                    return date.getFullYear().toString();
-                });
-                format = '%Y';
+            case 'quarter':
+                // 4 quý gần nhất
+                let currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+                let currentYear = now.getFullYear();
+                labels = [];
+                for (let i = 3; i >= 0; i--) {
+                    let quarter = currentQuarter - i;
+                    let year = currentYear;
+                    if (quarter <= 0) {
+                        quarter += 4;
+                        year -= 1;
+                    }
+                    labels.push(`Q${quarter}/${year}`);
+                }
+                // Lấy ngày bắt đầu của quý xa nhất
+                let firstQuarter = labels[0].split('/');
+                let fq = parseInt(firstQuarter[0].replace('Q', ''));
+                let fy = parseInt(firstQuarter[1]);
+                startDate = new Date(fy, (fq - 1) * 3, 1);
                 break;
-
             default:
                 return res.status(400).json({ message: 'Invalid type parameter' });
         }
@@ -764,36 +780,44 @@ exports.getRevenue = async (req, res) => {
             createdAt: { $gte: startDate }
         });
 
-        // Tạo map để lưu doanh thu theo thời gian
+        // Tạo map để lưu doanh thu và số lượng đơn hàng theo thời gian
         const revenueMap = new Map();
-        labels.forEach(label => revenueMap.set(label, 0));
+        const orderCountMap = new Map();
+        labels.forEach(label => {
+            revenueMap.set(label, 0);
+            orderCountMap.set(label, 0);
+        });
 
-        // Tính toán doanh thu
+        // Tính toán doanh thu và số lượng đơn hàng
         orders.forEach(order => {
-            let label;
             const date = new Date(order.createdAt);
-
+            let label;
             switch (type) {
                 case 'week':
                     label = date.toLocaleDateString('vi-VN', { weekday: 'short' });
                     break;
                 case 'month':
-                    label = date.toLocaleDateString('vi-VN', { month: 'short' });
+                    label = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
                     break;
                 case 'year':
-                    label = date.getFullYear().toString();
+                    label = (date.getMonth() + 1).toString().padStart(2, '0') + '/' + date.getFullYear();
+                    break;
+                case 'quarter':
+                    const q = Math.floor(date.getMonth() / 3) + 1;
+                    label = `Q${q}/${date.getFullYear()}`;
                     break;
             }
-
             if (revenueMap.has(label)) {
                 revenueMap.set(label, revenueMap.get(label) + order.totalAmount);
+                orderCountMap.set(label, orderCountMap.get(label) + 1);
             }
         });
 
         // Chuyển đổi map thành mảng dữ liệu
         const data = labels.map(label => ({
             label,
-            revenue: revenueMap.get(label)
+            revenue: revenueMap.get(label),
+            orderCount: orderCountMap.get(label)
         }));
 
         res.json({
@@ -819,7 +843,7 @@ exports.getTopSellingProducts = async (req, res) => {
         const limit = parseInt(req.query.limit) || 5;
         // Lấy tất cả đơn hàng đã giao thành công
         const orders = await Order.find({ currentStatus: 'delivered' });
-        // Gom nhóm sản phẩm và tính tổng số lượng bán ra
+        // Gom nhóm sản phẩm và tính tổng số lượng bán ra, tổng doanh thu
         const productMap = new Map();
         orders.forEach(order => {
             order.items.forEach(item => {
@@ -830,10 +854,12 @@ exports.getTopSellingProducts = async (req, res) => {
                         name: item.productSnapshot?.name || 'Unknown',
                         category: item.productSnapshot?.category || '',
                         image: item.productSnapshot?.image || '',
-                        sold: 0
+                        sold: 0,
+                        revenue: 0
                     });
                 }
                 productMap.get(key).sold += item.quantity;
+                productMap.get(key).revenue += (item.price || 0) * item.quantity;
             });
         });
         // Sắp xếp theo số lượng bán ra giảm dần

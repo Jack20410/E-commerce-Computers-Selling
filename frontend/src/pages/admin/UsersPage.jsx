@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { FaUser, FaEnvelope, FaUserShield, FaCalendarAlt, FaTrash, FaEdit } from 'react-icons/fa';
 
@@ -21,11 +21,7 @@ const UsersPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/users/admin/users', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/api/users/admin/users');
       setUsers(response.data.users);
       setIsLoading(false);
     } catch (error) {
@@ -50,14 +46,9 @@ const UsersPage = () => {
 
   const handleRoleChange = async () => {
     try {
-      await axios.patch(
+      await api.patch(
         `/api/users/admin/users/${selectedUser._id}/role`,
-        { role: newRole },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
+        { role: newRole }
       );
       toast.success('Role updated successfully');
       fetchUsers();
@@ -70,11 +61,7 @@ const UsersPage = () => {
 
   const handleDeleteUser = async () => {
     try {
-      await axios.delete(`/api/users/admin/users/${selectedUser._id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await api.delete(`/api/users/admin/users/${selectedUser._id}`);
       toast.success('User deleted successfully');
       fetchUsers();
       setIsModalOpen(false);

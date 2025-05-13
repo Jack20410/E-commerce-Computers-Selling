@@ -9,5 +9,6 @@ router.get('/all', reviewController.getAllReviews);
 router.get('/product/:productId/user', reviewController.getUserReviewForProduct);
 router.put('/:id', reviewController.updateReview);
 router.delete('/:id', reviewController.deleteReview);
+router.get('/top-5star', reviewController.getTop5StarReviews);
 
 module.exports = router;

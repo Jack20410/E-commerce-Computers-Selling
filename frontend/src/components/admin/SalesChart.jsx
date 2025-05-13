@@ -24,7 +24,7 @@ const COLORS = {
   tooltipText: '#3b82f6',
 };
 
-const SalesChart = ({ data = [], type = 'month' }) => {
+const SalesChart = ({ data = [], type = 'month', totalRevenuePeriod = 0, totalOrdersPeriod = 0 }) => {
   // Chuẩn hóa dữ liệu cho chartjs
   const chartData = {
     labels: data.map(item => item.label),
@@ -63,10 +63,14 @@ const SalesChart = ({ data = [], type = 'month' }) => {
         display: true,
         text:
           type === 'week'
-            ? 'Total sales per week'
+            ? 'Revenue in the last 7 days'
             : type === 'month'
-            ? 'Total sales per month'
-            : 'Total sales per year',
+            ? 'Revenue in the last 30 days'
+            : type === 'year'
+            ? 'Revenue in the last 12 months'
+            : type === 'quarter'
+            ? 'Revenue in the last 4 quarters'
+            : '',
         color: COLORS.font,
         font: { size: 20, weight: 'bold', family: 'Inter, sans-serif' },
         padding: { bottom: 24 },
@@ -79,7 +83,13 @@ const SalesChart = ({ data = [], type = 'month' }) => {
         borderWidth: 1,
         padding: 12,
         callbacks: {
-          label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('vi-VN')} ₫`,
+          label: (ctx) => {
+            const orderCount = data[ctx.dataIndex]?.orderCount || 0;
+            return [
+              ` Total sales: ${ctx.parsed.y.toLocaleString('vi-VN')} ₫`,
+              ` Orders: ${orderCount}`
+            ];
+          },
         },
         displayColors: false,
         caretSize: 8,
