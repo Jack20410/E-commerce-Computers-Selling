@@ -13,16 +13,16 @@ const HomePage = () => {
   const [testimonials, setTestimonials] = useState([]);
 
   useEffect(() => {
-    // Lấy 6 review mới nhất toàn hệ thống
+    // Fetch 6 latest reviews from the system
     const fetchTestimonials = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/reviews/all?limit=6'); // lấy nhiều hơn 6 để lọc
-        const data = await res.json();
-        const filtered = (data.data || [])
+        const response = await reviewService.getReviewsByProduct('all', { limit: 6 });
+        const filtered = (response || [])
           .filter(r => (r.rating >= 4) && (r.orderId || r.purchaseVerified))
-          .slice(0, 6); // lấy 6 review đầu tiên thỏa mãn
+          .slice(0, 6); // Take first 6 reviews that meet criteria
         setTestimonials(filtered);
       } catch (err) {
+        console.error('Error fetching testimonials:', err);
         setTestimonials([]);
       }
     };
@@ -61,7 +61,7 @@ const HomePage = () => {
             </p>
             <div className="mt-8">
               <a
-                href="#"
+                href="/products?sale=true"
                 className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
               >
                 View Deals
@@ -153,7 +153,7 @@ const HomePage = () => {
                 </form>
                 <p className="mt-3 text-sm text-gray-500">
                   We care about your data. Read our{' '}
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  <a href="/privacy-policy" className="font-medium text-blue-600 hover:text-blue-500">
                     Privacy Policy
                   </a>
                   .

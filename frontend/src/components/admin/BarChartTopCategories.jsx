@@ -12,29 +12,50 @@ import 'chart.js/auto';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title);
 
-// Màu gradient hoặc đơn sắc tinh tế
+// Subtle gradient or solid colors
 const COLORS = [
   '#3b82f6', '#60a5fa', '#818cf8', '#a78bfa', '#f472b6',
-  '#fb923c', '#34d399', '#22d3ee', '#facc15', '#f87171'
+  '#fb923c', '#34d399', '#22d3ee', '#facc15'
 ];
 
+// All possible categories
+const ALL_CATEGORIES = [
+  'laptop',
+  'pc',
+  'cpu',
+  'graphicsCard',
+  'memory',
+  'storage',
+  'monitor',
+  'motherboard',
+  'gears'
+];
+
+// Format category name
+const formatCategoryName = (category) => {
+  return category
+    .split(/(?=[A-Z])|_/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const BarChartTopCategories = ({ categories = [] }) => {
-  if (!categories || categories.length === 0) {
-    return (
-      <div className="bg-white shadow rounded-lg p-6 flex flex-col items-center justify-center h-full min-h-[320px]">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Selling Categories</h3>
-        <p className="text-gray-500">No category data available</p>
-      </div>
-    );
-  }
+  // Ensure all categories are included with at least 0 sales
+  const allCategoriesData = ALL_CATEGORIES.map(category => {
+    const existingCategory = categories.find(c => c.category === category);
+    return {
+      category,
+      sold: existingCategory ? existingCategory.sold : 0
+    };
+  });
 
   const chartData = {
-    labels: categories.map(c => c.category),
+    labels: allCategoriesData.map(c => formatCategoryName(c.category)),
     datasets: [
       {
-        label: 'Sản phẩm đã bán',
-        data: categories.map(c => c.sold),
-        backgroundColor: COLORS.slice(0, categories.length),
+        label: 'Products Sold',
+        data: allCategoriesData.map(c => c.sold),
+        backgroundColor: COLORS,
         borderRadius: 12,
         borderSkipped: false,
         maxBarThickness: 48,
@@ -64,7 +85,7 @@ const BarChartTopCategories = ({ categories = [] }) => {
         padding: 12,
         displayColors: true,
         callbacks: {
-          label: (ctx) => ` ${ctx.label}: ${ctx.parsed.y} sản phẩm`,
+          label: (ctx) => ` ${formatCategoryName(allCategoriesData[ctx.dataIndex].category)}: ${ctx.parsed.y} products`,
         },
       },
     },

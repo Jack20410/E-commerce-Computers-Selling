@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuthBanner from '../../components/ui/AuthBanner';
-import axios from 'axios';
+import api from '../../services/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const Register = () => {
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/address/provinces');
+        const response = await api.get('/api/address/provinces');
         setProvinces(response.data || []);
       } catch (error) {
         console.error('Error fetching provinces:', error);
@@ -47,7 +47,7 @@ const Register = () => {
       if (selectedProvince) {
         try {
           console.log('Selected province code:', selectedProvince);
-          const response = await axios.get(`http://localhost:3001/api/address/districts/${selectedProvince}`);
+          const response = await api.get(`/api/address/districts/${selectedProvince}`);
           console.log('Districts API response:', response.data);
           setDistricts(response.data);
           setWards([]); // Reset wards when district changes
@@ -75,7 +75,7 @@ const Register = () => {
       if (selectedDistrict) {
         try {
           console.log('Selected district code:', selectedDistrict);
-          const response = await axios.get(`http://localhost:3001/api/address/wards/${selectedDistrict}`);
+          const response = await api.get(`/api/address/wards/${selectedDistrict}`);
           console.log('Wards API response:', response.data);
           setWards(response.data);
           setFormData(prev => ({
@@ -164,7 +164,7 @@ const Register = () => {
     setError('');
     setIsLoading(true);
 
-    // Lấy tên phường, quận, thành phố từ mã
+    // Get ward, district, and city names from codes
     const wardObj = wards.find(w => String(w.code) === String(formData.address.ward));
     const districtObj = districts.find(d => String(d.code) === String(selectedDistrict));
     const provinceObj = provinces.find(p => String(p.code) === String(selectedProvince));
@@ -175,34 +175,26 @@ const Register = () => {
       ward: wardObj ? wardObj.name : '',
       district: districtObj ? districtObj.name : '',
       city: provinceObj ? provinceObj.name : '',
-      isDefault: true // Địa chỉ đầu tiên luôn là mặc định
+      isDefault: true // First address is always default
     };
 
     try {
-      const response = await fetch('http://localhost:3001/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          address: addressToSend
-        }),
+      const response = await api.post('/auth/register', {
+        ...formData,
+        address: addressToSend
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Đăng ký thất bại');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Registration failed');
       }
 
-      // Đăng ký thành công, tự động đăng nhập
-      login(data.data);
+      // Auto login after successful registration
+      login(response.data.data);
       
-      // Chuyển về trang chủ
+      // Navigate to home page
       navigate('/');
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setIsLoading(false);
     }
@@ -396,7 +388,7 @@ const Register = () => {
               <div className="mt-6 grid grid-cols-1 gap-3">
                 <div>
                   <a
-                    href="http://localhost:3001/auth/google"
+                    href={`${import.meta.env.VITE_BACKEND_API_URL}/auth/google`}
                     className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                   >
                     <span className="sr-only">Sign up with Google</span>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import api from '../../services/api';
 import { formatVND } from '../../utils/currencyFormatter';
 import websocketService from '../../services/websocket.service';
 
@@ -40,9 +40,7 @@ const OrdersPage = () => {
   // Fetch orders
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/orders/admin/orders', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/api/orders/admin/orders');
       setOrders(response.data.orders);
     } catch (err) {
       setError('Error fetching orders: ' + err.message);
@@ -55,10 +53,9 @@ const OrdersPage = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     setIsUpdating(true);
     try {
-      const response = await axios.patch(
-        `http://localhost:3001/api/orders/admin/${orderId}/status`,
-        { status: newStatus, note: statusNote },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.patch(
+        `/api/orders/admin/${orderId}/status`,
+        { status: newStatus, note: statusNote }
       );
 
       if (response.data.success) {

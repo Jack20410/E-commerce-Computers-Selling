@@ -35,10 +35,7 @@ const productService = {
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch products');
       }
-      return {
-        data: response.data.data,
-        pagination: response.data.pagination
-      };
+      return response.data;
     } catch (error) {
       console.error('Error in getProducts:', error);
       throw error.response?.data || error;
@@ -213,25 +210,11 @@ const productService = {
       const response = await api.get(`/api/products/category/${category}`, { params });
       console.log('Category products response:', response.data);
       
-      if (!response.data) {
-        throw new Error('No response data received');
-      }
-      
-      if (response.data.data) {
-        return {
-          data: response.data.data,
-          pagination: response.data.pagination || {}
-        };
-      }
-      
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch category products');
       }
       
-      return {
-        data: response.data.data || [],
-        pagination: response.data.pagination || {}
-      };
+      return response.data;
     } catch (error) {
       console.error('Error in getProductsByCategory:', error);
       console.error('Original error details:', error.response?.data || error);

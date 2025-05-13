@@ -8,6 +8,7 @@ import orderService from '../services/orderService';
 import websocketService from '../services/websocket.service';
 import { formatVND } from '../utils/currencyFormatter';
 import reviewService from '../services/reviewService';
+import api from '../services/api';
 
 const OrderStatusBadge = ({ status }) => {
   const statusColors = {
@@ -177,15 +178,12 @@ const ProfilePage = () => {
     try {
       if (!token) return;
       
-      const response = await axios.get(
-        'http://localhost:3001/api/address/user-addresses',
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      const response = await api.get('/api/address/user-addresses', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
       setAddresses(response.data);
     } catch (error) {
       console.error('Error fetching addresses:', {
@@ -199,7 +197,7 @@ const ProfilePage = () => {
 
   const fetchProvinces = async () => {
     try {
-      const response = await axios.get('/api/address/provinces');
+      const response = await api.get('/api/address/provinces');
       setProvinces(response.data);
     } catch (error) {
       console.error('Error fetching provinces:', error);
@@ -208,7 +206,7 @@ const ProfilePage = () => {
 
   const fetchDistricts = async (provinceCode) => {
     try {
-      const response = await axios.get(`/api/address/districts/${provinceCode}`);
+      const response = await api.get(`/api/address/districts/${provinceCode}`);
       setDistricts(response.data);
     } catch (error) {
       console.error('Error fetching districts:', error);
@@ -217,7 +215,7 @@ const ProfilePage = () => {
 
   const fetchWards = async (districtCode) => {
     try {
-      const response = await axios.get(`/api/address/wards/${districtCode}`);
+      const response = await api.get(`/api/address/wards/${districtCode}`);
       setWards(response.data);
     } catch (error) {
       console.error('Error fetching wards:', error);
@@ -510,16 +508,12 @@ const ProfilePage = () => {
       console.log('Sending address data:', addressToSend);
       console.log('Token:', token);
 
-      const response = await axios.post(
-        'http://localhost:3001/api/address/add', 
-        addressToSend,
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      const response = await api.post('/api/address/add', addressToSend, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
       console.log('Response:', response.data);
       await fetchAddresses();
@@ -568,16 +562,12 @@ const ProfilePage = () => {
       console.log('Sending update data:', addressToSend);
       console.log('Token:', token);
 
-      const response = await axios.put(
-        `http://localhost:3001/api/address/update/${editingAddress._id}`,
-        addressToSend,
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      const response = await api.put(`/api/address/update/${editingAddress._id}`, addressToSend, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
       console.log('Response:', response.data);
       await fetchAddresses();
@@ -607,15 +597,12 @@ const ProfilePage = () => {
       console.log('Deleting address:', addressId);
       console.log('Token:', token);
 
-      const response = await axios.delete(
-        `http://localhost:3001/api/address/delete/${addressId}`,
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      const response = await api.delete(`/api/address/delete/${addressId}`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
       console.log('Response:', response.data);
       await fetchAddresses();

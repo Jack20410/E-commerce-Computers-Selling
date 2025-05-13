@@ -10,39 +10,10 @@ import orderService from '../../services/orderService';
 import userService from '../../services/userService';
 import BarChartTopCategories from '../../components/admin/BarChartTopCategories';
 
-// Sample data for other stats
-const sampleData = {
-  stats: {
-    totalRevenue: 85749000, // 85,749,000 VND
-    monthlySales: [
-      { month: 'Jan', sales: 12000000 },
-      { month: 'Feb', sales: 15400000 },
-      { month: 'Mar', sales: 18900000 },
-      { month: 'Apr', sales: 16500000 },
-      { month: 'May', sales: 21000000 },
-      { month: 'Jun', sales: 19700000 }
-    ]
-  },
-  topProducts: [
-    { id: 1, name: 'NVIDIA GeForce RTX 4070', category: 'graphicsCard', sold: 48, image: '/images/products/rtx4070.jpg' },
-    { id: 2, name: 'AMD Ryzen 7 7800X3D', category: 'cpu', sold: 36, image: '/images/products/ryzen7.jpg' },
-    { id: 3, name: 'Samsung 990 PRO 2TB SSD', category: 'storage', sold: 29, image: '/images/products/samsung990pro.jpg' },
-    { id: 4, name: 'ASUS ROG Strix Gaming PC', category: 'pc', sold: 24, image: '/images/products/rogstrix.jpg' },
-    { id: 5, name: 'Corsair Vengeance RGB DDR5', category: 'memory', sold: 22, image: '/images/products/corsairrgb.jpg' }
-  ],
-  recentOrders: [
-    { id: 'ORD-8294', customer: 'Nguyen Van A', date: '2023-08-14', status: 'completed', total: 24500000 },
-    { id: 'ORD-8293', customer: 'Tran Thi B', date: '2023-08-14', status: 'processing', total: 15700000 },
-    { id: 'ORD-8292', customer: 'Le Van C', date: '2023-08-13', status: 'completed', total: 8900000 },
-    { id: 'ORD-8291', customer: 'Pham Thi D', date: '2023-08-13', status: 'shipped', total: 32100000 },
-    { id: 'ORD-8290', customer: 'Hoang Van E', date: '2023-08-12', status: 'completed', total: 4500000 }
-  ]
-};
-
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState(null);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [topProducts, setTopProducts] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
@@ -57,13 +28,12 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         
-        // Fetch all data in parallel
-        const [productsResponse, ordersResponse, totalCustomers, recentOrdersData, revenueResponse, topProductsResponse, topCategoriesResponse] = await Promise.all([
+        // Fetch initial data only once
+        const [productsResponse, ordersResponse, totalCustomers, recentOrdersData, topProductsResponse, topCategoriesResponse] = await Promise.all([
           productService.getAllProducts(),
           orderService.getAllOrders(),
           userService.getTotalCustomers(),
           orderService.getRecentOrders(5),
-          orderService.getRevenue(revenueType),
           orderService.getTopSellingProducts(5),
           orderService.getTopSellingCategories(5)
         ]);
@@ -73,17 +43,12 @@ const Dashboard = () => {
         setTotalOrders(ordersResponse.orders.length);
         setTotalCustomers(totalCustomers);
         setRecentOrders(recentOrdersData);
-        setRevenueData(revenueResponse.data);
         setTopProducts(topProductsResponse.data);
         setTopCategories(topCategoriesResponse.data);
 
-        // Set other stats
-        setStats({
-          ...sampleData.stats,
-          totalProducts: productsResponse.data.length,
-          totalOrders: ordersResponse.orders.length,
-          totalCustomers: totalCustomers
-        });
+        // Calculate total revenue from orders
+        const total = ordersResponse.orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        setTotalRevenue(total);
         
         setIsLoading(false);
       } catch (error) {
@@ -93,6 +58,20 @@ const Dashboard = () => {
     };
 
     loadData();
+  }, []); // Only load initial data once
+
+  // Add new useEffect for revenue type changes
+  useEffect(() => {
+    const updateRevenueData = async () => {
+      try {
+        const revenueResponse = await orderService.getRevenue(revenueType);
+        setRevenueData(revenueResponse.data);
+      } catch (error) {
+        console.error('Error updating revenue data:', error);
+      }
+    };
+
+    updateRevenueData();
   }, [revenueType]);
 
   // Format currency
@@ -159,7 +138,7 @@ const Dashboard = () => {
           {/* Total Revenue Card */}
           <StatCard 
             title="Total Revenue"
-            value={formatVND(stats.totalRevenue)}
+            value={formatVND(totalRevenue)}
             bgColor="bg-green-100"
             icon={
               <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -196,7 +175,7 @@ const Dashboard = () => {
         {/* Sales Chart */}
         <div className="bg-white shadow-sm rounded-lg p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Thống Kê Doanh Thu</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Revenue Statistics</h3>
             <div className="flex gap-2">
               <button
                 onClick={() => handleRevenueTypeChange('week')}
@@ -206,7 +185,7 @@ const Dashboard = () => {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Tuần
+                Week
               </button>
               <button
                 onClick={() => handleRevenueTypeChange('month')}
@@ -216,7 +195,7 @@ const Dashboard = () => {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Tháng
+                Month
               </button>
               <button
                 onClick={() => handleRevenueTypeChange('year')}
@@ -226,7 +205,7 @@ const Dashboard = () => {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Năm
+                Year
               </button>
             </div>
           </div>

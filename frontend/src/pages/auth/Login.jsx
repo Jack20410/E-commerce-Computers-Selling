@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuthBanner from '../../components/ui/AuthBanner';
+import api from '../../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,33 +28,25 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await api.post('/auth/login', formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Đăng nhập thất bại');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Login failed');
       }
 
-      // Lưu thông tin user và token
-      login(data.data);
+      // Save user info and token
+      login(response.data.data);
       
       // Check if user is admin and redirect accordingly
-      if (data.data.user.role === 'admin') {
+      if (response.data.data.user.role === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else {
-        // Chuyển về trang trước đó hoặc trang chủ cho non-admin users
+        // Redirect to previous page or home for non-admin users
         const from = location.state?.from || '/';
         navigate(from, { replace: true });
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setIsLoading(false);
     }
@@ -157,7 +150,7 @@ const Login = () => {
                 </button>
               </div>
 
-              {/* Phần đăng nhập với mạng xã hội */}
+              {/* Social login section */}
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -171,7 +164,7 @@ const Login = () => {
                 <div className="mt-6 grid grid-cols-1 gap-3">
                   <div>
                     <a
-                      href="http://localhost:3001/auth/google"
+                      href={`${import.meta.env.VITE_BACKEND_API_URL}/auth/google`}
                       className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                     >
                       <span className="sr-only">Sign in with Google</span>

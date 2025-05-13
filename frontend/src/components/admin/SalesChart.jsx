@@ -30,7 +30,7 @@ const SalesChart = ({ data = [], type = 'month' }) => {
     labels: data.map(item => item.label),
     datasets: [
       {
-        label: 'Doanh thu',
+        label: 'Total sales',
         data: data.map(item => item.revenue),
         fill: true,
         borderColor: COLORS.border,
@@ -63,10 +63,10 @@ const SalesChart = ({ data = [], type = 'month' }) => {
         display: true,
         text:
           type === 'week'
-            ? 'Doanh Thu Theo Tuần'
+            ? 'Total sales per week'
             : type === 'month'
-            ? 'Doanh Thu Theo Tháng'
-            : 'Doanh Thu Theo Năm',
+            ? 'Total sales per month'
+            : 'Total sales per year',
         color: COLORS.font,
         font: { size: 20, weight: 'bold', family: 'Inter, sans-serif' },
         padding: { bottom: 24 },

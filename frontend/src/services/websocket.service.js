@@ -1,18 +1,24 @@
 import { io } from 'socket.io-client';
+import api from './api';
 
 class WebSocketService {
   constructor() {
     this.socket = null;
     this.listeners = new Map();
+    // Get the base URL from the api configuration
+    this.baseURL = api.defaults.baseURL;
   }
 
   connect(token) {
     if (this.socket) return;
 
-    this.socket = io('http://localhost:3001', {
+    // Use the same base URL as api.js
+    this.socket = io(this.baseURL, {
       auth: {
         token
-      }
+      },
+      withCredentials: true,
+      path: '/socket.io'
     });
 
     this.socket.on('connect', () => {
@@ -49,28 +55,28 @@ class WebSocketService {
     this.listeners.delete('orderStatusUpdate');
   }
 
-  // Join room theo productId
+  // Join product room
   joinProductRoom(productId) {
     if (this.socket) {
       this.socket.emit('joinProductRoom', productId);
     }
   }
 
-  // Rời room
+  // Leave room
   leaveProductRoom(productId) {
     if (this.socket) {
       this.socket.emit('leaveProductRoom', productId);
     }
   }
 
-  // Lắng nghe review realtime
+  // Listen for real-time review updates
   subscribeToReviewUpdates(callback) {
     if (this.socket) {
       this.socket.on('reviewUpdate', callback);
     }
   }
 
-  // Hủy lắng nghe review realtime
+  // Unsubscribe from real-time review updates
   unsubscribeFromReviewUpdates() {
     if (this.socket) {
       this.socket.off('reviewUpdate');

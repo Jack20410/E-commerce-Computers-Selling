@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../Models/user.model');
-const passport = require('../Config/passport');
+const passport = require('../config/passport');
 
 // Middleware xác thực JWT token
 const authenticateToken = async (req, res, next) => {

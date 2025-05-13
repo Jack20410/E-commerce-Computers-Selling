@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? process.env.REACT_APP_API_URL 
-  : 'http://localhost:3001';
+// Determine which API URL to use based on environment
+const API_URL = import.meta.env.VITE_BACKEND_API_URL_DOCKER || 'http://localhost:3001';
 
 console.log('API URL:', API_URL);
 

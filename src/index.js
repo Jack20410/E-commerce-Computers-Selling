@@ -13,7 +13,7 @@ const addressRoutes = require('./Routes/address.route');
 const orderRoutes = require('./Routes/order.route');
 const reviewRoutes = require('./Routes/review.route');
 const discountRoutes = require('./Routes/discount.route');
-const passport = require('./Config/passport');
+const passport = require('./config/passport');
 const websocketService = require('./services/websocket.service');
 
 // Initialize express app

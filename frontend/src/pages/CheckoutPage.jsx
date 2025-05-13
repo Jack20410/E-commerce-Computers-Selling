@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useProfile } from '../context/ProfileContext';
 import orderService from '../services/orderService';
 import { formatVND } from '../utils/currencyFormatter';
-import axios from 'axios';
+import api from '../services/api';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ const CheckoutPage = () => {
   // Fetch provinces
   const fetchProvinces = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/address/provinces');
+      const response = await api.get('/api/address/provinces');
       setProvinces(response.data || []);
     } catch (error) {
       console.error('Error fetching provinces:', error);
@@ -69,7 +69,7 @@ const CheckoutPage = () => {
     const fetchDistricts = async () => {
       if (selectedProvince) {
         try {
-          const response = await axios.get(`http://localhost:3001/api/address/districts/${selectedProvince}`);
+          const response = await api.get(`/api/address/districts/${selectedProvince}`);
           setDistricts(response.data);
           setWards([]); // Reset wards when district changes
           setGuestForm(prev => ({
@@ -95,7 +95,7 @@ const CheckoutPage = () => {
     const fetchWards = async () => {
       if (selectedDistrict) {
         try {
-          const response = await axios.get(`http://localhost:3001/api/address/wards/${selectedDistrict}`);
+          const response = await api.get(`/api/address/wards/${selectedDistrict}`);
           setWards(response.data);
           setSelectedWard(''); // Reset selected ward
           setGuestForm(prev => ({
@@ -126,7 +126,7 @@ const CheckoutPage = () => {
 
       // Load loyalty points
       const pointsData = await orderService.getLoyaltyPoints();
-      setLoyaltyPoints(pointsData.currentPoints || 0);
+      setLoyaltyPoints(pointsData.data.currentPoints || 0);
     } catch (err) {
       setError('Error loading user data');
       console.error(err);

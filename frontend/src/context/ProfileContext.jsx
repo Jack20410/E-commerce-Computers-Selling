@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from './AuthContext';
+import api from '../services/api';
 
 const ProfileContext = createContext();
 
@@ -17,38 +17,6 @@ export const ProfileProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
-  // Tạo instance axios với cấu hình mặc định
-  const api = axios.create({
-    baseURL: 'http://localhost:3001',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-
-  // Thêm interceptor để tự động thêm token vào header
-  api.interceptors.request.use(
-    (config) => {
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    }
-  );
-
-  // Xử lý lỗi chung
-  api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-      }
-      return Promise.reject(error);
-    }
-  );
 
   // Lấy thông tin profile
   const getProfile = async () => {
@@ -79,11 +47,8 @@ export const ProfileProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       console.log('Sending profile update request:', data);
-      const response = await api.patch('/users/update-profile', { fullName: data.fullName }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      const response = await api.patch('/users/update-profile', { 
+        fullName: data.fullName 
       });
       console.log('Profile update response:', response.data);
       setSuccess(response.data.message);
