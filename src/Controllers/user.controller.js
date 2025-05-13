@@ -195,6 +195,132 @@ const userController = {
         error: error.message
       });
     }
+  },
+
+  // Lấy danh sách tất cả user (cho admin)
+  getAllUsers: async (req, res) => {
+    try {
+      // Kiểm tra quyền admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Không có quyền truy cập'
+        });
+      }
+
+      const users = await User.find()
+        .select('-password -googleProfile -verificationToken -verificationTokenExpires -resetPasswordToken -resetPasswordExpires')
+        .sort({ createdAt: -1 });
+
+      res.json({
+        success: true,
+        users
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server',
+        error: error.message
+      });
+    }
+  },
+
+  // Cập nhật role của user (cho admin)
+  updateUserRole: async (req, res) => {
+    try {
+      // Kiểm tra quyền admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Không có quyền truy cập'
+        });
+      }
+
+      const { id } = req.params;
+      const { role } = req.body;
+
+      if (!['customer', 'admin'].includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Role không hợp lệ'
+        });
+      }
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy người dùng'
+        });
+      }
+
+      // Không cho phép thay đổi role của chính mình
+      if (id === req.user.id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể thay đổi role của chính mình'
+        });
+      }
+
+      user.role = role;
+      await user.save();
+
+      res.json({
+        success: true,
+        message: 'Cập nhật role thành công',
+        user
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server',
+        error: error.message
+      });
+    }
+  },
+
+  // Xóa user (cho admin)
+  deleteUser: async (req, res) => {
+    try {
+      // Kiểm tra quyền admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Không có quyền truy cập'
+        });
+      }
+
+      const { id } = req.params;
+
+      // Không cho phép xóa chính mình
+      if (id === req.user.id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể xóa tài khoản của chính mình'
+        });
+      }
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy người dùng'
+        });
+      }
+
+      await user.deleteOne();
+
+      res.json({
+        success: true,
+        message: 'Xóa người dùng thành công'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server',
+        error: error.message
+      });
+    }
   }
 };
 

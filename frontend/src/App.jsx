@@ -28,6 +28,7 @@ import ProductsAdmin from './pages/admin/ProductsAdmin';
 import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
 import OrdersPage from './pages/admin/OrdersPage';
+import UsersPage from './pages/admin/UsersPage';
 
 const AdminLayout = () => {
   return (
@@ -67,6 +68,7 @@ function App() {
                   <Route path="/admin/products/add" element={<AddProduct />} />
                   <Route path="/admin/products/edit/:id" element={<EditProduct />} />
                   <Route path="/admin/orders" element={<OrdersPage />} />
+                  <Route path="/admin/users" element={<UsersPage />} />
                 </Route>
               </Route>
 

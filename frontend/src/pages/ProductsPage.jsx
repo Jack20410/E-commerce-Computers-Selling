@@ -151,192 +151,185 @@ const ProductsPage = () => {
         </title>
         <meta name="description" content="Browse our selection of computers and accessories" />
       </Helmet>
-      <div className="container mx-auto container mx-auto px-2 sm:px-4 md:px-6 lg:px-10 xl:px-12 py-8 flex">
-        {/* Sidebar Filter */}
-        <aside className="w-64 mr-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
-            {/* Brand Filter */}
-            {category && (
-              <div className="mb-8">
-                <h2 className="font-bold mb-3 text-lg text-blue-700 tracking-wide">BRAND</h2>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                  {brands.map(brand => (
+      <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-10 xl:px-12 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Filter - Responsive */}
+          <aside className="w-full lg:w-64">
+            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 sticky top-8">
+              {/* Brand Filter */}
+              {category && (
+                <div className="mb-6 sm:mb-8">
+                  <h2 className="font-bold mb-3 text-base sm:text-lg text-blue-700 tracking-wide">BRAND</h2>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {brands.map(brand => (
+                      <label
+                        key={brand}
+                        className={`flex items-center px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-blue-50 ${
+                          selectedBrand === brand ? 'bg-blue-100' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedBrand === brand}
+                          onChange={() => setSelectedBrand(selectedBrand === brand ? '' : brand)}
+                          className="mr-2 accent-blue-600 w-4 h-4"
+                        />
+                        <span className="capitalize text-sm sm:text-base text-gray-700">{brand}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Price Range Filter */}
+              <div>
+                <h2 className="font-bold mb-3 text-base sm:text-lg text-blue-700 tracking-wide">PRICE RANGE (VNĐ)</h2>
+                <div className="space-y-2">
+                  {PRICE_RANGES.map(range => (
                     <label
-                      key={brand}
+                      key={range.value}
                       className={`flex items-center px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-blue-50 ${
-                        selectedBrand === brand ? 'bg-blue-100' : ''
+                        selectedPriceRange === range.value ? 'bg-blue-100' : ''
                       }`}
                     >
                       <input
                         type="checkbox"
-                        checked={selectedBrand === brand}
-                        onChange={() => setSelectedBrand(selectedBrand === brand ? '' : brand)}
+                        checked={selectedPriceRange === range.value}
+                        onChange={() => handleCheckboxChange(range.value)}
                         className="mr-2 accent-blue-600 w-4 h-4"
                       />
-                      <span className="capitalize text-gray-700">{brand}</span>
+                      <span className="text-sm sm:text-base text-gray-700">{range.label}</span>
                     </label>
                   ))}
                 </div>
+                {/* Price Range Slider and Min-Max Input */}
+                <div className="mt-4 sm:mt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Min"
+                      value={minPriceInput}
+                      onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
+                      className="border border-gray-300 rounded-lg px-2 py-1 w-20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                    <span className="text-gray-400">-</span>
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Max"
+                      value={maxPriceInput}
+                      onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1 w-20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="range"
+                      min={0}
+                      max={50000000}
+                      step={1000000}
+                      value={minPriceInput || 0}
+                      onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
+                      className="w-full accent-blue-600"
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={150000000}
+                      step={1000000}
+                      value={maxPriceInput || 0}
+                      onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
+                      className="w-full accent-blue-600"
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                {queryParam
+                  ? `Search Results for "${queryParam}"`
+                  : category
+                  ? `${category.charAt(0).toUpperCase() + category.slice(1)} Products`
+                  : 'All Products'}
+              </h1>
+              {!queryParam && (
+                <div className="flex flex-wrap gap-4">
+                  <select
+                    value={sort}
+                    onChange={e => setSort(e.target.value)}
+                    className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
+                  >
+                    <option value="">Sort by</option>
+                    <option value="price">Price: Low to High</option>
+                    <option value="-price">Price: High to Low</option>
+                    <option value="name">Name: A-Z</option>
+                    <option value="-brand">Name: Z-A</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {loading && (
+              <p className="text-center text-gray-500">Loading products...</p>
             )}
-            {/* Price Range Filter */}
-            <div>
-              <h2 className="font-bold mb-3 text-lg text-blue-700 tracking-wide">PRICE RANGE (VNĐ)</h2>
-              <div className="space-y-2">
-                {PRICE_RANGES.map(range => (
-                  <label
-                    key={range.value}
-                    className={`flex items-center px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-blue-50 ${
-                      selectedPriceRange === range.value ? 'bg-blue-100' : ''
+
+            {error && (
+              <p className="text-center text-red-500">{error}</p>
+            )}
+
+            {!loading && !error && products.length === 0 && (
+              <p className="text-center text-gray-500">No products found.</p>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {products.map(product => (
+                <div 
+                  key={product.id || product._id} 
+                  onClick={() => handleProductClick(product.id || product._id)}
+                  className="cursor-pointer transform transition-transform duration-200 hover:scale-105"
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {pagination.pages > 1 && (
+              <div className="flex flex-wrap justify-center gap-2 mt-8">
+                <button
+                  onClick={() => handlePageChange(pagination.current - 1)}
+                  disabled={pagination.current === 1}
+                  className="px-3 sm:px-4 py-2 bg-gray-200 rounded disabled:opacity-50 text-sm sm:text-base"
+                >
+                  Prev
+                </button>
+                {[...Array(pagination.pages)].map((_, idx) => (
+                  <button
+                    key={idx + 1}
+                    onClick={() => handlePageChange(idx + 1)}
+                    className={`px-3 sm:px-4 py-2 rounded text-sm sm:text-base ${
+                      pagination.current === idx + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedPriceRange === range.value}
-                      onChange={() => handleCheckboxChange(range.value)}
-                      className="mr-2 accent-blue-600 w-4 h-4"
-                    />
-                    <span className="text-gray-700">{range.label}</span>
-                  </label>
+                    {idx + 1}
+                  </button>
                 ))}
-              </div>
-              {/* Price Range Slider and Min-Max Input */}
-              <div className="mt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <input
-                    type="number"
-                    min={0}
-                    placeholder="Min"
-                    value={minPriceInput}
-                    onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
-                    className="border border-gray-300 rounded-lg px-2 py-1 w-20 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  />
-                  <span className="text-gray-400">-</span>
-                  <input
-                    type="number"
-                    min={0}
-                    placeholder="Max"
-                    value={maxPriceInput}
-                    onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
-                    className="border border-gray-300 rounded-lg px-2 py-1 w-20 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="range"
-                    min={0}
-                    max={50000000}
-                    step={1000000}
-                    value={minPriceInput || 0}
-                    onChange={e => handleMinMaxChange(e.target.value, maxPriceInput)}
-                    className="w-full accent-blue-600"
-                  />
-                  <input
-                    type="range"
-                    min={0}
-                    max={150000000}
-                    step={1000000}
-                    value={maxPriceInput || 0}
-                    onChange={e => handleMinMaxChange(minPriceInput, e.target.value)}
-                    className="w-full accent-blue-600"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-        {/* Main Content */}
-        <main className="flex-1">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">
-              {queryParam
-                ? `Search Results for "${queryParam}"`
-                : category
-                ? `${category.charAt(0).toUpperCase() + category.slice(1)} Products`
-                : 'All Products'}
-            </h1>
-            {!queryParam && (
-              <div className="flex gap-4">
-                {/* Brand Dropdown */}
-                {/* {category && (
-                  <select
-                    value={selectedBrand}
-                    onChange={e => setSelectedBrand(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-2 text-sm"
-                  >
-                    <option value="">All Brands</option>
-                    {brands.map(brand => (
-                      <option key={brand} value={brand}>{brand}</option>
-                    ))}
-                  </select>
-                )} */}
-                {/* Sort Dropdown */}
-                <select
-                  value={sort}
-                  onChange={e => setSort(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 text-sm"
+                <button
+                  onClick={() => handlePageChange(pagination.current + 1)}
+                  disabled={pagination.current === pagination.pages}
+                  className="px-3 sm:px-4 py-2 bg-gray-200 rounded disabled:opacity-50 text-sm sm:text-base"
                 >
-                  <option value="">Sort by</option>
-                  <option value="price">Price: Low to High</option>
-                  <option value="-price">Price: High to Low</option>
-                  <option value="name">Name: A-Z</option>
-                  <option value="-brand">Name: Z-A</option>
-                </select>
+                  Next
+                </button>
               </div>
             )}
-          </div>
-          {loading && (
-            <p className="text-center text-gray-500">Loading products...</p>
-          )}
-
-          {error && (
-            <p className="text-center text-red-500">{error}</p>
-          )}
-
-          {!loading && !error && products.length === 0 && (
-            <p className="text-center text-gray-500">No products found.</p>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-            {products.map(product => (
-              <div 
-                key={product.id || product._id} 
-                onClick={() => handleProductClick(product.id || product._id)}
-                className="cursor-pointer transform transition-transform duration-200 hover:scale-105"
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
-          {/* Pagination Controls */}
-          {(
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={() => handlePageChange(pagination.current - 1)}
-                disabled={pagination.current === 1}
-                className="px-4 py-2 mx-1 bg-gray-200 rounded disabled:opacity-50"
-              >
-                Prev
-              </button>
-              {[...Array(pagination.pages)].map((_, idx) => (
-                <button
-                  key={idx + 1}
-                  onClick={() => handlePageChange(idx + 1)}
-                  className={`px-4 py-2 mx-1 rounded ${pagination.current === idx + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-              <button
-                onClick={() => handlePageChange(pagination.current + 1)}
-                disabled={pagination.current === pagination.pages}
-                className="px-4 py-2 mx-1 bg-gray-200 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </main>
+          </main>
+        </div>
       </div>
     </>
   );
