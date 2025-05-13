@@ -119,8 +119,11 @@ const BarChartTopCategories = ({ categories = [] }) => {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6 mt-6 h-[400px] w-full">
-      <Bar data={chartData} options={chartOptions} />
+    <div className="bg-white shadow-xl rounded-2xl p-8 h-[420px] min-h-[320px] flex flex-col justify-center">
+      <h2 className="text-2xl font-bold text-blue-700 mb-4 tracking-tight">Top Selling Categories</h2>
+      <div className="flex-1 min-h-[320px]">
+        <Bar data={chartData} options={chartOptions} />
+      </div>
     </div>
   );
 };

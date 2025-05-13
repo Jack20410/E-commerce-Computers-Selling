@@ -44,36 +44,39 @@ const TopProductsList = ({ products = [] }) => {
   );
 
   return (
-    <div className="bg-white shadow-sm rounded-lg p-6 min-h-[320px]">
-      <h3 className="text-lg leading-6 font-bold text-gray-900 mb-6">Top Selling Products</h3>
+    <div className="bg-white shadow-xl rounded-2xl p-8 min-h-[320px]">
+      <h3 className="text-2xl font-bold text-blue-700 mb-6 tracking-tight">Top Selling Products</h3>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-blue-100">
+          <thead className="bg-gradient-to-r from-blue-50 to-blue-100 sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Image</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">STT</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Product Name</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Quantity Sold</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Revenue</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Image</th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-blue-700 uppercase tracking-wider">#</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Product Name</th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-blue-700 uppercase tracking-wider">Sold</th>
+              <th className="px-4 py-3 text-right text-xs font-bold text-blue-700 uppercase tracking-wider">Revenue</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody className="bg-white divide-y divide-blue-50">
             {products.map((p, idx) => (
-              <tr key={p.id || idx} className="hover:bg-blue-50 transition">
+              <tr
+                key={p.id || idx}
+                className="hover:bg-blue-50 transition"
+              >
                 <td className="px-4 py-3 text-center">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 mx-auto flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-blue-200 shadow-md mx-auto flex items-center justify-center bg-white">
                     <img
                       src={`http://localhost:3001${p.image}`}
                       alt={p.name}
-                      className="object-cover w-12 h-12"
+                      className="object-cover w-14 h-14"
                       onError={e => { e.target.src = '/placeholder-image.jpg'; }}
                     />
                   </div>
                 </td>
-                <td className="px-4 py-3 font-bold text-blue-600 text-center">{idx + 1}</td>
-                <td className="px-4 py-3 font-medium text-gray-900">{renderProductName(p.name)}</td>
-                <td className="px-4 py-3 text-center text-gray-700">{p.sold}</td>
-                <td className="px-4 py-3 text-right text-green-600 font-semibold">{formatVND(p.revenue || 0)}</td>
+                <td className="px-4 py-3 font-bold text-blue-600 text-center text-lg">{idx + 1}</td>
+                <td className="px-4 py-3 font-semibold text-gray-900">{renderProductName(p.name)}</td>
+                <td className="px-4 py-3 text-center text-blue-700 font-semibold">{p.sold}</td>
+                <td className="px-4 py-3 text-right text-green-600 font-bold">{formatVND(p.revenue || 0)}</td>
               </tr>
             ))}
           </tbody>
@@ -83,4 +86,4 @@ const TopProductsList = ({ products = [] }) => {
   );
 };
 
-export default TopProductsList; 
+export default TopProductsList;

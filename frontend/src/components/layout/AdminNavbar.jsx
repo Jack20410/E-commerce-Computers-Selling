@@ -1,203 +1,113 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { FaTachometerAlt, FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, FaBars, FaTimes, FaUserCircle } from 'react-icons/fa';
+
+const NAV_ITEMS = [
+  { to: '/admin/dashboard', label: 'Dashboard', icon: <FaTachometerAlt className="mr-2" /> },
+  { to: '/admin/products', label: 'Products', icon: <FaBoxOpen className="mr-2" /> },
+  { to: '/admin/orders', label: 'Orders', icon: <FaClipboardList className="mr-2" /> },
+  { to: '/admin/users', label: 'Users', icon: <FaUsers className="mr-2" /> },
+];
 
 const AdminNavbar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const isActive = (path) => location.pathname === path;
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
-    <nav className="bg-gray-800 fixed w-full z-10">
+    <nav className="bg-gradient-to-r from-blue-800 to-blue-600 shadow-lg fixed w-full z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Logo & Brand */}
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Link to="/admin" className="text-white font-bold text-xl">
-                TechStation Admin
-              </Link>
-            </div>
-            
+            <Link to="/admin" className="flex items-center text-white font-extrabold text-2xl tracking-tight">
+              <span className="mr-2">
+                <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#2563eb"/><path d="M10 22l6-12 6 12" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </span>
+              TechStation <span className="text-blue-200 ml-1">Admin</span>
+            </Link>
             {/* Desktop menu */}
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
+            <div className="hidden md:flex ml-10 space-x-2">
+              {NAV_ITEMS.map(item => (
                 <Link
-                  to="/admin/dashboard"
-                  className={`${
-                    isActive('/admin/dashboard')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } px-3 py-2 rounded-md text-sm font-medium`}
+                  key={item.to}
+                  to={item.to}
+                  className={`flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                    isActive(item.to)
+                      ? 'bg-white text-blue-700 shadow'
+                      : 'text-blue-100 hover:bg-blue-700 hover:text-white'
+                  }`}
                 >
-                  Dashboard
+                  {item.icon}
+                  {item.label}
                 </Link>
-                
-                <Link
-                  to="/admin/products"
-                  className={`${
-                    isActive('/admin/products')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } px-3 py-2 rounded-md text-sm font-medium`}
-                >
-                  Products
-                </Link>
-                
-                <Link
-                  to="/admin/orders"
-                  className={`${
-                    isActive('/admin/orders')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } px-3 py-2 rounded-md text-sm font-medium`}
-                >
-                  Orders
-                </Link>
-                
-                <Link
-                  to="/admin/users"
-                  className={`${
-                    isActive('/admin/users')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } px-3 py-2 rounded-md text-sm font-medium`}
-                >
-                  Users
-                </Link>
-              </div>
+              ))}
             </div>
           </div>
-          
+
           {/* User dropdown */}
-          <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6">
-              <div className="ml-3 relative">
-                <div className="flex items-center">
-                  <span className="text-gray-300 mr-4">{user?.fullName || 'Admin'}</span>
-                  <button
-                    onClick={logout}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
-                  >
-                    Logout
-                  </button>
-                </div>
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-9 h-9 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden">
+                <FaUserCircle className="text-blue-700 text-2xl" />
               </div>
+              <span className="text-white font-medium">{user?.fullName || 'Admin'}</span>
             </div>
+            <button
+              onClick={logout}
+              className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-all duration-150"
+            >
+              <FaSignOutAlt className="mr-2" /> Logout
+            </button>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+              className="inline-flex items-center justify-center p-2 rounded-md text-blue-100 hover:text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white"
             >
               <span className="sr-only">Open main menu</span>
-              {!isMobileMenuOpen ? (
-                <svg
-                  className="block h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="block h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              )}
+              {isMobileMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden`}>
+      <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden bg-gradient-to-b from-blue-800 to-blue-600 shadow-lg`}> 
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <Link
-            to="/admin/dashboard"
-            className={`${
-              isActive('/admin/dashboard')
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-            } block px-3 py-2 rounded-md text-base font-medium`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Dashboard
-          </Link>
-          
-          <Link
-            to="/admin/products"
-            className={`${
-              isActive('/admin/products')
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-            } block px-3 py-2 rounded-md text-base font-medium`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Products
-          </Link>
-          
-          <Link
-            to="/admin/orders"
-            className={`${
-              isActive('/admin/orders')
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-            } block px-3 py-2 rounded-md text-base font-medium`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Orders
-          </Link>
-          
-          <Link
-            to="/admin/users"
-            className={`${
-              isActive('/admin/users')
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-            } block px-3 py-2 rounded-md text-base font-medium`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Users
-          </Link>
+          {NAV_ITEMS.map(item => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`flex items-center px-4 py-3 rounded-lg text-base font-semibold transition-all duration-150 ${
+                isActive(item.to)
+                  ? 'bg-white text-blue-700 shadow'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
         </div>
-        
         {/* Mobile user options */}
-        <div className="pt-4 pb-3 border-t border-gray-700">
+        <div className="pt-4 pb-3 border-t border-blue-700">
           <div className="flex items-center px-5">
-            <div className="ml-3">
+            <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden mr-3">
+              <FaUserCircle className="text-blue-700 text-2xl" />
+            </div>
+            <div>
               <div className="text-base font-medium leading-none text-white">
                 {user?.fullName || 'Admin'}
               </div>
-              <div className="text-sm font-medium leading-none text-gray-400">
+              <div className="text-sm font-medium leading-none text-blue-200">
                 {user?.email || 'admin@example.com'}
               </div>
             </div>
@@ -208,9 +118,9 @@ const AdminNavbar = () => {
                 logout();
                 setIsMobileMenuOpen(false);
               }}
-              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-white bg-red-600 hover:bg-red-700 transition duration-150 ease-in-out"
+              className="flex items-center w-full px-4 py-2 rounded-lg text-base font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-150"
             >
-              Logout
+              <FaSignOutAlt className="mr-2" /> Logout
             </button>
           </div>
         </div>
