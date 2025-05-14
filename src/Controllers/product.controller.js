@@ -120,28 +120,26 @@ exports.getProducts = async (req, res) => {
 // Get a single product by ID
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+    
+    const product = await Product.findById(id)
+      .populate({
+        path: 'variants',
+        select: '_id brand model price stock images specifications variantDescription'
+      });
     
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found',
-        error: 'NOT_FOUND'
+        message: 'Product not found'
       });
     }
-
+    
     res.status(200).json({
       success: true,
       data: product
     });
   } catch (error) {
-    if (error.name === 'CastError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid product ID format',
-        error: 'INVALID_ID'
-      });
-    }
     handleError(error, res);
   }
 };
@@ -454,26 +452,38 @@ exports.searchProducts = async (req, res) => {
   }
 };
 
-// Get similar products
+// Get similar products (items in the same category, excluding the current product)
 exports.getSimilarProducts = async (req, res) => {
   try {
     const { category, productId } = req.params;
+    const limit = parseInt(req.query.limit) || 4;
     
-    console.log('Getting similar products for category:', category, 'excluding:', productId);
+    // First get current product to access its variants
+    const currentProduct = await Product.findById(productId);
     
+    if (!currentProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+    
+    // Create a filter to exclude current product and its variants
+    const excludeIds = [productId, ...(currentProduct.variants || []).map(v => v.toString())];
+    
+    // Find similar products
     const similarProducts = await Product.find({
-      category,
-      _id: { $ne: productId }
+      category: category,
+      _id: { $nin: excludeIds }
     })
     .sort({ createdAt: -1 })
-    .limit(4);
+    .limit(limit);
     
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: similarProducts
     });
   } catch (error) {
-    console.error('Error in getSimilarProducts:', error);
     handleError(error, res);
   }
 };
@@ -747,6 +757,380 @@ exports.getAllProducts = async (req, res) => {
       success: true,
       data: products,
       total: products.length
+    });
+  } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// =====================================================================
+// Variant Management
+// =====================================================================
+
+// Search for potential variant products
+exports.searchPotentialVariants = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { query } = req.query;
+    
+    // Get the base product
+    const baseProduct = await Product.findById(id);
+    if (!baseProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Base product not found'
+      });
+    }
+    
+    // Build the search filter
+    const filter = {
+      // Must be same category and brand
+      category: baseProduct.category,
+      brand: baseProduct.brand,
+      // Exclude the base product itself
+      _id: { $ne: baseProduct._id }
+    };
+    
+    // Exclude existing variants
+    if (baseProduct.variants && baseProduct.variants.length > 0) {
+      filter._id.$nin = baseProduct.variants;
+    }
+    
+    // If a search query is provided, add it to the filter
+    if (query && query.trim()) {
+      const searchTerm = query.trim();
+      
+      // Search in model and specifications
+      filter.$or = [
+        { model: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } }
+      ];
+      
+      // Add search in specifications fields
+      // This is more complex as specifications are mixed type fields
+      // We'll do this post-query filtering in memory
+    }
+    
+    // Find matching products
+    const potentialVariants = await Product.find(filter)
+      .select('_id brand model price stock images specifications description')
+      .limit(20);
+    
+    // If a search query was provided, do additional in-memory filtering on specifications
+    let results = potentialVariants;
+    
+    if (query && query.trim()) {
+      const searchTerm = query.trim().toLowerCase();
+      
+      // Function to check if a specification value contains the search term
+      const containsSearchTerm = (value) => {
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'string') return value.toLowerCase().includes(searchTerm);
+        if (typeof value === 'number') return String(value).includes(searchTerm);
+        if (Array.isArray(value)) return value.some(v => containsSearchTerm(v));
+        return false;
+      };
+      
+      // Score products by how well they match the search term
+      results = potentialVariants.map(product => {
+        let score = 0;
+        
+        // Check model name (highest weight)
+        if (product.model.toLowerCase().includes(searchTerm)) {
+          score += 10;
+        }
+        
+        // Check specifications
+        if (product.specifications) {
+          Object.entries(product.specifications).forEach(([key, value]) => {
+            // Check if key contains search term
+            if (key.toLowerCase().includes(searchTerm)) {
+              score += 3;
+            }
+            
+            // Check if value contains search term
+            if (containsSearchTerm(value)) {
+              score += 5;
+            }
+          });
+        }
+        
+        // Check description
+        if (product.description && product.description.toLowerCase().includes(searchTerm)) {
+          score += 2;
+        }
+        
+        return { product, score };
+      })
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.product);
+    }
+    
+    // Calculate similarity to base product for more intelligent suggestions
+    if (baseProduct.specifications) {
+      results = results.map(product => {
+        // Calculate a similarity score based on matching specifications
+        let similarityScore = 0;
+        let differenceCount = 0;
+        
+        if (product.specifications) {
+          // Count matching and differing specs
+          Object.keys(baseProduct.specifications).forEach(key => {
+            if (product.specifications[key] !== undefined) {
+              if (String(product.specifications[key]) === String(baseProduct.specifications[key])) {
+                similarityScore += 1;
+              } else {
+                differenceCount += 1;
+              }
+            }
+          });
+          
+          // Additional specs in the variant that don't exist in base product
+          const additionalSpecs = Object.keys(product.specifications).filter(
+            key => baseProduct.specifications[key] === undefined
+          ).length;
+          
+          // A good variant has some differences but is mostly similar
+          // Ideal is high similarity with some strategic differences
+          const totalSpecCount = Object.keys(baseProduct.specifications).length;
+          
+          // Calculate normalized similarity (0-100)
+          const normalizedSimilarity = totalSpecCount > 0 
+            ? Math.round((similarityScore / totalSpecCount) * 100)
+            : 0;
+            
+          // Variants with at least 1 difference but high similarity are best
+          product.similarityScore = differenceCount > 0 ? normalizedSimilarity : 0;
+          product.differences = differenceCount;
+        } else {
+          product.similarityScore = 0;
+          product.differences = 0;
+        }
+        
+        return product;
+      })
+      .sort((a, b) => {
+        // Sort by: has differences (> 0), then by similarity score (higher is better)
+        if ((a.differences > 0 && b.differences > 0) || (a.differences === 0 && b.differences === 0)) {
+          return b.similarityScore - a.similarityScore;
+        }
+        return b.differences - a.differences;
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: results,
+      baseProduct: {
+        id: baseProduct._id,
+        brand: baseProduct.brand,
+        model: baseProduct.model,
+        category: baseProduct.category
+      }
+    });
+    
+  } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// Add a variant to a product
+exports.addVariant = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { variantId, variantDescription } = req.body;
+
+    if (!variantId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Variant ID is required'
+      });
+    }
+
+    if (id === variantId) {
+      return res.status(400).json({
+        success: false,
+        message: 'A product cannot be a variant of itself'
+      });
+    }
+
+    // Get both products
+    const product = await Product.findById(id);
+    const variantProduct = await Product.findById(variantId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    if (!variantProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Variant product not found'
+      });
+    }
+
+    // Check if the variant is already linked
+    if (product.variants.includes(variantId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Products are already linked as variants'
+      });
+    }
+
+    // Check if products have the same category and brand (required for variants)
+    if (product.category !== variantProduct.category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Variants must be of the same category'
+      });
+    }
+    
+    if (product.brand !== variantProduct.brand) {
+      return res.status(400).json({
+        success: false,
+        message: 'Variants must be of the same brand'
+      });
+    }
+
+    // Link products as variants (adds each to the other's variants array)
+    await Product.linkVariants(id, variantId);
+
+    // Update variant descriptions if provided
+    if (variantDescription) {
+      product.variantDescription = variantDescription;
+      await product.save();
+    }
+
+    const updatedProduct = await Product.findById(id).populate({
+      path: 'variants',
+      select: '_id brand model price stock images specifications variantDescription'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Variant added successfully',
+      data: updatedProduct
+    });
+  } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// Remove a variant from a product
+exports.removeVariant = async (req, res) => {
+  try {
+    const { id, variantId } = req.params;
+
+    const product = await Product.findById(id);
+    const variantProduct = await Product.findById(variantId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    if (!variantProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Variant product not found'
+      });
+    }
+
+    // Check if the products are linked as variants
+    if (!product.variants.some(v => v.toString() === variantId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Products are not linked as variants'
+      });
+    }
+
+    // Unlink products as variants
+    await Product.unlinkVariants(id, variantId);
+
+    const updatedProduct = await Product.findById(id).populate({
+      path: 'variants',
+      select: '_id brand model price stock images specifications variantDescription'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Variant removed successfully',
+      data: updatedProduct
+    });
+  } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// Get variants of a product
+exports.getVariants = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id).populate({
+      path: 'variants',
+      select: '_id brand model price stock images specifications variantDescription'
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product.variants || []
+    });
+  } catch (error) {
+    handleError(error, res);
+  }
+};
+
+// Update variant description
+exports.updateVariantDescription = async (req, res) => {
+  try {
+    const { id, variantId } = req.params;
+    const { variantDescription } = req.body;
+
+    if (variantDescription === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Variant description is required'
+      });
+    }
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Check if the products are linked as variants
+    if (!product.variants.some(v => v.toString() === variantId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Products are not linked as variants'
+      });
+    }
+
+    product.variantDescription = variantDescription;
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Variant description updated successfully',
+      data: product
     });
   } catch (error) {
     handleError(error, res);

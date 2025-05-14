@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import productService from '../../services/productService';
 import ProductCard from './ProductCard';
+import './CategorySlider.css';
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     fetchProducts();
@@ -19,7 +21,7 @@ const FeaturedProducts = () => {
 
       const response = await productService.getProducts({
         limit: 8,
-        sort: '+createdAt'
+        sort: '-createdAt'
       });
 
       setProducts(response.data);
@@ -32,12 +34,24 @@ const FeaturedProducts = () => {
     }
   };
 
+  const nextSlide = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex + 4 >= products.length ? 0 : prevIndex + 4
+    );
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex - 4 < 0 ? Math.max(0, products.length - 4) : prevIndex - 4
+    );
+  };
+
   return (
     <section className="bg-gradient-to-b from-gray-50 to-white py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-4xl font-bold text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            Featured Products
+            Newest Products
           </h2>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600">
             Discover our top technology products
@@ -63,21 +77,37 @@ const FeaturedProducts = () => {
           ) : products.length === 0 ? (
             <div className="text-center w-full py-10">No products available.</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
+            <div className="slider-container">
+              <button 
+                className="slider-button prev" 
+                onClick={prevSlide}
+                disabled={currentIndex === 0}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div 
+                className="slider-wrapper"
+                style={{ transform: `translateX(-${currentIndex * (100 / 4)}%)` }}
+              >
+                {products.map((product) => (
+                  <div key={product._id} className="slider-card">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+              <button 
+                className="slider-button next" 
+                onClick={nextSlide}
+                disabled={currentIndex + 4 >= products.length}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           )}
-        </div>
-
-        <div className="mt-10 text-center">
-          <Link
-            to="/products"
-            className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
-          >
-            View All Products
-          </Link>
         </div>
       </div>
     </section>

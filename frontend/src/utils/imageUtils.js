@@ -15,7 +15,7 @@ export const getImageUrl = (imagePath) => {
   const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
   
   // In development, use the backend URL
-  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001';
   
   return `${backendUrl}/${cleanPath}`;
 };
@@ -26,6 +26,6 @@ export const getImageUrl = (imagePath) => {
  * @returns {string} URL of the placeholder image
  */
 export const getPlaceholderImage = (category) => {
-  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001';
   return `${backendUrl}/images/placeholders/${category || 'default'}.jpg`;
 }; 

@@ -14,7 +14,12 @@ const {
   deleteProductImage,
   getSimilarProducts,
   getSpecificationsByCategory,
-  getAllProducts
+  getAllProducts,
+  addVariant,
+  removeVariant,
+  getVariants,
+  updateVariantDescription,
+  searchPotentialVariants
 } = require('../Controllers/product.controller');
 
 // Middleware to validate MongoDB ObjectId
@@ -23,6 +28,17 @@ const validateObjectId = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: 'Invalid product ID format'
+    });
+  }
+  next();
+};
+
+// Middleware to validate variant MongoDB ObjectId
+const validateVariantObjectId = (req, res, next) => {
+  if (!req.params.variantId.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid variant ID format'
     });
   }
   next();
@@ -65,8 +81,8 @@ router.get('/category/:category/brands', async (req, res) => {
 // Get similar products in same category (excluding current product)
 router.get('/similar/:category/:productId', getSimilarProducts);
 
-// Fix: Use the destructured function directly
-// router.get('/category/:category/specifications', getSpecificationsByCategory);
+// Get specifications for a category
+router.get('/category/:category/specifications', getSpecificationsByCategory);
 
 // Get, update, delete product by ID
 router.route('/:id')
@@ -84,5 +100,24 @@ router.route('/:id/image')
 
 // Update product stock
 router.patch('/:id/stock', validateObjectId, updateStock);
+
+// =====================================================================
+// Product Variants Routes
+// =====================================================================
+
+// Search for potential variants for a product
+router.get('/:id/potential-variants', validateObjectId, searchPotentialVariants);
+
+// Get all variants of a product
+router.get('/:id/variants', validateObjectId, getVariants);
+
+// Add a variant to a product
+router.post('/:id/variants', validateObjectId, addVariant);
+
+// Remove a variant from a product
+router.delete('/:id/variants/:variantId', [validateObjectId, validateVariantObjectId], removeVariant);
+
+// Update variant description
+router.patch('/:id/variants/:variantId/description', [validateObjectId, validateVariantObjectId], updateVariantDescription);
 
 module.exports = router;

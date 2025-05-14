@@ -178,6 +178,16 @@ const productSchema = new mongoose.Schema({
       message: 'Missing required specifications for the selected category'
     }
   },
+  // Add variants field - bidirectional references to other product variants
+  variants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  }],
+  // Optional field to store a human-readable description of what makes this variant different
+  variantDescription: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: function() {
@@ -270,6 +280,54 @@ productSchema.methods.addImages = function(imageUrls) {
   }
 };
 
+// Method to add a variant to this product
+productSchema.methods.addVariant = async function(variantId) {
+  // Add the variant if it doesn't exist
+  if (!this.variants.some(v => v.toString() === variantId.toString())) {
+    this.variants.push(variantId);
+    await this.save();
+  }
+};
+
+// Method to remove a variant from this product
+productSchema.methods.removeVariant = async function(variantId) {
+  // Remove the variant if it exists
+  this.variants = this.variants.filter(v => v.toString() !== variantId.toString());
+  await this.save();
+};
+
+// Static method to link two products as variants of each other
+productSchema.statics.linkVariants = async function(productId1, productId2) {
+  const product1 = await this.findById(productId1);
+  const product2 = await this.findById(productId2);
+  
+  if (!product1 || !product2) {
+    throw new Error('One or both products not found');
+  }
+  
+  // Add each product to the other's variants array if not already there
+  await product1.addVariant(productId2);
+  await product2.addVariant(productId1);
+  
+  return { product1, product2 };
+};
+
+// Static method to unlink two products that are variants
+productSchema.statics.unlinkVariants = async function(productId1, productId2) {
+  const product1 = await this.findById(productId1);
+  const product2 = await this.findById(productId2);
+  
+  if (!product1 || !product2) {
+    throw new Error('One or both products not found');
+  }
+  
+  // Remove each product from the other's variants array
+  await product1.removeVariant(productId2);
+  await product2.removeVariant(productId1);
+  
+  return { product1, product2 };
+};
+
 // Method to transform the document when converting to JSON
 productSchema.methods.toJSON = function() {
   const obj = this.toObject();
@@ -300,6 +358,7 @@ productSchema.index({ 'specifications.brand': 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ createdAt: 1 });
 productSchema.index({ updatedAt: 1 });
+productSchema.index({ variants: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 

@@ -898,3 +898,52 @@ exports.getTopSellingCategories = async (req, res) => {
         res.status(500).json({ message: 'Error fetching top selling categories', error: error.message });
     }
 };
+
+// Public API: Get top selling products
+exports.getPublicTopSellingProducts = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 4;
+        // Get all successfully delivered orders
+        const orders = await Order.find({ currentStatus: 'delivered' });
+        
+        // Group products and calculate total sales quantity and revenue
+        const productMap = new Map();
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const key = item.product.toString();
+                if (!productMap.has(key)) {
+                    productMap.set(key, {
+                        id: key,
+                        name: item.productSnapshot?.name || 'Unknown',
+                        category: item.productSnapshot?.category || '',
+                        image: item.productSnapshot?.image || '',
+                        price: item.price || 0,
+                        sold: 0,
+                        revenue: 0
+                    });
+                }
+                productMap.get(key).sold += item.quantity;
+                productMap.get(key).revenue += (item.price || 0) * item.quantity;
+            });
+        });
+
+        // Sort by quantity sold in descending order and get top products
+        const topProducts = Array.from(productMap.values())
+            .sort((a, b) => b.sold - a.sold)
+            .slice(0, limit);
+
+        res.json({ 
+            success: true, 
+            data: topProducts.map(product => ({
+                ...product,
+                soldCount: product.sold // Rename for frontend clarity
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching public top selling products:', error);
+        res.status(500).json({ 
+            message: 'Error fetching top selling products', 
+            error: error.message 
+        });
+    }
+};

@@ -26,6 +26,19 @@ const orderService = {
     return api.get('/api/orders/loyalty-points');
   },
 
+  // Get top selling products for homepage
+  getTopSellingProductsHomePage: async (limit = 4) => {
+    try {
+      console.log('Calling API endpoint: /api/orders/top-selling');
+      const response = await api.get(`/api/orders/top-selling?limit=${limit}`);
+      console.log('API response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top selling products for homepage:', error);
+      throw error;
+    }
+  },
+
   getAllOrders: async (params = { limit: 1000 }) => {
     try {
       const query = new URLSearchParams(params).toString();
@@ -71,7 +84,7 @@ const orderService = {
     }
   },
 
-  // Get top selling products
+  // Get top selling products for admin
   getTopSellingProducts: async (limit = 5) => {
     try {
       const response = await api.get(`/api/orders/admin/top-products?limit=${limit}`);

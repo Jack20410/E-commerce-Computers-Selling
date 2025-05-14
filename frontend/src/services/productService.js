@@ -314,6 +314,7 @@ const productService = {
       throw error.response?.data || error;
     }
   },
+
   /**
    * Get all specifications for a specific category
    */
@@ -325,6 +326,95 @@ const productService = {
       }
       return response.data.data || {};
     } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Get variants of a product
+   */
+  getProductVariants: async (productId) => {
+    try {
+      const response = await api.get(`/api/products/${productId}/variants`);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch product variants');
+      }
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error in getProductVariants:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Add a variant to a product
+   */
+  addProductVariant: async (productId, variantId, variantDescription = '') => {
+    try {
+      const response = await api.post(`/api/products/${productId}/variants`, {
+        variantId,
+        variantDescription
+      });
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to add product variant');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in addProductVariant:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Remove a variant from a product
+   */
+  removeProductVariant: async (productId, variantId) => {
+    try {
+      const response = await api.delete(`/api/products/${productId}/variants/${variantId}`);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to remove product variant');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in removeProductVariant:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Update variant description
+   */
+  updateVariantDescription: async (productId, variantId, variantDescription) => {
+    try {
+      const response = await api.patch(`/api/products/${productId}/variants/${variantId}/description`, {
+        variantDescription
+      });
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to update variant description');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Error in updateVariantDescription:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Search for potential variants for a product
+   * This finds products of same category and brand with intelligent similarity ranking
+   */
+  searchPotentialVariants: async (productId, searchQuery = '') => {
+    try {
+      const params = searchQuery ? { query: searchQuery } : {};
+      const response = await api.get(`/api/products/${productId}/potential-variants`, { params });
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to search for potential variants');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error in searchPotentialVariants:', error);
       throw error.response?.data || error;
     }
   },

@@ -299,7 +299,7 @@ const ProductsPage = () => {
             </div>
 
             {/* Pagination Controls */}
-            {pagination.pages > 1 && (
+            {(
               <div className="flex flex-wrap justify-center gap-2 mt-8">
                 <button
                   onClick={() => handlePageChange(pagination.current - 1)}

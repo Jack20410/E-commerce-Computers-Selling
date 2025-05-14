@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import specificationFields from '../../utils/specificationFields';
 import productService from '../../services/productService';
+import ProductVariantsSection from '../../components/product/ProductVariantsSection';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -28,6 +29,8 @@ const EditProduct = () => {
   const [deletedImageIds, setDeletedImageIds] = useState([]);
   const [categoryHasChanged, setCategoryHasChanged] = useState(false);
   const [mainImageId, setMainImageId] = useState(null);
+  const [variantsRefreshKey, setVariantsRefreshKey] = useState(0);
+  const [variants, setVariants] = useState([]);
 
   // Check if user is admin
   useEffect(() => {
@@ -335,6 +338,9 @@ const EditProduct = () => {
       const result = await productService.updateProduct(id, productData);
 
       setMessage({ text: 'Product updated successfully!', type: 'success' });
+      
+      // Refresh variants section
+      setVariantsRefreshKey(prev => prev + 1);
       
       setTimeout(() => {
         navigate(`/admin/products`);
@@ -650,6 +656,16 @@ const EditProduct = () => {
             </div>
           )}
         </div>
+
+        {/* Product Variants Section */}
+        {!loading && id && (
+          <ProductVariantsSection 
+            productId={id}
+            productModel={formData.model}
+            onVariantsChange={setVariants}
+            refreshKey={variantsRefreshKey}
+          />
+        )}
 
         {message.text && (
         <div 

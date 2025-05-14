@@ -8,6 +8,7 @@ import { formatVND } from '../utils/currencyFormatter';
 import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
 import WebSocketService from '../services/websocket.service';
 import ProductCard from '../components/product/ProductCard';
+import ProductVariants from '../components/product/ProductVariants';
 
 // Rating Stars Component
 const RatingStars = ({ rating = 0, totalRatings }) => (
@@ -174,7 +175,6 @@ const ProductSpecifications = ({ category, specs }) => {
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">Specifications</h2>
       <div className="bg-white rounded-lg shadow-sm p-6">
         <SpecificationRow label="Brand" value={specs.brand} />
         <SpecificationRow label="Model" value={specs.model} />
@@ -271,6 +271,7 @@ const ProductDetailPage = () => {
   const [reviewSuccess, setReviewSuccess] = useState('');
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  const [variants, setVariants] = useState([]);
   const REVIEWS_PER_PAGE = 5;
 
   useEffect(() => {
@@ -300,6 +301,10 @@ const ProductDetailPage = () => {
         const firstImage = data.images?.[0];
         const imageUrl = mainImage?.url || firstImage?.url;
         setSelectedImage(imageUrl ? getImageUrl(imageUrl) : getPlaceholderImage(data.category));
+
+        // Fetch variants
+        const variantsData = await productService.getProductVariants(id);
+        setVariants(variantsData);
 
         // Update recently viewed products
         const recentlyViewedProducts = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
@@ -557,13 +562,75 @@ const ProductDetailPage = () => {
                 </div>
               </div>
               
-              <div className="border-t border-b border-gray-100 py-3">
+              <div className="border-t border-gray-100 py-3">
                 <h2 className="text-lg font-semibold mb-2">Description</h2>
                 <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{product.description}</p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center space-x-4">
+                {/* Product Variants Selection */}
+                {variants && variants.length > 0 && (
+                  <div className="border-t border-gray-100 pt-4">
+                    <div className="mb-2">
+                      <h3 className="text-sm font-medium text-gray-900">Product options</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <div
+                        className="px-3 py-2 rounded-lg text-sm font-medium border bg-blue-50 border-blue-600 text-blue-700"
+                      >
+                        {product.specifications?.processor || 
+                         product.specifications?.capacity || 
+                         product.specifications?.memory ||
+                         product.specifications?.displaySize ||
+                         'Base model'}
+                      </div>
+                      {variants.map((variant) => (
+                        <Link
+                          key={variant._id}
+                          to={`/products/${variant._id}`}
+                          className="px-3 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 flex items-center"
+                        >
+                          <span>
+                            {variant.specifications?.processor || 
+                             variant.specifications?.capacity || 
+                             variant.specifications?.memory ||
+                             variant.specifications?.displaySize ||
+                             variant.model}
+                          </span>
+                          {variant.price !== product.price && (
+                            <span className={`ml-2 text-xs ${variant.price > product.price ? 'text-red-600' : 'text-green-600'}`}>
+                              {variant.price > product.price ? '+' : '-'}
+                              {Math.abs(variant.price - product.price).toLocaleString('vi-VN')}₫
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <label htmlFor="quantity" className="text-sm text-gray-600">Quantity:</label>
+                    <div className="relative">
+                      <select 
+                        id="quantity"
+                        value={quantity} 
+                        onChange={(e) => setQuantity(parseInt(e.target.value))}
+                        className="appearance-none bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        {[...Array(Math.min(5, product.stock))].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>{i + 1}</option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600">Availability:</span>
                     {product.stock > 0 ? (
@@ -578,32 +645,10 @@ const ProductDetailPage = () => {
                       </span>
                     )}
                   </div>
-                  
                 </div>
 
                 {product.stock > 0 && (
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <label htmlFor="quantity" className="text-sm text-gray-600">Quantity:</label>
-                      <div className="relative">
-                        <select 
-                          id="quantity"
-                          value={quantity} 
-                          onChange={(e) => setQuantity(parseInt(e.target.value))}
-                          className="appearance-none bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          {[...Array(Math.min(5, product.stock))].map((_, i) => (
-                            <option key={i + 1} value={i + 1}>{i + 1}</option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                    
                     <button 
                       onClick={handleAddToCart}
                       className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg
@@ -823,32 +868,35 @@ const ProductDetailPage = () => {
               )}
             </div>
           </div>
-
+          
           {/* Similar Products Section */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold mb-4">Similar Products</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {similarProducts.length > 0 ? (
-                similarProducts.map(product => (
+          {similarProducts && similarProducts.length > 0 && (
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+                Similar Products
+              </h2>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {similarProducts.map(product => (
                   <ProductCard key={product._id} product={product} />
-                ))
-              ) : (
-                // Loading placeholders
-                [...Array(4)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow-md p-3 transform hover:scale-105 transition-transform duration-200">
-                    <div className="aspect-w-1 aspect-h-1 w-full bg-gray-100 rounded-lg mb-3 animate-pulse"></div>
-                    <div className="h-3 bg-gray-100 rounded w-3/4 mb-2 animate-pulse"></div>
-                    <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse"></div>
-                  </div>
-                ))
-              )}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Recently Viewed Section */}
-          {recentlyViewed.length > 1 && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Recently Viewed</h2>
+          {recentlyViewed && recentlyViewed.length > 1 && (
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recently Viewed
+              </h2>
+              
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {recentlyViewed.filter(p => p._id !== product?._id).map((product) => (
                   <ProductCard key={product._id} product={product} />

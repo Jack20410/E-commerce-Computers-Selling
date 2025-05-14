@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import Banner from '../components/ui/Banner';
 import FeaturedProducts from '../components/product/FeaturedProducts';
+import TopSellingProducts from '../components/product/TopSellingProducts';
 import Categories from '../components/ui/Categories';
 import LaptopCategories from '../components/product/LaptopCategories';
 import ProcessorCategories from '../components/product/ProcessorCategories';
@@ -35,6 +36,9 @@ const HomePage = () => {
       <div className="overflow-x-hidden w-full">
         <Banner />
         
+        {/* Top Selling Products Section */}
+        <TopSellingProducts />
+
         {/* Featured products section */}
         <FeaturedProducts />
         
@@ -54,11 +58,11 @@ const HomePage = () => {
               Special Summer Sale
             </h2>
             <p className="mt-4 text-xl text-blue-100">
-              Get up to 30% off on selected gaming PCs and laptops.
+              Get up to 50% off code.
             </p>
             <div className="mt-8">
               <a
-                href="/products?sale=true"
+                href="/discounts"
                 className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
               >
                 View Deals

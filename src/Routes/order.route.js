@@ -3,8 +3,9 @@ const router = express.Router();
 const orderController = require('../Controllers/order.controller');
 const { authenticateToken, requireAdmin } = require('../Middlewares/auth.middleware');
 
-// Guest route (không cần authentication)
+// Public routes
 router.post('/guest', orderController.createGuestOrder);
+router.get('/top-selling', orderController.getPublicTopSellingProducts);
 
 // Admin routes - đặt trước để tránh conflict với route params
 router.get('/admin/orders', authenticateToken, requireAdmin, orderController.getAllOrders);
