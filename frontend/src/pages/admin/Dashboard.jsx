@@ -31,7 +31,7 @@ const Dashboard = () => {
         // Fetch initial data only once
         const [productsResponse, ordersResponse, totalCustomers, recentOrdersData, topProductsResponse, topCategoriesResponse] = await Promise.all([
           productService.getAllProducts(),
-          orderService.getAllOrders(),
+          orderService.getAllOrders({ limit: 1000 }),
           userService.getTotalCustomers(),
           orderService.getRecentOrders(5),
           orderService.getTopSellingProducts(5),

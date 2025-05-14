@@ -26,9 +26,10 @@ const orderService = {
     return api.get('/api/orders/loyalty-points');
   },
 
-  getAllOrders: async () => {
+  getAllOrders: async (params = { limit: 1000 }) => {
     try {
-      const response = await api.get('/api/orders/admin/orders');
+      const query = new URLSearchParams(params).toString();
+      const response = await api.get(`/api/orders/admin/orders?${query}`);
       return response.data;
     } catch (error) {
       console.error('Error in getAllOrders:', error);
