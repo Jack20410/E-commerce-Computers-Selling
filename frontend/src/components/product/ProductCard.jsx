@@ -124,12 +124,12 @@ const ProductCard = ({ product }) => {
         <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
           {product.name || product.model}
         </h3>
-        <div className="text-blue-600 font-extrabold text-base sm:text-lg mb-2">
+        <div className="text-blue-600 font-extrabold text-base sm:text-lg">
           {product.price.toLocaleString('vi-VN')}₫
         </div>
         <div className="mt-auto flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 pt-3">
           <span className={`text-xs font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-            {product.stock > 0 ? `In Stock: ${product.stock}` : 'Out of Stock'}
+            Rating here
           </span>
           <button
             onClick={handleAddToCart}

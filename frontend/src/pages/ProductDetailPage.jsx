@@ -318,6 +318,19 @@ const ProductDetailPage = () => {
         const firstImage = data.images?.[0];
         const imageUrl = mainImage?.url || firstImage?.url;
         setSelectedImage(imageUrl ? getImageUrl(imageUrl) : getPlaceholderImage(data.category));
+
+        // Update recently viewed products
+        const recentlyViewedProducts = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        
+        // Remove the current product if it exists in the list
+        const filteredProducts = recentlyViewedProducts.filter(p => p._id !== data._id);
+        
+        // Add the current product to the beginning
+        const updatedProducts = [data, ...filteredProducts].slice(0, 5);
+        
+        // Update localStorage and state
+        localStorage.setItem('recentlyViewed', JSON.stringify(updatedProducts));
+        setRecentlyViewed(updatedProducts);
         
       } catch (err) {
         console.error('Error fetching product:', err);
@@ -851,18 +864,16 @@ const ProductDetailPage = () => {
           </div>
 
           {/* Recently Viewed Section */}
-          <div>
-            <h2 className="text-xl font-bold mb-4">Recently Viewed</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {/* Placeholder for recently viewed products */}
-              <div className="bg-white rounded-lg shadow-md p-3 transform hover:scale-105 transition-transform duration-200">
-                <div className="aspect-w-1 aspect-h-1 w-full bg-gray-100 rounded-lg mb-3 animate-pulse"></div>
-                <div className="h-3 bg-gray-100 rounded w-3/4 mb-2 animate-pulse"></div>
-                <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse"></div>
+          {recentlyViewed.length > 1 && (
+            <div>
+              <h2 className="text-xl font-bold mb-4">Recently Viewed</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {recentlyViewed.filter(p => p._id !== product?._id).map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
               </div>
-              {/* Repeat placeholder 3 more times */}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>
