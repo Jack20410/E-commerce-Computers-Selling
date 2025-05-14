@@ -876,7 +876,6 @@ exports.getTopSellingProducts = async (req, res) => {
 // API: Top selling categories (Bar chart)
 exports.getTopSellingCategories = async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 5;
         // Lấy tất cả đơn hàng đã giao thành công
         const orders = await Order.find({ currentStatus: 'delivered' });
         // Gom nhóm theo category và tính tổng số lượng bán ra
@@ -890,10 +889,9 @@ exports.getTopSellingCategories = async (req, res) => {
                 categoryMap.get(cat).sold += item.quantity;
             });
         });
-        // Sắp xếp theo số lượng bán ra giảm dần
+        // Return all categories without limiting
         const topCategories = Array.from(categoryMap.values())
-            .sort((a, b) => b.sold - a.sold)
-            .slice(0, limit);
+            .sort((a, b) => b.sold - a.sold);
         res.json({ success: true, data: topCategories });
     } catch (error) {
         console.error('Error fetching top selling categories:', error);

@@ -82,7 +82,7 @@ const orderService = {
   },
 
   // Get top selling categories
-  getTopSellingCategories: async (limit = 5) => {
+  getTopSellingCategories: async (limit = 9) => {
     try {
       const response = await api.get(`/api/orders/admin/top-categories?limit=${limit}`);
       return response.data;
