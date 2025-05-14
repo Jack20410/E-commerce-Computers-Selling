@@ -7,6 +7,7 @@ import reviewService from '../services/reviewService';
 import { formatVND } from '../utils/currencyFormatter';
 import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
 import WebSocketService from '../services/websocket.service';
+import ProductCard from '../components/product/ProductCard';
 
 // Rating Stars Component
 const RatingStars = ({ rating = 0, totalRatings }) => (
@@ -27,25 +28,6 @@ const RatingStars = ({ rating = 0, totalRatings }) => (
       <span className="ml-2 text-gray-600">({totalRatings} reviews)</span>
     )}
   </div>
-);
-
-// Product Card Component for Similar Products
-const ProductCard = ({ product }) => (
-  <Link to={`/products/${product._id}`} className="group">
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden transition-transform hover:scale-105">
-      <div className="aspect-w-1 aspect-h-1 w-full">
-        <img
-          src={product.images?.[0]?.url ? getImageUrl(product.images[0].url) : getPlaceholderImage(product.category)}
-          alt={`${product.brand} ${product.model}`}
-          className="w-full h-full object-cover object-center"
-        />
-      </div>
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-900 truncate">{product.brand} {product.model}</h3>
-        <p className="mt-1 text-lg font-semibold text-blue-600">{formatVND(product.price)}</p>
-      </div>
-    </div>
-  </Link>
 );
 
 const SpecificationRow = ({ label, value }) => (
