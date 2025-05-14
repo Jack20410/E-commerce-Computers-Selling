@@ -214,7 +214,7 @@ const OrdersPage = () => {
                   <div className="flex justify-between items-center px-4 py-3">
                     <div className="flex items-center gap-4">
                       <img
-                        src={`http://localhost:3001${firstItem.productSnapshot.image}`}
+                        src={`${import.meta.env.VITE_BACKEND_API_URL}${firstItem.productSnapshot.image}`}
                         alt={firstItem.productSnapshot.name}
                         className="w-16 h-16 object-cover rounded"
                       />
@@ -269,7 +269,7 @@ const OrdersPage = () => {
                           {order.items.map((item, index) => (
                             <div key={index} className="flex items-center gap-4">
                               <img
-                                src={`http://localhost:3001${item.productSnapshot.image}`}
+                                src={`${import.meta.env.VITE_BACKEND_API_URL}${item.productSnapshot.image}`}
                                 alt={item.productSnapshot.name}
                                 className="w-12 h-12 object-cover rounded"
                               />

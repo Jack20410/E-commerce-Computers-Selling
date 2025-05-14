@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+// import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { formatVND } from '../utils/currencyFormatter';
+import api from '../services/api';
 
 const Discounts = () => {
   const [discounts, setDiscounts] = useState([]);
@@ -12,7 +13,7 @@ const Discounts = () => {
   useEffect(() => {
     const fetchDiscounts = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_API_URL}/api/discount/valid`, {
+        const response = await api.get(`/api/discount/valid`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
