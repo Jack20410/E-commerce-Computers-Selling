@@ -42,11 +42,50 @@ const OrdersPage = () => {
   const [totalOrders, setTotalOrders] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
+  // Thêm state cho filter thời gian
+  const [dateFilter, setDateFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const fetchOrders = async (page = 1, limit = 10) => {
     try {
-      const response = await api.get(`/api/orders/admin/orders?page=${page}&limit=${limit}`);
-      
-      // Backend trả về structure này:
+      let params = { page, limit };
+      const today = new Date();
+      if (dateFilter === 'today') {
+        const start = new Date();
+        start.setHours(0,0,0,0);
+        const end = new Date();
+        end.setHours(23,59,59,999);
+        params.startDate = start.toISOString();
+        params.endDate = end.toISOString();
+      } else if (dateFilter === 'yesterday') {
+        const y = new Date();
+        y.setDate(y.getDate() - 1);
+        const start = new Date(y);
+        start.setHours(0,0,0,0);
+        const end = new Date(y);
+        end.setHours(23,59,59,999);
+        params.startDate = start.toISOString();
+        params.endDate = end.toISOString();
+      } else if (dateFilter === 'week') {
+        const now = new Date();
+        const first = now.getDate() - now.getDay();
+        const start = new Date(now.setDate(first));
+        start.setHours(0,0,0,0);
+        params.startDate = start.toISOString();
+        params.endDate = new Date().toISOString();
+      } else if (dateFilter === 'month') {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        start.setHours(0,0,0,0);
+        params.startDate = start.toISOString();
+        params.endDate = new Date().toISOString();
+      } else if (dateFilter === 'range' && startDate && endDate) {
+        params.startDate = new Date(startDate).toISOString();
+        params.endDate = new Date(endDate).toISOString();
+      }
+      const query = new URLSearchParams(params).toString();
+      const response = await api.get(`/api/orders/admin/orders?${query}`);
       setOrders(response.data.orders);
       if (response.data.pagination) {
         setCurrentPage(response.data.pagination.currentPage);
@@ -104,8 +143,6 @@ const OrdersPage = () => {
     if (token) {
       websocketService.connect(token);
       fetchOrders(currentPage, pageSize);
-
-      // Subscribe to order updates
       websocketService.subscribeToOrderUpdates((data) => {
         setOrders(prevOrders =>
           prevOrders.map(order =>
@@ -122,14 +159,18 @@ const OrdersPage = () => {
           )
         );
       });
-
-      // Cleanup
       return () => {
         websocketService.unsubscribeFromOrderUpdates();
         websocketService.disconnect();
       };
     }
   }, [token, currentPage, pageSize]);
+
+  // Tự động fetch khi đổi filter thời gian
+  useEffect(() => {
+    fetchOrders(1, pageSize);
+    setCurrentPage(1);
+  }, [dateFilter, startDate, endDate]);
 
   const getStatusTransitions = (currentStatus) => {
     const transitions = {
@@ -214,6 +255,46 @@ const OrdersPage = () => {
                 Total Orders: {totalOrders}
               </p>
             </div>
+          </div>
+
+          {/* Filter UI */}
+          <div className="mb-4 flex flex-wrap gap-2 items-center">
+            <label className="font-medium mr-2">Filter by:</label>
+            <select
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className="border rounded px-2 py-1"
+            >
+              <option value="all">All</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="range">Date Range</option>
+            </select>
+            {dateFilter === 'range' && (
+              <>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  className="border rounded px-2 py-1"
+                />
+                <span>-</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  className="border rounded px-2 py-1"
+                />
+              </>
+            )}
+            {/* <button
+              onClick={() => fetchOrders(1, pageSize)}
+              className="ml-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Apply
+            </button> */}
           </div>
 
           <div className="flow-root">
