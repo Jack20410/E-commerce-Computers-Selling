@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { formatVND } from '../../utils/currencyFormatter';
@@ -22,7 +23,7 @@ const OrderStatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[status]}`}>
+    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full shadow ${statusColors[status]}`}>
       {statusText[status]}
     </span>
   );
@@ -36,7 +37,6 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusNote, setStatusNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   // Fetch orders
   const fetchOrders = async () => {
@@ -163,6 +163,11 @@ const OrdersPage = () => {
     return icons[status];
   };
 
+  // Calculate total items for an order
+  const getTotalItems = (order) => {
+    return order.items.reduce((sum, item) => sum + item.quantity, 0);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 pt-20 px-4">
@@ -191,169 +196,78 @@ const OrdersPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 pt-20 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+        <div className="bg-white shadow-xl rounded-2xl p-8">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Order Management</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <h1 className="text-2xl font-bold text-blue-700">Order Management</h1>
+              <p className="mt-1 text-sm text-blue-500">
                 Total Orders: {orders.length}
               </p>
             </div>
           </div>
 
-          <div className="space-y-4 p-4">
-            {orders.map((order) => {
-              const firstItem = order.items[0];
-              return (
-                <div
-                  key={order._id}
-                  className="bg-white border rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
-                >
-                  {/* Collapsed Card: Main Info Only */}
-                  <div className="flex justify-between items-center px-4 py-3">
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={`${import.meta.env.VITE_BACKEND_API_URL}${firstItem.productSnapshot.image}`}
-                        alt={firstItem.productSnapshot.name}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                      <div>
-                        <h4 className="font-medium text-base line-clamp-1 max-w-xs">{firstItem.productSnapshot.name}</h4>
-                        <p className="text-sm text-gray-500">Quantity: {firstItem.quantity}</p>
-                        <p className="text-sm font-medium">{formatVND(firstItem.price * firstItem.quantity)}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <OrderStatusBadge status={order.currentStatus} />
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">Total</p>
-                        <p className="text-lg font-bold text-blue-600">{formatVND(order.totalAmount)}</p>
-                      </div>
-                      <button
-                        className={`transition-transform duration-200 ${expandedOrderId === order._id ? 'rotate-90' : ''}`}
-                        onClick={e => { e.stopPropagation(); setExpandedOrderId(expandedOrderId === order._id ? null : order._id); }}
-                      >
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  {/* Dropdown details */}
-                  {expandedOrderId === order._id && (
-                    <div className="border-t px-4 py-4 animate-fadeIn">
-                      {/* Customer Info */}
-                      <div className="mb-2">
-                        <span className="text-xs text-gray-500">Order ID: {order._id}</span>
-                        <span className="ml-4 text-xs text-gray-500">Order Date: {new Date(order.createdAt).toLocaleDateString('en-US')}</span>
-                      </div>
-                      <div className="mb-4">
-                        <h5 className="font-semibold mb-2">Customer</h5>
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <svg className="h-6 w-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{order.user?.fullName || 'Guest'}</div>
-                            <div className="text-sm text-gray-500">{order.user?.email || 'No email provided'}</div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* All Products */}
-                      <div className="mb-4">
-                        <h5 className="font-semibold mb-2">All Products</h5>
-                        <div className="space-y-2">
-                          {order.items.map((item, index) => (
-                            <div key={index} className="flex items-center gap-4">
-                              <img
-                                src={`${import.meta.env.VITE_BACKEND_API_URL}${item.productSnapshot.image}`}
-                                alt={item.productSnapshot.name}
-                                className="w-12 h-12 object-cover rounded"
-                              />
-                              <div className="flex-1">
-                                <h4 className="font-medium text-sm line-clamp-1 max-w-xs">{item.productSnapshot.name}</h4>
-                                <p className="text-xs text-gray-500">Quantity: {item.quantity} × {formatVND(item.price)}</p>
-                                <p className="text-xs font-medium">Subtotal: {formatVND(item.price * item.quantity)}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {/* Payment & Points */}
-                      <div className="mb-4">
-                        <h5 className="font-semibold mb-2">Payment & Points</h5>
-                        <p className="text-xs text-gray-500">Payment Method: {order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</p>
-                        {order.loyaltyPointsEarned > 0 && (
-                          <p className="text-xs text-green-600">Points Earned: +{order.loyaltyPointsEarned}</p>
-                        )}
-                        <div className="text-right mt-2">
-                          <span className="text-xs text-gray-500">Total Amount</span>
-                          <span className="ml-2 text-lg font-bold text-blue-600">{formatVND(order.totalAmount)}</span>
-                        </div>
-                      </div>
-                      {/* Status History & Actions */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-semibold">Status History</h5>
-                          <button
-                            onClick={e => { e.stopPropagation(); setSelectedOrder(order); }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={getStatusTransitions(order.currentStatus).length === 0}
-                          >
-                            Update Status
-                          </button>
-                        </div>
-                        <div className="flex flex-col space-y-4">
-                          {order.statusHistory.map((status, index) => (
-                            <div key={index} className="flex items-start space-x-3">
-                              <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full ${
-                                status.status === order.currentStatus 
-                                  ? 'bg-blue-100 text-blue-600' 
-                                  : 'bg-gray-100 text-gray-500'
-                              }`}>
-                                {getStatusIcon(status.status)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm font-medium text-gray-900">
-                                    {status.status === 'pending' && 'Pending'}
-                                    {status.status === 'confirmed' && 'Confirmed'}
-                                    {status.status === 'shipping' && 'Shipping'}
-                                    {status.status === 'delivered' && 'Delivered'}
-                                    {status.status === 'cancelled' && 'Cancelled'}
-                                  </span>
-                                  <span className="text-sm text-gray-500">
-                                    {new Date(status.timestamp).toLocaleString('en-US', {
-                                      year: 'numeric',
-                                      month: '2-digit',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                      hour12: true
-                                    })}
-                                  </span>
-                                </div>
-                                {status.note && (
-                                  <p className="mt-1 text-sm text-gray-600">
-                                    Note: {status.note}
-                                  </p>
-                                )}
-                              </div>
-                              {index < order.statusHistory.length - 1 && (
-                                <div className="absolute left-4 ml-3.5 h-full w-0.5 bg-gray-200" style={{ top: '2rem' }}></div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+          <div className="flow-root">
+            {orders.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-400 text-lg">No orders found</p>
+              </div>
+            ) : (
+              <div className="-mx-4 -my-2 overflow-x-auto">
+                <div className="inline-block min-w-full py-2 align-middle">
+                  <table className="min-w-full divide-y divide-blue-100">
+                    <thead className="bg-gradient-to-r from-blue-50 to-blue-100 sticky top-0 z-10">
+                      <tr>
+                        <th className="py-3.5 pl-4 pr-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Order ID</th>
+                        <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Customer</th>
+                        <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Order Date</th>
+                        <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Total Items</th>
+                        <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Status</th>
+                        <th className="px-3 py-3.5 text-right text-xs font-bold text-blue-700 uppercase tracking-wider">Total Amount</th>
+                        <th className="px-3 py-3.5 text-center text-xs font-bold text-blue-700 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-50 bg-white">
+                      {orders.map((order) => (
+                        <tr key={order._id} className="hover:bg-blue-50 transition">
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-semibold text-blue-700">
+                            <Link 
+                              to={`/admin/orders/${order._id}`} 
+                              className="hover:underline"
+                            >
+                              {order._id}
+                            </Link>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                            {order.user?.fullName || 'Guest'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                            {new Date(order.createdAt).toLocaleDateString('en-US')}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                            {getTotalItems(order)} items
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm">
+                            <OrderStatusBadge status={order.currentStatus} />
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-green-600 text-right font-semibold">
+                            {formatVND(order.totalAmount)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                              disabled={getStatusTransitions(order.currentStatus).length === 0}
+                            >
+                              Update Status
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
         </div>
       </div>

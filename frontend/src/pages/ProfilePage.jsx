@@ -1224,113 +1224,130 @@ const ProfilePage = () => {
                     <p className="text-gray-500">You have no orders yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {orders.map((order) => {
-                      const firstItem = order.items[0];
-                      return (
-                        <div
-                          key={order._id}
-                          className="border rounded-lg p-4 hover:shadow-lg transition-shadow bg-white cursor-pointer"
-                          onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                              <img
-                                src={`http://localhost:3001${firstItem.productSnapshot.image}`}
-                                alt={firstItem.productSnapshot.name}
-                                className="w-16 h-16 object-cover rounded"
-                              />
-                              <div>
-                                <h4 className="font-medium text-base line-clamp-1 max-w-xs">{firstItem.productSnapshot.name}</h4>
-                                <p className="text-sm text-gray-500">Quantity: {firstItem.quantity}</p>
-                                <p className="text-sm font-medium">{formatVND(firstItem.price * firstItem.quantity)}</p>
-                              </div>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <OrderStatusBadge status={order.currentStatus} />
-                              <div className="text-right">
-                                <p className="text-xs text-gray-500">Total</p>
-                                <p className="text-lg font-bold text-blue-600">{formatVND(order.totalAmount)}</p>
-                              </div>
-                              <button
-                                className={`transition-transform duration-200 ${expandedOrderId === order._id ? 'rotate-90' : ''}`}
-                                onClick={e => { e.stopPropagation(); setExpandedOrderId(expandedOrderId === order._id ? null : order._id); }}
-                              >
-                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                          {/* Dropdown details */}
-                          {expandedOrderId === order._id && (
-                            <div className="mt-4 border-t pt-4 animate-fadeIn">
-                              <div className="mb-2">
-                                <span className="text-xs text-gray-500">Order ID: {order._id}</span>
-                                <span className="ml-4 text-xs text-gray-500">Order Date: {new Date(order.createdAt).toLocaleDateString('en-US')}</span>
-                              </div>
-                              <div className="mb-4">
-                                <h5 className="font-semibold mb-2">All Products</h5>
-                                <div className="space-y-2">
-                                  {order.items.map((item) => {
-                                    const productId = item.product;
-                                    const reviewKey = `${order._id}_${productId}`;
-                                    const hasReview = !!itemReviews[reviewKey];
-                                    return (
-                                      <div key={item._id} className="flex items-center gap-4">
-                                        <img
-                                          src={`http://localhost:3001${item.productSnapshot.image}`}
-                                          alt={item.productSnapshot.name}
-                                          className="w-12 h-12 object-cover rounded"
-                                        />
-                                        <div className="flex-1">
-                                          <h4 className="font-medium text-sm line-clamp-1 max-w-xs">{item.productSnapshot.name}</h4>
-                                          <p className="text-xs text-gray-500">Quantity: {item.quantity}</p>
-                                          <p className="text-xs font-medium">{formatVND(item.price * item.quantity)}</p>
-                                          {order.currentStatus === 'delivered' && (
-                                            <div className="mt-1">
-                                              {hasReview ? (
-                                                <span className="text-green-600 text-xs">Reviewed</span>
-                                              ) : (
-                                                <button
-                                                  className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 shadow"
-                                                  onClick={e => { e.stopPropagation(); openReviewModal(order._id, productId); }}
-                                                >
-                                                  Review
-                                                </button>
-                                              )}
+                  <div className="bg-white shadow-xl rounded-2xl p-8">
+                    <h3 className="text-xl font-bold text-blue-700 mb-6">My Orders</h3>
+                    <div className="flow-root">
+                      <div className="-mx-4 -my-2 overflow-x-auto">
+                        <div className="inline-block min-w-full py-2 align-middle">
+                          <table className="min-w-full divide-y divide-blue-100">
+                            <thead className="bg-gradient-to-r from-blue-50 to-blue-100 sticky top-0 z-10">
+                              <tr>
+                                <th className="py-3.5 pl-4 pr-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Order ID</th>
+                                <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Order Date</th>
+                                <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Total Items</th>
+                                <th className="px-3 py-3.5 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Status</th>
+                                <th className="px-3 py-3.5 text-right text-xs font-bold text-blue-700 uppercase tracking-wider">Total Amount</th>
+                                <th className="px-3 py-3.5 text-center text-xs font-bold text-blue-700 uppercase tracking-wider">Details</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-blue-50 bg-white">
+                              {orders.map((order) => (
+                                <>
+                                  <tr key={order._id} className="hover:bg-blue-50 transition">
+                                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-semibold text-blue-700">
+                                      <button
+                                        onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+                                        className="hover:underline cursor-pointer"
+                                      >
+                                        {order._id}
+                                      </button>
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                                      {new Date(order.createdAt).toLocaleDateString('en-US')}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                                      {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-4 text-sm">
+                                      <OrderStatusBadge status={order.currentStatus} />
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-green-600 text-right font-semibold">
+                                      {formatVND(order.totalAmount)}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
+                                      <button
+                                        className={`transition-transform duration-200 ${expandedOrderId === order._id ? 'rotate-90' : ''}`}
+                                        onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+                                      >
+                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                  {/* Dropdown details */}
+                                  {expandedOrderId === order._id && (
+                                    <tr>
+                                      <td colSpan={6} className="px-4 py-4 bg-gray-50">
+                                        <div className="animate-fadeIn">
+                                          <div className="mb-4">
+                                            <h5 className="font-semibold mb-2">All Products</h5>
+                                            <div className="space-y-2">
+                                              {order.items.map((item) => {
+                                                const productId = item.product;
+                                                const reviewKey = `${order._id}_${productId}`;
+                                                const hasReview = !!itemReviews[reviewKey];
+                                                return (
+                                                  <div key={item._id} className="flex items-center gap-4 bg-white p-3 rounded-lg">
+                                                    <img
+                                                      src={`http://localhost:3001${item.productSnapshot.image}`}
+                                                      alt={item.productSnapshot.name}
+                                                      className="w-12 h-12 object-cover rounded"
+                                                    />
+                                                    <div className="flex-1">
+                                                      <h4 className="font-medium text-sm line-clamp-1 max-w-xs">{item.productSnapshot.name}</h4>
+                                                      <p className="text-xs text-gray-500">Quantity: {item.quantity} × {formatVND(item.price)}</p>
+                                                      <p className="text-xs font-medium">Subtotal: {formatVND(item.price * item.quantity)}</p>
+                                                      {order.currentStatus === 'delivered' && (
+                                                        <div className="mt-1">
+                                                          {hasReview ? (
+                                                            <span className="text-green-600 text-xs">Reviewed</span>
+                                                          ) : (
+                                                            <button
+                                                              className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 shadow"
+                                                              onClick={e => { e.stopPropagation(); openReviewModal(order._id, productId); }}
+                                                            >
+                                                              Review
+                                                            </button>
+                                                          )}
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
                                             </div>
-                                          )}
+                                          </div>
+                                          <div className="mb-4">
+                                            <h5 className="font-semibold mb-2">Payment & Points</h5>
+                                            <p className="text-xs text-gray-500">Payment method: {{ cod: 'Cash on Delivery', banking: 'Bank Transfer', momo: 'MoMo Wallet' }[order.paymentMethod]}</p>
+                                            {order.loyaltyPointsEarned > 0 && (
+                                              <p className="text-xs text-green-600">Points earned: +{order.loyaltyPointsEarned}</p>
+                                            )}
+                                          </div>
+                                          <div>
+                                            <h5 className="font-semibold mb-2">Status History</h5>
+                                            <div className="space-y-2">
+                                              {order.statusHistory.map((status, index) => (
+                                                <div key={index} className="flex items-center text-xs">
+                                                  <div className="w-32">{new Date(status.timestamp).toLocaleString('en-US')}</div>
+                                                  <OrderStatusBadge status={status.status} />
+                                                  {status.note && <span className="ml-2 text-gray-500">{status.note}</span>}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
                                         </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <div className="mb-4">
-                                <h5 className="font-semibold mb-2">Payment & Points</h5>
-                                <p className="text-xs text-gray-500">Payment method: {{ cod: 'Cash on Delivery', banking: 'Bank Transfer', momo: 'MoMo Wallet' }[order.paymentMethod]}</p>
-                                {order.loyaltyPointsEarned > 0 && (
-                                  <p className="text-xs text-green-600">Points earned: +{order.loyaltyPointsEarned}</p>
-                                )}
-                              </div>
-                              <div>
-                                <h5 className="font-semibold mb-2">Status History</h5>
-                                <div className="space-y-2">
-                                  {order.statusHistory.map((status, index) => (
-                                    <div key={index} className="flex items-center text-xs">
-                                      <div className="w-32">{new Date(status.timestamp).toLocaleString('en-US')}</div>
-                                      <OrderStatusBadge status={status.status} />
-                                      {status.note && <span className="ml-2 text-gray-500">{status.note}</span>}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
+                                      </td>
+                                    </tr>
+                                  )}
+                                </>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                      );
-                    })}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
