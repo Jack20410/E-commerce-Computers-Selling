@@ -11,6 +11,9 @@ const ProductsAdmin = () => {
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 15;
 
   // Check if user is admin
   useEffect(() => {
@@ -81,10 +84,22 @@ const ProductsAdmin = () => {
   // Get unique categories
   const categories = ['all', ...new Set(products.map(product => product.category))];
 
+  // Reset to first page when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
+
   // Filter products by category (if needed)
   const displayProducts = selectedCategory === 'all' 
     ? products 
     : products.filter(product => product.category === selectedCategory);
+
+  // Pagination logic
+  const totalPages = Math.ceil(displayProducts.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = displayProducts.slice(
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE
+  );
 
   if (loading) {
     return (
@@ -141,7 +156,7 @@ const ProductsAdmin = () => {
             Total Products: {displayProducts.length}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-6">
-            {displayProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <div key={product._id} className="bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="relative h-[200px] w-full ">
                   <img 
@@ -208,6 +223,37 @@ const ProductsAdmin = () => {
             ))}
           </div>
 
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center gap-2 mt-4 mb-8">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => (
+              <button
+                key={idx + 1}
+                onClick={() => setCurrentPage(idx + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === idx + 1
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+
           {/* Total Products Count */}
           <div className="text-center mt-4 text-sm text-gray-600">
             Total Products: {displayProducts.length}
@@ -229,4 +275,4 @@ const ProductsAdmin = () => {
   );
 };
 
-export default ProductsAdmin; 
+export default ProductsAdmin;

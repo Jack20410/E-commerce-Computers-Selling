@@ -14,6 +14,9 @@ const UsersPage = () => {
   const [newRole, setNewRole] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const USERS_PER_PAGE = 10;
 
   useEffect(() => {
     fetchUsers();
@@ -78,12 +81,24 @@ const UsersPage = () => {
     setNewRole('');
   };
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, users]);
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  // Add this pagination logic before the return statement
+  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * USERS_PER_PAGE,
+    currentPage * USERS_PER_PAGE
+  );
 
   if (isLoading) {
     return (
@@ -169,7 +184,7 @@ const UsersPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((userItem) => (
+                {paginatedUsers.map((userItem) => (
                   <tr key={userItem._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -235,6 +250,37 @@ const UsersPage = () => {
             </table>
           </div>
         </div>
+      </div>
+
+      {/* Pagination Controls - always show, even if only 1 page */}
+      <div className="flex justify-center items-center gap-2 mt-4 mb-8">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+        >
+          Prev
+        </button>
+        {Array.from({ length: totalPages }, (_, idx) => (
+          <button
+            key={idx + 1}
+            onClick={() => setCurrentPage(idx + 1)}
+            className={`px-3 py-1 rounded ${
+              currentPage === idx + 1
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {idx + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
 
       {/* Confirmation Modal */}
