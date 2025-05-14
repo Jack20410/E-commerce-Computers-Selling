@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthBanner from '../../components/ui/AuthBanner';
+import api from '../../services/api';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -36,19 +37,8 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/users/recover-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Có lỗi xảy ra khi khôi phục mật khẩu');
-      }
+      const response = await api.post('/users/recover-password', { email });
+      const data = response.data;
 
       setStatus({
         type: 'success',
