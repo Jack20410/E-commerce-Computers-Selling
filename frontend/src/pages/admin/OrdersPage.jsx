@@ -37,12 +37,22 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusNote, setStatusNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Fetch orders
-  const fetchOrders = async () => {
+  const fetchOrders = async (page = 1, limit = 10) => {
     try {
-      const response = await api.get('/api/orders/admin/orders');
+      const response = await api.get(`/api/orders/admin/orders?page=${page}&limit=${limit}`);
+      
+      // Backend trả về structure này:
       setOrders(response.data.orders);
+      if (response.data.pagination) {
+        setCurrentPage(response.data.pagination.currentPage);
+        setTotalPages(response.data.pagination.totalPages);
+        setTotalOrders(response.data.pagination.totalItems);
+      }
     } catch (err) {
       setError('Error fetching orders: ' + err.message);
     } finally {
@@ -93,7 +103,7 @@ const OrdersPage = () => {
   useEffect(() => {
     if (token) {
       websocketService.connect(token);
-      fetchOrders();
+      fetchOrders(currentPage, pageSize);
 
       // Subscribe to order updates
       websocketService.subscribeToOrderUpdates((data) => {
@@ -119,7 +129,7 @@ const OrdersPage = () => {
         websocketService.disconnect();
       };
     }
-  }, [token]);
+  }, [token, currentPage, pageSize]);
 
   const getStatusTransitions = (currentStatus) => {
     const transitions = {
@@ -201,7 +211,7 @@ const OrdersPage = () => {
             <div>
               <h1 className="text-2xl font-bold text-blue-700">Order Management</h1>
               <p className="mt-1 text-sm text-blue-500">
-                Total Orders: {orders.length}
+                Total Orders: {totalOrders}
               </p>
             </div>
           </div>
@@ -269,6 +279,74 @@ const OrdersPage = () => {
               </div>
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+              <div className="flex flex-1 justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing{' '}
+                    <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span>
+                    {' '}to{' '}
+                    <span className="font-medium">
+                      {Math.min(currentPage * pageSize, totalOrders)}
+                    </span>
+                    {' '}of{' '}
+                    <span className="font-medium">{totalOrders}</span>
+                    {' '}orders
+                  </p>
+                </div>
+                <div>
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    {/* Page numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                          page === currentPage
+                            ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
