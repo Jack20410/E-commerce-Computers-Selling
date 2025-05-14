@@ -253,11 +253,6 @@ const ProductsAdmin = () => {
               Next
             </button>
           </div>
-
-          {/* Total Products Count */}
-          <div className="text-center mt-4 text-sm text-gray-600">
-            Total Products: {displayProducts.length}
-          </div>
         </>
       )}
 
