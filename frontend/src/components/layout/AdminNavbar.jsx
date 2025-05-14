@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/admin/products', label: 'Products', icon: <FaBoxOpen className="mr-2" /> },
   { to: '/admin/orders', label: 'Orders', icon: <FaClipboardList className="mr-2" /> },
   { to: '/admin/users', label: 'Users', icon: <FaUsers className="mr-2" /> },
+  { to: '/admin/deals', label: 'Deals', icon: <FaClipboardList className="mr-2" /> },
 ];
 
 const AdminNavbar = () => {

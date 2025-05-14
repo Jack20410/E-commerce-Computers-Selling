@@ -6,6 +6,7 @@ import { useProfile } from '../context/ProfileContext';
 import orderService from '../services/orderService';
 import { formatVND } from '../utils/currencyFormatter';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -19,6 +20,10 @@ const CheckoutPage = () => {
   const [selectedAddress, setSelectedAddress] = useState('');
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [usedPoints, setUsedPoints] = useState(0);
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [validDiscounts, setValidDiscounts] = useState([]);
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
 
   // Address selection states
   const [provinces, setProvinces] = useState([]);
@@ -47,6 +52,7 @@ const CheckoutPage = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadUserData();
+      loadValidDiscounts();
     } else {
       // Fetch provinces for guest checkout
       fetchProvinces();
@@ -133,6 +139,15 @@ const CheckoutPage = () => {
     }
   };
 
+  const loadValidDiscounts = async () => {
+    try {
+      const response = await api.get('/api/discount/valid');
+      setValidDiscounts(response.data.data || []);
+    } catch (error) {
+      console.error('Error loading valid discounts:', error);
+    }
+  };
+
   const handleGuestInputChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('.')) {
@@ -194,6 +209,47 @@ const CheckoutPage = () => {
     }));
   };
 
+  const handleApplyDiscount = async () => {
+    if (!discountCode) {
+      toast.error('Vui lòng nhập mã giảm giá');
+      return;
+    }
+
+    try {
+      const response = await api.post('/api/discount/validate', {
+        code: discountCode,
+        totalAmount: getCartTotal()
+      });
+
+      if (response.data.isValid) {
+        setDiscountAmount(response.data.savings);
+        setAppliedDiscount({
+          code: discountCode,
+          discountValue: response.data.discountValue,
+          savings: response.data.savings
+        });
+        toast.success('Áp dụng mã giảm giá thành công!');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Mã giảm giá không hợp lệ');
+      setDiscountAmount(0);
+      setAppliedDiscount(null);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCode('');
+    setDiscountAmount(0);
+    setAppliedDiscount(null);
+  };
+
+  const handlePointsChange = (e) => {
+    const points = parseInt(e.target.value) || 0;
+    if (points <= loyaltyPoints) {
+      setUsedPoints(points);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -211,6 +267,7 @@ const CheckoutPage = () => {
           items: orderItems,
           shippingAddressId: selectedAddress,
           paymentMethod,
+          discountCode: appliedDiscount?.code,
           loyaltyPointsUsed: usedPoints
         });
       } else {
@@ -297,7 +354,7 @@ const CheckoutPage = () => {
                       min="0"
                       max={loyaltyPoints}
                       value={usedPoints}
-                      onChange={(e) => setUsedPoints(Number(e.target.value))}
+                      onChange={handlePointsChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                     />
                   </div>
@@ -407,6 +464,92 @@ const CheckoutPage = () => {
             )}
           </div>
 
+          {/* Discount Code Section */}
+          {isAuthenticated && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold mb-4">Mã giảm giá</h2>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                    placeholder="Nhập mã giảm giá"
+                    className="flex-1 rounded-md border-gray-300 shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyDiscount}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+
+                {appliedDiscount && (
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span>Mã giảm giá: {appliedDiscount.code}</span>
+                      <span className="text-green-600">-{formatVND(appliedDiscount.savings)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveDiscount}
+                      className="text-sm text-red-600 hover:text-red-800 mt-2"
+                    >
+                      Xóa mã giảm giá
+                    </button>
+                  </div>
+                )}
+
+                {validDiscounts.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Mã giảm giá có sẵn:</h3>
+                    <div className="space-y-2">
+                      {validDiscounts.map((discount) => (
+                        <div
+                          key={discount.code}
+                          className="text-sm text-gray-600 cursor-pointer hover:text-blue-600"
+                          onClick={() => {
+                            setDiscountCode(discount.code);
+                            handleApplyDiscount();
+                          }}
+                        >
+                          {discount.code} - Giảm {discount.discountValue}% (Còn {discount.remainingUses} lượt)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Loyalty Points Section */}
+          {isAuthenticated && loyaltyPoints > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold mb-4">Điểm thưởng</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Sử dụng điểm thưởng ({loyaltyPoints} điểm = {formatVND(loyaltyPoints * 1000)})
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={loyaltyPoints}
+                    value={usedPoints}
+                    onChange={handlePointsChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Giá trị quy đổi: {formatVND(usedPoints * 1000)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
             <div className="space-y-4">
@@ -486,6 +629,13 @@ const CheckoutPage = () => {
                   <span>{formatVND(getCartTotal())}</span>
                 </div>
                 
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>-{formatVND(discountAmount)}</span>
+                  </div>
+                )}
+
                 {usedPoints > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Points Discount</span>
@@ -502,7 +652,7 @@ const CheckoutPage = () => {
                   <span>Total</span>
                   <span className="text-blue-600">
                     {formatVND(
-                      getCartTotal() - (usedPoints * 1000) + 
+                      getCartTotal() - discountAmount - (usedPoints * 1000) + 
                       (getCartTotal() > 5000000 ? 0 : 50000)
                     )}
                   </span>

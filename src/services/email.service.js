@@ -177,9 +177,15 @@ const sendOrderConfirmationEmail = async (orderData) => {
                   <td colspan="3" style="padding: 10px; text-align: right;"><strong>Subtotal:</strong></td>
                   <td style="padding: 10px; text-align: right;">${formatCurrency(orderData.subtotal)}</td>
                 </tr>
+                ${orderData.discountAmount ? `
+                <tr>
+                  <td colspan="3" style="padding: 10px; text-align: right;"><strong>Discount (${orderData.discount?.code || 'N/A'}):</strong></td>
+                  <td style="padding: 10px; text-align: right;">-${formatCurrency(orderData.discountAmount)}</td>
+                </tr>
+                ` : ''}
                 ${orderData.loyaltyPointsUsed ? `
                 <tr>
-                  <td colspan="3" style="padding: 10px; text-align: right;"><strong>Loyalty Points Used:</strong></td>
+                  <td colspan="3" style="padding: 10px; text-align: right;"><strong>Loyalty Points Used (${orderData.loyaltyPointsUsed} points):</strong></td>
                   <td style="padding: 10px; text-align: right;">-${formatCurrency(orderData.loyaltyPointsUsed * 1000)}</td>
                 </tr>
                 ` : ''}

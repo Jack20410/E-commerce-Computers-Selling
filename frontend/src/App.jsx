@@ -21,6 +21,7 @@ import ProfilePage from './pages/ProfilePage';
 import OAuth2Redirect from './pages/auth/OAuth2Redirect';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import Discounts from './pages/Discounts';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
@@ -30,6 +31,7 @@ import EditProduct from './pages/admin/EditProduct';
 import OrdersPage from './pages/admin/OrdersPage';
 import UsersPage from './pages/admin/UsersPage';
 import OrderDetailAdmin from './pages/admin/OrderDetailAdmin';
+import DealsAdmin from './pages/admin/DealsAdmin';
 
 const AdminLayout = () => {
   return (
@@ -71,6 +73,7 @@ function App() {
                   <Route path="/admin/orders" element={<OrdersPage />} />
                   <Route path="/admin/orders/:orderId" element={<OrderDetailAdmin />} />
                   <Route path="/admin/users" element={<UsersPage />} />
+                  <Route path="/admin/deals" element={<DealsAdmin />} />
                 </Route>
               </Route>
 
@@ -88,6 +91,7 @@ function App() {
                 <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+                <Route path="/discounts" element={<Discounts />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>
