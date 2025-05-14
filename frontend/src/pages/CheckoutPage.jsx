@@ -211,7 +211,7 @@ const CheckoutPage = () => {
 
   const handleApplyDiscount = async () => {
     if (!discountCode) {
-      toast.error('Vui lòng nhập mã giảm giá');
+      toast.error('Please enter a discount code');
       return;
     }
 
@@ -228,10 +228,10 @@ const CheckoutPage = () => {
           discountValue: response.data.discountValue,
           savings: response.data.savings
         });
-        toast.success('Áp dụng mã giảm giá thành công!');
+        toast.success('Discount code applied successfully!');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Mã giảm giá không hợp lệ');
+      toast.error(error.response?.data?.message || 'Invalid discount code');
       setDiscountAmount(0);
       setAppliedDiscount(null);
     }
@@ -467,14 +467,14 @@ const CheckoutPage = () => {
           {/* Discount Code Section */}
           {isAuthenticated && (
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Mã giảm giá</h2>
+              <h2 className="text-xl font-semibold mb-4">Discount Code</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                    placeholder="Nhập mã giảm giá"
+                    placeholder="Enter discount code"
                     className="flex-1 rounded-md border-gray-300 shadow-sm"
                   />
                   <button
@@ -482,14 +482,14 @@ const CheckoutPage = () => {
                     onClick={handleApplyDiscount}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
-                    Áp dụng
+                    Apply
                   </button>
                 </div>
 
                 {appliedDiscount && (
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="flex justify-between items-center">
-                      <span>Mã giảm giá: {appliedDiscount.code}</span>
+                      <span>Discount code: {appliedDiscount.code}</span>
                       <span className="text-green-600">-{formatVND(appliedDiscount.savings)}</span>
                     </div>
                     <button
@@ -497,14 +497,14 @@ const CheckoutPage = () => {
                       onClick={handleRemoveDiscount}
                       className="text-sm text-red-600 hover:text-red-800 mt-2"
                     >
-                      Xóa mã giảm giá
+                      Remove discount
                     </button>
                   </div>
                 )}
 
                 {validDiscounts.length > 0 && (
                   <div className="mt-4">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Mã giảm giá có sẵn:</h3>
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Available discount codes:</h3>
                     <div className="space-y-2">
                       {validDiscounts.map((discount) => (
                         <div
@@ -515,7 +515,7 @@ const CheckoutPage = () => {
                             handleApplyDiscount();
                           }}
                         >
-                          {discount.code} - Giảm {discount.discountValue}% (Còn {discount.remainingUses} lượt)
+                          {discount.code} - Save {discount.discountValue}% ({discount.remainingUses} uses left)
                         </div>
                       ))}
                     </div>
