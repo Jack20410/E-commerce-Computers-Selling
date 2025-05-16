@@ -15,6 +15,7 @@ const reviewRoutes = require('./Routes/review.route');
 const discountRoutes = require('./Routes/discount.route');
 const passport = require('./config/passport');
 const websocketService = require('./services/websocket.service');
+const healthRoutes = require('./Routes/health');
 
 // Initialize express app
 const app = express();
@@ -49,6 +50,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health Check Routes - Must be registered before other routes
+app.use('/health', healthRoutes);
 
 // API Routes
 app.use('/auth', authRoutes);

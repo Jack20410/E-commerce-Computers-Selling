@@ -1290,7 +1290,7 @@ const ProfilePage = () => {
                                                 return (
                                                   <div key={item._id} className="flex items-center gap-4 bg-white p-3 rounded-lg">
                                                     <img
-                                                      src={`http://localhost:3001${item.productSnapshot.image}`}
+                                                      src={`${import.meta.env.VITE_BACKEND_API_URL}${item.productSnapshot.image}`}
                                                       alt={item.productSnapshot.name}
                                                       className="w-12 h-12 object-cover rounded"
                                                     />
@@ -1377,7 +1377,7 @@ const ProfilePage = () => {
               return (
                 <div>
                   <div className="flex items-center gap-4 mb-4">
-                    <img src={`http://localhost:3001${item.productSnapshot.image}`} alt={item.productSnapshot.name} className="w-16 h-16 object-cover rounded" />
+                    <img src={`${import.meta.env.VITE_BACKEND_API_URL}${item.productSnapshot.image}`} alt={item.productSnapshot.name} className="w-16 h-16 object-cover rounded" />
                     <div>
                       <h4 className="font-semibold text-lg">{item.productSnapshot.name}</h4>
                       <p className="text-gray-500 text-sm">{formatVND(item.price * item.quantity)}</p>

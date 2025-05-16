@@ -164,10 +164,9 @@ const OrderDetailAdmin = () => {
               <div key={idx} className="flex items-center space-x-4">
                 <div className="w-16 h-16 flex-shrink-0">
                   <img
-                    src={`http://localhost:3001${item.productSnapshot.image}`}
+                    src={`${import.meta.env.VITE_BACKEND_API_URL}${item.productSnapshot.image}`}
                     alt={item.productSnapshot.name}
                     className="w-full h-full object-cover rounded-md"
-                    onError={e => { e.target.src = '/placeholder-image.jpg'; }}
                   />
                 </div>
                 <div className="flex-1 min-w-0">

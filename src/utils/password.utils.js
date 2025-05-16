@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('./bcryptWrapper');
 
 const passwordUtils = {
   // Kiểm tra độ mạnh của mật khẩu
@@ -38,8 +38,7 @@ const passwordUtils = {
 
   // Hash mật khẩu
   hashPassword: async (password) => {
-    const salt = await bcrypt.genSalt(10);
-    return bcrypt.hash(password, salt);
+    return bcrypt.hash(password);
   },
 
   // So sánh mật khẩu

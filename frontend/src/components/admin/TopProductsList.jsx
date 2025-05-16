@@ -66,10 +66,9 @@ const TopProductsList = ({ products = [] }) => {
                 <td className="px-4 py-3 text-center">
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-blue-200 shadow-md mx-auto flex items-center justify-center bg-white">
                     <img
-                      src={`http://localhost:3001${p.image}`}
+                      src={`${import.meta.env.VITE_BACKEND_API_URL}${p.image}`}
                       alt={p.name}
                       className="object-cover w-14 h-14"
-                      onError={e => { e.target.src = '/placeholder-image.jpg'; }}
                     />
                   </div>
                 </td>

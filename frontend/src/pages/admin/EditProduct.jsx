@@ -572,7 +572,7 @@ const EditProduct = () => {
                 {visibleImages.map((image, index) => (
                   <div key={image._id} className="relative" data-image-id={image._id}>
                     <img
-                      src={image.url.startsWith('http') ? image.url : `http://localhost:3001${image.url}`}
+                      src={`${import.meta.env.VITE_BACKEND_API_URL}${image.url}`}
                       alt={`Product ${index + 1}`}
                       className={`w-32 h-32 object-cover border rounded ${image.isMain ? 'border-blue-500 border-2' : ''}`}
                       style={{width: '150px', height: '150px', objectFit: 'cover'}}

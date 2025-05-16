@@ -27,10 +27,6 @@ const CartItem = ({ item }) => {
           src={item.image || '/placeholder-image.jpg'} 
           alt={item.name}
           className="w-full h-full object-cover rounded-lg"
-          onError={(e) => {
-            e.target.src = '/placeholder-image.jpg';
-            e.target.onerror = null;
-          }}
         />
       </div>
       

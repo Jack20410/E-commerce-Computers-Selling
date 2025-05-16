@@ -161,9 +161,7 @@ const ProductsAdmin = () => {
                 <div className="relative h-[200px] w-full ">
                   <img 
                     className="absolute  w-full h-full object-contain"
-                    src={product.images && product.images.length > 0 
-                      ? `http://localhost:3001${product.images[0].url}` 
-                      : '/images/placeholder.jpg'} 
+                    src={`${import.meta.env.VITE_BACKEND_API_URL}${product.images[0].url}`} 
                     alt={product.model}
                   />
                 </div>

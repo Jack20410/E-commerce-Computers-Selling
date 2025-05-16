@@ -124,7 +124,7 @@ const handleGoogleCallback = (req, res, next) => {
     try {
       if (err || !user) {
         // Redirect về trang login với thông báo lỗi
-        return res.redirect('http://localhost:3000/login?error=google_auth_failed');
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
       }
       const token = jwt.sign(
         { userId: user._id },
@@ -140,7 +140,7 @@ const handleGoogleCallback = (req, res, next) => {
         googleId: user.googleId
       }));
       // Redirect về frontend
-      return res.redirect(`http://localhost:3000/oauth2-redirect?token=${token}&user=${userInfo}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/oauth2-redirect?token=${token}&user=${userInfo}`);
     } catch (error) {
       next(error);
     }

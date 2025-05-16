@@ -1,5 +1,5 @@
 const User = require('../Models/user.model');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('../utils/bcryptWrapper');
 const jwt = require('jsonwebtoken');
 const { validatePassword, generateTempPassword } = require('../utils/password.utils');
 const { sendRecoveryEmail } = require('../services/email.service');
