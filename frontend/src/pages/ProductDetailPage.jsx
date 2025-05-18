@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../context/CartContext';
+import { useWebSocket } from '../context/WebSocketContext';
 import productService from '../services/productService';
 import reviewService from '../services/reviewService';
 import { formatVND } from '../utils/currencyFormatter';
@@ -273,6 +274,7 @@ const ProductDetailPage = () => {
   const [currentReviewPage, setCurrentReviewPage] = useState(1);
   const [variants, setVariants] = useState([]);
   const REVIEWS_PER_PAGE = 5;
+  const { joinProductRoom, leaveProductRoom } = useWebSocket();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -357,24 +359,76 @@ const ProductDetailPage = () => {
   }, [product]);
 
   useEffect(() => {
+    if (product && product._id) {
+      // Join the product room for real-time updates
+      try {
+        joinProductRoom(product._id);
+      } catch (err) {
+        console.error('Error joining product room:', err);
+      }
+      
+      // Clean up when component unmounts
+      return () => {
+        try {
+          leaveProductRoom(product._id);
+        } catch (err) {
+          console.error('Error leaving product room:', err);
+        }
+      };
+    }
+  }, [product, joinProductRoom, leaveProductRoom]);
+
+  // Modified function to subscribe directly to review updates
+  useEffect(() => {
     if (!product || !product._id) return;
-    // Lấy token nếu có (nếu không có vẫn connect được vì backend chỉ check nếu cần userId)
-    const token = localStorage.getItem('token') || '';
-    WebSocketService.connect(token);
-    WebSocketService.joinProductRoom(product._id);
-    // Khi có review mới thì fetch lại reviews và rating
+    
+    // Setup WebSocket listener for review updates
     const handleReviewUpdate = (data) => {
+      console.log("Received review update in ProductDetailPage:", data);
+      
       if (data.productId === product._id) {
-        // Gọi lại fetchReviews
-        fetchReviews();
+        if (data.review) {
+          // Add the new review to the existing reviews
+          setReviews(prevReviews => {
+            // Check if review already exists by ID to avoid duplicates
+            const exists = prevReviews.some(r => r._id === data.review._id);
+            if (exists) {
+              return prevReviews.map(r => 
+                r._id === data.review._id ? data.review : r
+              );
+            }
+            // If it's a new review, add it to the beginning
+            return [data.review, ...prevReviews];
+          });
+          
+          // Update rating summary
+          if (data.review.rating) {
+            setRatingSummary(prev => {
+              const newTotal = (prev.total || 0) + 1;
+              const newSum = (prev.average * (prev.total || 0)) + data.review.rating;
+              const newAverage = newSum / newTotal;
+              
+              return {
+                total: newTotal,
+                average: newAverage
+              };
+            });
+          }
+        } else {
+          // If the data doesn't include review (like when multiple reviews are added),
+          // then fetch all reviews
+          fetchReviews();
+        }
       }
     };
+    
+    // Subscribe to review updates
     WebSocketService.subscribeToReviewUpdates(handleReviewUpdate);
+    
+    // Cleanup
     return () => {
-      WebSocketService.leaveProductRoom(product._id);
       WebSocketService.unsubscribeFromReviewUpdates();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
   // Đưa fetchReviews ra ngoài để có thể gọi lại khi có review realtime
@@ -733,17 +787,52 @@ const ProductDetailPage = () => {
                 setReviewLoading(true);
                 setReviewError('');
                 setReviewSuccess('');
+                
+                // Save review data for optimistic update
+                const reviewData = {
+                  productId: product._id,
+                  userName: reviewForm.userName,
+                  comment: reviewForm.comment,
+                  createdAt: new Date().toISOString()
+                };
+                
                 try {
-                  await reviewService.createReview({
-                    productId: product._id,
-                    userName: reviewForm.userName,
-                    comment: reviewForm.comment
-                  });
+                  // Optimistic update - add the review immediately
+                  const optimisticId = 'temp-' + Date.now();
+                  const optimisticReview = {
+                    _id: optimisticId,
+                    ...reviewData,
+                    isPending: true
+                  };
+                  
+                  // Add to UI immediately
+                  setReviews(prev => [optimisticReview, ...prev]);
+                  
+                  // Send to the server
+                  const response = await reviewService.createReview(reviewData);
+                  
+                  // WebSocket will handle the real update when the server broadcasts it
+                  // but we'll set success message now
                   setReviewSuccess('Cảm ơn bạn đã bình luận!');
                   setReviewForm({ userName: '', comment: '' });
                   setShowReviewForm(false);
-                  fetchReviews();
+                  
+                  // If WebSocket fails to update, we can fall back to manual update
+                  // by removing the optimistic review after a timeout
+                  setTimeout(() => {
+                    setReviews(prevReviews => {
+                      // If the optimistic review is still there, replace it
+                      const stillHasOptimistic = prevReviews.some(r => r._id === optimisticId);
+                      if (stillHasOptimistic) {
+                        // Remove the temporary review
+                        return prevReviews.filter(r => r._id !== optimisticId);
+                      }
+                      return prevReviews;
+                    });
+                  }, 5000);
                 } catch (err) {
+                  // Remove optimistic update in case of error
+                  setReviews(prev => prev.filter(r => !r.isPending));
                   setReviewError(err.message || 'Gửi bình luận thất bại');
                 } finally {
                   setReviewLoading(false);
@@ -810,7 +899,7 @@ const ProductDetailPage = () => {
                   {reviews.slice((currentReviewPage-1)*REVIEWS_PER_PAGE, currentReviewPage*REVIEWS_PER_PAGE).map((review) => (
                     <div
                       key={review._id}
-                      className="flex items-start gap-3 bg-white rounded-xl shadow p-4 border border-gray-100 hover:shadow-md transition-shadow"
+                      className={`flex items-start gap-3 bg-white rounded-xl shadow p-4 border border-gray-100 hover:shadow-md transition-shadow ${review.isPending ? 'opacity-70 border-dashed border-blue-300' : ''}`}
                     >
                       <img
                         src={review.userAvatar || 'https://www.gravatar.com/avatar/?d=mp'}
@@ -818,9 +907,14 @@ const ProductDetailPage = () => {
                         className="w-10 h-10 rounded-full object-cover border border-gray-200"
                       />
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-gray-900 text-base">{review.userName || 'Ẩn danh'}</span>
-                          <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString('vi-VN')}</span>
+                        <div className="flex items-center gap-2 mb-1 justify-between">
+                          <div>
+                            <span className="font-semibold text-gray-900 text-base">{review.userName || 'Ẩn danh'}</span>
+                            <span className="text-xs text-gray-400 ml-2">{new Date(review.createdAt).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          {review.isPending && (
+                            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Đang gửi...</span>
+                          )}
                         </div>
                         {review.purchaseVerified && (
                           <span className="inline-block text-xs text-green-600 bg-green-50 rounded px-2 py-0.5 mb-1 font-medium">Purchased</span>
