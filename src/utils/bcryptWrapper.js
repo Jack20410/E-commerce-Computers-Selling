@@ -10,6 +10,15 @@ const bcryptjs = require('bcryptjs');
 const SALT_ROUNDS = 10;
 
 /**
+ * Generate a salt for password hashing
+ * @param {number} rounds - Number of salt rounds (default: 10)
+ * @returns {Promise<string>} - Generated salt
+ */
+const genSalt = async (rounds = SALT_ROUNDS) =>{
+  return bcryptjs.genSalt(rounds);
+}
+
+/**
  * Hash a password using bcryptjs
  * @param {string} password - Plain text password to hash
  * @param {number} saltRounds - Number of salt rounds (default: 10)
@@ -30,6 +39,7 @@ const compare = async (password, hash) => {
 };
 
 module.exports = {
+  genSalt,
   hash,
   compare,
   // Provide direct access to bcryptjs if needed

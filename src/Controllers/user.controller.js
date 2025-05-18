@@ -1,5 +1,5 @@
 const User = require('../Models/user.model');
-const bcrypt = require('../utils/bcryptWrapper');
+const bcryptWrapper = require('../utils/bcryptWrapper');
 const jwt = require('jsonwebtoken');
 const { validatePassword, generateTempPassword } = require('../utils/password.utils');
 const { sendRecoveryEmail } = require('../services/email.service');
@@ -83,7 +83,7 @@ const userController = {
         // Không kiểm tra currentPassword
       } else {
         // Kiểm tra mật khẩu hiện tại
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        const isMatch = await bcryptWrapper.compare(currentPassword, user.password);
         if (!isMatch) {
           return res.status(400).json({
             success: false,
@@ -103,8 +103,8 @@ const userController = {
       }
 
       // Hash mật khẩu mới
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
+      const salt = await bcryptWrapper.genSalt(10);
+      user.password = await bcryptWrapper.hash(newPassword, salt);
       user.isFirstLogin = false;
       user.passwordChangeRequired = false;
 
@@ -160,8 +160,8 @@ const userController = {
 
       // Tạo mật khẩu tạm thời
       const tempPassword = generateTempPassword();
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(tempPassword, salt);
+      const salt = await bcryptWrapper.genSalt(10);
+      user.password = await bcryptWrapper.hash(tempPassword, salt);
       user.isFirstLogin = true;
       user.passwordChangeRequired = true;
 
