@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-
 import { AuthProvider } from './context/AuthContext';
 import { ProfileProvider } from './context/ProfileContext';
 import { CartProvider } from './context/CartContext';
+import { WebSocketProvider } from './context/WebSocketContext'; // Add this import
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ScrollToTop from './components/layout/ScrollToTop';
@@ -61,40 +62,42 @@ function App() {
       <AuthProvider>
         <ProfileProvider>
           <CartProvider>
-            <Routes>
-              {/* Admin Routes - using a separate route structure with empty path to avoid nesting issues */}
-              <Route element={<ProtectedRoute requireAdmin={true} />}>
-                <Route element={<AdminLayout />}>
-                  <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                  <Route path="/admin/dashboard" element={<Dashboard />} />
-                  <Route path="/admin/products" element={<ProductsAdmin />} />
-                  <Route path="/admin/products/add" element={<AddProduct />} />
-                  <Route path="/admin/products/edit/:id" element={<EditProduct />} />
-                  <Route path="/admin/orders" element={<OrdersPage />} />
-                  <Route path="/admin/orders/:orderId" element={<OrderDetailAdmin />} />
-                  <Route path="/admin/users" element={<UsersPage />} />
-                  <Route path="/admin/deals" element={<DealsAdmin />} />
+            <WebSocketProvider> {/* Add WebSocketProvider here */}
+              <Routes>
+                {/* Admin Routes - using a separate route structure with empty path to avoid nesting issues */}
+                <Route element={<ProtectedRoute requireAdmin={true} />}>
+                  <Route element={<AdminLayout />}>
+                    <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                    <Route path="/admin/dashboard" element={<Dashboard />} />
+                    <Route path="/admin/products" element={<ProductsAdmin />} />
+                    <Route path="/admin/products/add" element={<AddProduct />} />
+                    <Route path="/admin/products/edit/:id" element={<EditProduct />} />
+                    <Route path="/admin/orders" element={<OrdersPage />} />
+                    <Route path="/admin/orders/:orderId" element={<OrderDetailAdmin />} />
+                    <Route path="/admin/users" element={<UsersPage />} />
+                    <Route path="/admin/deals" element={<DealsAdmin />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              {/* Public Routes */}
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/category/:category" element={<ProductsPage />} />
-                <Route path="/products/:id" element={<ProductDetailPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
-                <Route path="/discounts" element={<Discounts />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
+                {/* Public Routes */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/category/:category" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+                  <Route path="/discounts" element={<Discounts />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </WebSocketProvider>
           </CartProvider>
         </ProfileProvider>
       </AuthProvider>
@@ -103,4 +106,3 @@ function App() {
 }
 
 export default App;
-// 
