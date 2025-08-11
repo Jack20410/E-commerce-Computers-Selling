@@ -15,10 +15,10 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy application code
+# Copy application code (including uploads folder with existing images)
 COPY src/ ./src/
 
-# Create uploads directory
+# Ensure uploads directory exists and has correct permissions
 RUN mkdir -p src/uploads
 
 # Create a non-root user

@@ -15,8 +15,8 @@ frontend/node_modules
 frontend/dist
 frontend/.env
 
-# Ignore uploads during build (will be mounted as volume)
-src/uploads
+# Include uploads folder for production (contains existing product images)
+# src/uploads
 
 # Ignore Docker files
 docker-compose.yml

@@ -104,6 +104,56 @@ const migrationHandler = async (req, res) => {
 app.get('/migrate-images', migrationHandler);
 app.post('/migrate-images', migrationHandler);
 
+// Debug endpoint to check uploads folder
+app.get('/debug/uploads', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    const uploadsPath = path.join(__dirname, 'uploads');
+    console.log('Checking uploads path:', uploadsPath);
+    
+    const exists = fs.existsSync(uploadsPath);
+    console.log('Uploads folder exists:', exists);
+    
+    if (!exists) {
+      return res.json({
+        success: false,
+        message: 'Uploads folder does not exist',
+        path: uploadsPath
+      });
+    }
+    
+    const categories = fs.readdirSync(uploadsPath);
+    console.log('Categories found:', categories);
+    
+    const result = {};
+    categories.forEach(category => {
+      const categoryPath = path.join(uploadsPath, category);
+      if (fs.statSync(categoryPath).isDirectory()) {
+        const files = fs.readdirSync(categoryPath);
+        result[category] = {
+          count: files.length,
+          files: files.slice(0, 5) // Show first 5 files
+        };
+      }
+    });
+    
+    res.json({
+      success: true,
+      uploadsPath,
+      categories: result
+    });
+    
+  } catch (error) {
+    console.error('Error checking uploads:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // API Routes
 app.use('/auth', authRoutes);
 app.use('/api/products', productRoutes);
