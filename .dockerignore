@@ -1,0 +1,38 @@
+# Ignore local environment files
+.env
+.env.local
+.env.production.example
+
+# Ignore development files
+node_modules
+npm-debug.log*
+.git
+.gitignore
+README.md
+
+# Ignore frontend build files
+frontend/node_modules
+frontend/dist
+frontend/.env
+
+# Ignore uploads during build (will be mounted as volume)
+src/uploads
+
+# Ignore Docker files
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore logs
+logs
+*.log
+
+# Ignore cache
+.cache
+.temp

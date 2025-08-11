@@ -54,6 +54,25 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Health Check Routes - Must be registered before other routes
 app.use('/health', healthRoutes);
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Computer Store API is running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: '/auth',
+      products: '/api/products',
+      users: '/api/users',
+      orders: '/api/orders',
+      reviews: '/api/reviews',
+      discounts: '/api/discount'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API Routes
 app.use('/auth', authRoutes);
 app.use('/api/products', productRoutes);
