@@ -48,8 +48,14 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files with proper headers
+app.use('/uploads', (req, res, next) => {
+  // Set CORS headers for images
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // Health Check Routes - Must be registered before other routes
 app.use('/health', healthRoutes);
@@ -67,10 +73,32 @@ app.get('/', (req, res) => {
       users: '/api/users',
       orders: '/api/orders',
       reviews: '/api/reviews',
-      discounts: '/api/discount'
+      discounts: '/api/discount',
+      'migrate-images': '/migrate-images'
     },
     timestamp: new Date().toISOString()
   });
+});
+
+// Migration endpoint (run once after deployment)
+app.post('/migrate-images', async (req, res) => {
+  try {
+    const { migrateImageUrls } = require('./utils/migrateImageUrls');
+    const result = await migrateImageUrls();
+    
+    res.json({
+      success: true,
+      message: 'Image URL migration completed',
+      data: result
+    });
+  } catch (error) {
+    console.error('Migration failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Migration failed',
+      error: error.message
+    });
+  }
 });
 
 // API Routes

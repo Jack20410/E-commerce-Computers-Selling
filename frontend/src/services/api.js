@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // Determine which API URL to use based on environment
-const API_URL = import.meta.env.VITE_BACKEND_API_URL_DOCKER || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_BACKEND_API_URL 
+  || import.meta.env.VITE_BACKEND_API_URL_DOCKER 
+  || 'http://localhost:3001';
 
 console.log('API URL:', API_URL);
 

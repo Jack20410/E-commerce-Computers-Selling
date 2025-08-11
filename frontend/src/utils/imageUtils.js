@@ -14,8 +14,10 @@ export const getImageUrl = (imagePath) => {
   // Remove leading slash if present
   const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
   
-  // In development, use the backend URL
-  const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001';
+  // Use the backend URL from environment
+  const backendUrl = import.meta.env.VITE_BACKEND_API_URL 
+    || import.meta.env.VITE_BACKEND_API_URL_DOCKER 
+    || 'http://localhost:3001';
   
   return `${backendUrl}/${cleanPath}`;
 };

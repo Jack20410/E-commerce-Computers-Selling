@@ -169,7 +169,12 @@ const getImageUrls = (category, filenames) => {
     filenames = [filenames];
   }
 
-  return filenames.map(filename => `/uploads/${category}/${filename}`);
+  // For production, include the full backend URL
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`
+    : '';
+
+  return filenames.map(filename => `${baseUrl}/uploads/${category}/${filename}`);
 };
 
 // Function to extract filename from URL
