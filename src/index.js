@@ -80,8 +80,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// Migration endpoint (run once after deployment)
-app.post('/migrate-images', async (req, res) => {
+// Migration endpoint (run once after deployment) - supports both GET and POST
+const migrationHandler = async (req, res) => {
   try {
     const { migrateImageUrls } = require('./utils/migrateImageUrls');
     const result = await migrateImageUrls();
@@ -99,7 +99,10 @@ app.post('/migrate-images', async (req, res) => {
       error: error.message
     });
   }
-});
+};
+
+app.get('/migrate-images', migrationHandler);
+app.post('/migrate-images', migrationHandler);
 
 // API Routes
 app.use('/auth', authRoutes);
