@@ -20,21 +20,22 @@ class HealthController {
       // Check MongoDB connection
       const mongoStatus = mongoose.connection.readyState === 1;
       
-      // Check Redis connection
-      const redisStatus = redisClient.status === 'ready';
+      // Check Redis connection (if available)
+      const redisStatus = redisClient ? redisClient.status === 'ready' : null;
 
-      if (mongoStatus && redisStatus) {
+      // Application is healthy if MongoDB is connected (Redis is optional)
+      if (mongoStatus) {
         res.status(200).json({
           status: 'healthy',
           mongodb: 'connected',
-          redis: 'connected',
+          redis: redisStatus === null ? 'not_configured' : (redisStatus ? 'connected' : 'disconnected'),
           timestamp: new Date().toISOString()
         });
       } else {
         res.status(503).json({
           status: 'unhealthy',
           mongodb: mongoStatus ? 'connected' : 'disconnected',
-          redis: redisStatus ? 'connected' : 'disconnected',
+          redis: redisStatus === null ? 'not_configured' : (redisStatus ? 'connected' : 'disconnected'),
           timestamp: new Date().toISOString()
         });
       }
@@ -124,8 +125,13 @@ class HealthController {
 
       switch (serviceName.toLowerCase()) {
         case 'redis':
-          healthy = redisClient.status === 'ready';
-          status = healthy ? 'healthy' : 'unhealthy';
+          if (redisClient) {
+            healthy = redisClient.status === 'ready';
+            status = healthy ? 'healthy' : 'unhealthy';
+          } else {
+            healthy = false;
+            status = 'not_configured';
+          }
           break;
         case 'mongodb':
           healthy = mongoose.connection.readyState === 1;
@@ -173,12 +179,18 @@ class HealthController {
     try {
       const services = [];
       
-      // Check Redis
-      if (redisClient.status === 'ready') {
+      // Check Redis (if configured)
+      if (redisClient && redisClient.status === 'ready') {
         services.push({
           id: 'redis-1',
           name: 'Redis',
           status: 'healthy'
+        });
+      } else if (redisClient) {
+        services.push({
+          id: 'redis-1',
+          name: 'Redis',
+          status: 'unhealthy'
         });
       }
 
