@@ -2,6 +2,8 @@
 
 A full-stack e-commerce platform specializing in selling computers, laptops, and computer components, built with the MERN stack (MongoDB, Express, React, Node.js).
 
+## Deployed website link: https://e-commerce-computers-selling.onrender.com/
+
 ## Table of Contents
 - [Features](#features)
 - [Tech Stack](#tech-stack)
