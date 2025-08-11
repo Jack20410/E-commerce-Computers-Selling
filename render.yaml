@@ -1,0 +1,61 @@
+services:
+  # Backend API Service
+  - type: web
+    name: computer-store-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    branch: production
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mongodb-atlas
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: computer-store-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: computer-store-frontend
+          property: url
+
+  # Frontend Service (Static Site)
+  - type: web
+    name: computer-store-frontend
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    buildFilter:
+      paths:
+      - frontend/**
+    rootDir: frontend
+    envVars:
+      - key: VITE_BACKEND_API_URL
+        fromService:
+          type: web
+          name: computer-store-api
+          property: url
+
+  # Redis Service
+  - type: redis
+    name: computer-store-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  # MongoDB Atlas (External)
+  - name: mongodb-atlas
+    databaseName: computer_store
+    user: admin
