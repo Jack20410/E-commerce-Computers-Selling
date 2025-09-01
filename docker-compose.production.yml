@@ -1,22 +1,6 @@
 version: '3.8'
 
 services:
-  # Load Balancer
-  nginx-lb:
-    image: nginx:alpine
-    container_name: nginx-lb
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/logs:/var/log/nginx
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - app-network
-
   # Redis for session management and caching
   redis:
     image: redis:alpine
@@ -29,7 +13,7 @@ services:
     networks:
       - app-network
 
-  # Backend API service
+  # Backend API service (for api.jabick.site)
   backend:
     build:
       context: ./
@@ -38,7 +22,7 @@ services:
         - NODE_ENV=production
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       update_config:
         parallelism: 1
         delay: 10s
@@ -50,8 +34,8 @@ services:
       - REDIS_URL=redis://redis:6379
     volumes:
       - ./src/uploads:/usr/src/app/src/uploads
-    expose:
-      - "3001"
+    ports:
+      - "3001:3001"  # Expose directly for api.jabick.site
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
       interval: 30s
@@ -62,10 +46,8 @@ services:
       - app-network
     labels:
       - "com.docker.compose.service=backend"
-      - "com.docker.compose.project.working_dir=${PWD}"
-      - "com.docker.compose.project.config_files=docker-compose.yml"
 
-  # Frontend React service
+  # Frontend React service (for jabick.site)
   frontend:
     build:
       context: ./frontend
@@ -73,9 +55,9 @@ services:
     container_name: frontend
     restart: unless-stopped
     environment:
-      - VITE_BACKEND_API_URL_DOCKER=http://localhost/api
-    expose:
-      - "3000"
+      - VITE_BACKEND_API_URL=https://api.jabick.site
+    ports:
+      - "3000:3000"  # Expose directly for jabick.site
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
       interval: 30s
@@ -93,4 +75,3 @@ networks:
 
 volumes:
   redis_data:
-  nginx_logs:
