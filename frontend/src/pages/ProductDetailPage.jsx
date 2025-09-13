@@ -524,6 +524,25 @@ const ProductDetailPage = () => {
       <Helmet>
         <title>{`${product.brand} ${product.model} | Computer Store`}</title>
         <meta name="description" content={product.description} />
+        
+        {/* Open Graph Meta Tags */}
+        <meta property="og:title" content={`${product.brand} ${product.model} | Computer Store`} />
+        <meta property="og:description" content={product.description} />
+        <meta property="og:image" content={selectedImage || getPlaceholderImage(product.category)} />
+        <meta property="og:url" content={window.location.href} />
+        <meta property="og:type" content="product" />
+        <meta property="og:site_name" content="TechStation - Premium Computer Store" />
+        <meta property="product:price:amount" content={product.price} />
+        <meta property="product:price:currency" content="VND" />
+        <meta property="product:availability" content={product.stock > 0 ? "in stock" : "out of stock"} />
+        <meta property="product:condition" content="new" />
+        <meta property="product:brand" content={product.brand} />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${product.brand} ${product.model} | Computer Store`} />
+        <meta name="twitter:description" content={product.description} />
+        <meta name="twitter:image" content={selectedImage || getPlaceholderImage(product.category)} />
       </Helmet>
       
       <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen py-4">

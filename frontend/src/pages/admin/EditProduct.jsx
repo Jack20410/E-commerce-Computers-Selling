@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { getImageUrl } from '../../utils/imageUtils';
 import specificationFields from '../../utils/specificationFields';
 import productService from '../../services/productService';
 import ProductVariantsSection from '../../components/product/ProductVariantsSection';
@@ -612,10 +613,10 @@ const EditProduct = () => {
                       >
                         <i className="fas fa-trash">×</i>
                       </button>
+                      </div>
                     </div>
-                  </div>
                 ))}
-              </div>
+                </div>
             </div>
           )}
           

@@ -26,33 +26,37 @@ if (!process.env.GOOGLE_CLIENT_SECRET) {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3001/auth/google/callback",
-    scope: ['profile', 'email']
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    scope: ['profile', 'email'],
+    proxy: true // Add this line for proxy support
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // Kiểm tra xem user đã tồn tại chưa
+      console.log('Google profile:', profile); // Add logging
+
       let user = await User.findOne({ googleId: profile.id });
       
       if (user) {
+        console.log('Existing user found:', user._id);
         return done(null, user);
       }
 
-      // Nếu user chưa tồn tại, tạo user mới
       user = await User.create({
         googleId: profile.id,
         email: profile.emails[0].value,
         fullName: profile.displayName,
-        isEmailVerified: true, // Email đã được Google xác thực
+        isEmailVerified: true,
         googleProfile: profile,
-        isFirstLogin: false, // Đánh dấu là đã login lần đầu
+        isFirstLogin: true
       });
 
+      console.log('New user created:', user._id);
       return done(null, user);
     } catch (error) {
+      console.error('Google auth error:', error);
       return done(error, null);
     }
   }
 ));
 
-module.exports = passport; 
+module.exports = passport;

@@ -9,34 +9,52 @@ class WebSocketService {
 
   initialize(server) {
     this.io = new Server(server, {
+      path: '/socket.io',
       cors: {
         origin: process.env.NODE_ENV === 'production'
-          ? process.env.FRONTEND_URL
+          ? [process.env.FRONTEND_URL, 'https://www.jabick.site', 'https://jabick.site']
           : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
         methods: ['GET', 'POST'],
         credentials: true
-      }
+      },
+      allowEIO3: true,
+      transports: ['websocket', 'polling']
     });
 
-    // Authentication middleware
+    // Authentication middleware (optional for basic connection)
     this.io.use((socket, next) => {
       const token = socket.handshake.auth.token;
+      
       if (!token) {
-        return next(new Error('Authentication error'));
+        // Allow connection without authentication but mark as guest
+        socket.userId = null;
+        socket.isGuest = true;
+        console.log('Guest WebSocket connection allowed');
+        return next();
       }
 
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         socket.userId = decoded.userId;
+        socket.isGuest = false;
+        console.log('Authenticated WebSocket connection for user:', decoded.userId);
         next();
       } catch (err) {
-        next(new Error('Authentication error'));
+        // Allow connection but mark as guest if token is invalid
+        socket.userId = null;
+        socket.isGuest = true;
+        console.log('Invalid token, allowing as guest connection');
+        next();
       }
     });
 
     this.io.on('connection', (socket) => {
-      console.log(`User connected: ${socket.userId}`);
-      this.connectedUsers.set(socket.userId, socket);
+      const userType = socket.isGuest ? 'guest' : 'authenticated';
+      console.log(`${userType} user connected: ${socket.userId || 'anonymous'}`);
+      
+      if (socket.userId) {
+        this.connectedUsers.set(socket.userId, socket);
+      }
 
       // Join product room
       socket.on('joinProductRoom', (productId) => {
@@ -48,8 +66,12 @@ class WebSocketService {
       });
 
       socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.userId}`);
-        this.connectedUsers.delete(socket.userId);
+        const userType = socket.isGuest ? 'guest' : 'authenticated';
+        console.log(`${userType} user disconnected: ${socket.userId || 'anonymous'}`);
+        
+        if (socket.userId) {
+          this.connectedUsers.delete(socket.userId);
+        }
       });
     });
   }

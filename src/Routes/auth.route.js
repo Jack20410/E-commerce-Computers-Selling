@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
+const jwt = require('jsonwebtoken');
 const {
   register,
   login,
   verifyEmail,
-  createGuestUser,
-  googleLogin,
-  googleCallback
+  createGuestUser
 } = require('../Controllers/auth.controller');
 const { authenticateToken } = require('../Middlewares/auth.middleware');
 
@@ -15,8 +15,41 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/guest', createGuestUser);
 router.get('/verify-email/:token', verifyEmail);
-router.get('/google', googleLogin);
-router.get('/google/callback', googleCallback);
+
+// Google OAuth routes
+router.get('/google',
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false 
+  })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed` 
+  }),
+  (req, res) => {
+    // Generate JWT token here
+    const token = jwt.sign(
+      { userId: req.user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Redirect to frontend with token and user data
+    const userObj = {
+      id: req.user._id,
+      email: req.user.email,
+      fullName: req.user.fullName,
+      role: req.user.role || 'user',
+      isEmailVerified: req.user.isEmailVerified,
+      googleId: req.user.googleId
+    };
+    
+    res.redirect(`${process.env.FRONTEND_URL}/oauth2-redirect?token=${token}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
+  }
+);
 
 // Protected routes (cần JWT token)
 router.get('/me', authenticateToken, (req, res) => {
@@ -35,4 +68,4 @@ router.get('/me', authenticateToken, (req, res) => {
   });
 });
 
-module.exports = router; 
+module.exports = router;

@@ -8,7 +8,7 @@ const userController = {
   // Lấy thông tin profile
   getProfile: async (req, res) => {
     try {
-      const user = await User.findById(req.user.id).select('-password');
+      const user = await User.findById(req.user._id).select('-password');
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -32,7 +32,7 @@ const userController = {
   updateProfile: async (req, res) => {
     try {
       const { fullName } = req.body;
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user._id);
       
       if (!user) {
         return res.status(404).json({
@@ -69,7 +69,7 @@ const userController = {
   changePassword: async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user._id);
 
       if (!user) {
         return res.status(404).json({
@@ -125,7 +125,7 @@ const userController = {
   // Kiểm tra lần đăng nhập đầu tiên
   checkFirstLogin: async (req, res) => {
     try {
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user._id);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -255,7 +255,7 @@ const userController = {
       }
 
       // Không cho phép thay đổi role của chính mình
-      if (id === req.user.id) {
+      if (id === req.user._id.toString()) {
         return res.status(400).json({
           success: false,
           message: 'Không thể thay đổi role của chính mình'
@@ -293,7 +293,7 @@ const userController = {
       const { id } = req.params;
 
       // Không cho phép xóa chính mình
-      if (id === req.user.id) {
+      if (id === req.user._id.toString()) {
         return res.status(400).json({
           success: false,
           message: 'Không thể xóa tài khoản của chính mình'
