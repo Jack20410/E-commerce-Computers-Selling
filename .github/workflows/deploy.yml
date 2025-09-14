@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: github_action_ci_key
     
     steps:
       - name: Checkout code
