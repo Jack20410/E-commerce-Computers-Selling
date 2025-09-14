@@ -90,7 +90,7 @@ const Navbar = () => {
     return (
       <div
         ref={cartPreviewRef}
-        className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl py-4 z-50"
+        className="absolute right-0 mt-3 w-80 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 py-4 z-50"
       >
         <div className="px-4 py-2 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-gray-800">Shopping Cart</h3>
@@ -139,7 +139,7 @@ const Navbar = () => {
           </div>
           <Link
             to="/cart"
-            className="block w-full text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300"
+            className="block w-full text-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-medium rounded-2xl transition-all duration-300 transform hover:scale-105"
             onClick={() => setIsCartPreviewOpen(false)}
           >
             View Cart
@@ -151,17 +151,23 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      {/* Floating Navbar */}
+      <nav className={`fixed top-4 left-4 right-4 z-50 transition-all duration-500 ease-in-out ${
         isScrolled 
-          ? 'bg-white/80 backdrop-blur-md shadow-lg' 
-          : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+          ? 'transform translate-y-0' 
+          : 'transform translate-y-0'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+        <div className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${
+          isScrolled 
+            ? 'bg-blue-50/95 backdrop-blur-xl border border-blue-100/40' 
+            : 'bg-white/70 backdrop-blur-lg border border-white/30'
+        } rounded-2xl overflow-visible`}>
+          <div className="px-6 sm:px-8 lg:px-10">
+            <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 cursor-pointer">
-                  TechStation
+                  <Link to="/">TechStation</Link>
                 </span>
               </div>
               <div className="hidden xl:block ml-10">
@@ -174,7 +180,7 @@ const Navbar = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
+                    <div className="absolute left-0 mt-3 w-48 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 z-50">
                       <div className="py-2 px-1">
                         <Link to="/products/category/pc" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">Gaming PC</Link>
                         <Link to="/products/category/laptop" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">Laptop</Link>
@@ -188,7 +194,7 @@ const Navbar = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
+                    <div className="absolute left-0 mt-3 w-56 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 z-50">
                       <div className="py-2 px-1">
                         <Link to="/products/category/cpu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">CPUs</Link>
                         <Link to="/products/category/motherboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">Motherboards</Link>
@@ -240,7 +246,7 @@ const Navbar = () => {
             if (e.key === "Enter") handleSearch();
           }}
           placeholder="Search products..."
-          className="w-64 pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 group-hover:bg-white transition-all duration-200"
+          className="w-64 pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 bg-white/60 backdrop-blur-sm group-hover:bg-white/80 transition-all duration-300 placeholder-gray-500"
         />
       </div>
 
@@ -259,7 +265,7 @@ const Navbar = () => {
 
                   {/* User Dropdown */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 px-1 z-50 transform transition-all duration-200">
+                    <div className="absolute right-0 mt-3 w-48 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 py-2 px-1 z-50 transform transition-all duration-300">
                       <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-150">
                         Account Info
                       </Link>
@@ -282,7 +288,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/register"
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white px-6 py-2.5 rounded-2xl text-sm font-medium transition-all duration-300 transform hover:scale-105"
                   >
                     Register
                   </Link>
@@ -328,7 +334,7 @@ const Navbar = () => {
               
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-700 hover:text-blue-600 focus:outline-none transition-all duration-200 p-2 rounded-lg hover:bg-blue-50"
+                className="text-gray-700 hover:text-blue-600 focus:outline-none transition-all duration-200 p-2 rounded-2xl hover:bg-blue-50"
               >
                 {isMenuOpen ? (
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,6 +349,7 @@ const Navbar = () => {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Mobile Navigation Menu */}
         <div 
@@ -350,30 +357,34 @@ const Navbar = () => {
         >
           {/* Overlay */}
           <div 
-            className={`fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
+            className={`fixed inset-0 bg-black/0 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setIsMenuOpen(false)}
           />
           
           {/* Menu Content */}
           <div 
-            className={`fixed top-0 left-0 w-[85%] max-w-sm h-full bg-white shadow-xl overflow-y-auto transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            className={`fixed top-4 right-4 w-[85%] max-w-sm h-[calc(100vh-2rem)] bg-white border border-gray-200 rounded-2xl overflow-hidden transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
-            <div className="px-4 py-6 space-y-6">
-              {/* Menu Header with Close Button */}
+            {/* Fixed Header */}
+            <div className="absolute top-0 left-0 right-0 bg-white px-4 py-4 border-b border-gray-200 rounded-t-2xl z-10">
               <div className="flex items-center justify-between">
                 <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  TechStation
+                <Link to="/">TechStation</Link>
                 </div>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200"
+                  className="p-2 rounded-2xl text-gray-500 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
+            </div>
               
+            {/* Scrollable Content */}
+            <div className="pt-20 pb-6 px-4 h-full overflow-y-auto">
+              <div className="space-y-6">
               {/* Mobile Search */}
               <div className="relative">
                 <input
@@ -387,7 +398,7 @@ const Navbar = () => {
                       setIsMenuOpen(false);
                     }
                   }}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 bg-white/60 backdrop-blur-sm"
                 />
                 <div className="absolute left-3 top-3.5" onClick={() => {
                   handleSearch();
@@ -408,7 +419,7 @@ const Navbar = () => {
                   <div className="space-y-2">
                     <Link
                       to="/profile"
-                      className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                      className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                     >
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -430,13 +441,13 @@ const Navbar = () => {
                 <div className="flex flex-col space-y-3">
                   <Link
                     to="/login"
-                    className="w-full text-center px-4 py-3 text-gray-700 hover:text-blue-600 font-medium rounded-xl border border-gray-200 hover:border-blue-500 transition-all duration-200 hover:bg-blue-50"
+                    className="w-full text-center px-4 py-3 text-gray-700 hover:text-blue-600 font-medium rounded-2xl border border-gray-200/50 hover:border-blue-500 transition-all duration-200 hover:bg-blue-50 backdrop-blur-sm"
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="w-full text-center px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 font-medium rounded-xl transition-all duration-300"
+                    className="w-full text-center px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 font-medium rounded-2xl transition-all duration-300 transform hover:scale-105"
                   >
                     Register
                   </Link>
@@ -450,7 +461,7 @@ const Navbar = () => {
               <div className="space-y-6">
                 <Link
                   to="/"
-                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -463,7 +474,7 @@ const Navbar = () => {
                   <div className="px-4 text-sm font-semibold text-gray-400 uppercase tracking-wider">Computers</div>
                   <Link
                     to="/products/category/pc"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -472,7 +483,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/laptop"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -486,7 +497,7 @@ const Navbar = () => {
                   <div className="px-4 text-sm font-semibold text-gray-400 uppercase tracking-wider">Components</div>
                   <Link
                     to="/products/category/cpu"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
@@ -495,7 +506,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/graphicsCard"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -504,7 +515,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/motherboard"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 9a2 2 0 10-4 0v5a2 2 0 01-2 2h6m-6-4h4m8 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -513,7 +524,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/storage"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -522,7 +533,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/memory"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -531,7 +542,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/monitor"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -540,7 +551,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/gears"
-                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                    className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -553,7 +564,7 @@ const Navbar = () => {
                 {/* Deals */}
                 <Link
                   to="/discounts"
-                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
@@ -564,7 +575,7 @@ const Navbar = () => {
                 {/* Cart Link for Mobile */}
                 <Link
                   to="/cart"
-                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
+                  className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -572,13 +583,14 @@ const Navbar = () => {
                   <span>Cart {getCartItemsCount() > 0 && `(${getCartItemsCount()})`}</span>
                 </Link>
               </div>
+              </div>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Spacer for fixed navbar */}
-      <div className="h-16"></div>
+      {/* Spacer for floating navbar */}
+      <div className="mb-20"></div>
     </>
   );
 };
