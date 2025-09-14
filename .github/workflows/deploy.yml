@@ -24,7 +24,7 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd ~/E-commerce-Computers-Selling
+            cd ~/Projects/E-commerce-Computers-Selling
             git pull origin deploy_2
             docker-compose pull
             docker-compose up -d --build
