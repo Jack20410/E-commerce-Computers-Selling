@@ -77,32 +77,32 @@ const Categories = () => {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-3 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
             <Link
               to={`/products/category/${getCategorySlug(category.name)}`}
               key={category.id}
               className="group relative bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="w-full h-48 bg-gray-200 overflow-hidden">
+              <div className="w-full h-32 sm:h-48 bg-gray-200 overflow-hidden">
                 <img
                   src={category.image}
                   alt={category.name}
                   className="w-full h-full object-center object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+              <div className="p-3 sm:p-6">
+                <h3 className="text-sm sm:text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
                   {capitalizeFirstLetter(category.name)}
                 </h3>
-                <p className="mt-2 text-base text-gray-500">
+                <p className="mt-1 sm:mt-2 text-xs sm:text-base text-gray-500 line-clamp-2">
                   {category.description}
                 </p>
-                <div className="mt-4">
-                  <span className="inline-flex items-center text-blue-600 group-hover:text-blue-800">
+                <div className="mt-2 sm:mt-4">
+                  <span className="inline-flex items-center text-blue-600 group-hover:text-blue-800 text-xs sm:text-base">
                     Shop now
                     <svg
-                      className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
+                      className="ml-1 sm:ml-2 w-3 h-3 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300"
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
                       fill="currentColor"

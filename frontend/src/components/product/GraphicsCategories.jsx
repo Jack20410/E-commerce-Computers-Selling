@@ -65,57 +65,73 @@ const GraphicsCategories = () => {
             Elevate your visual experience with cutting-edge graphics cards
           </p>
         </div>
-        <div className="mt-10 slider-container">
-          <button 
-            className="slider-button prev"
-            onClick={() => scroll('prev')}
-            disabled={scrollPosition === 0}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div 
-            ref={sliderRef}
-            className="slider-wrapper"
-            style={{
-              transform: `translateX(-${scrollPosition}px)`
-            }}
-          >
-            {loading ? (
-              <div className="flex justify-center items-center w-full py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                <span className="ml-3">Đang tải dữ liệu...</span>
+        <div className="mt-10">
+          {loading ? (
+            <div className="flex justify-center items-center w-full py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              <span className="ml-3">Đang tải dữ liệu...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center w-full py-10 text-red-500">
+              <p>{error}</p>
+              <button 
+                onClick={() => fetchGraphicsCards()} 
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : graphics.length === 0 ? (
+            <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
+          ) : (
+            <>
+              {/* Mobile: Horizontal Scroll */}
+              <div className="md:hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide">
+                  {graphics.map((gpu) => (
+                    <div key={gpu._id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                      <ProductCard product={gpu} />
+                    </div>
+                  ))}
+                </div>
               </div>
-            ) : error ? (
-              <div className="text-center w-full py-10 text-red-500">
-                <p>{error}</p>
+
+              {/* Desktop: Slider with Controls */}
+              <div className="hidden md:block slider-container">
                 <button 
-                  onClick={() => fetchGraphicsCards()} 
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="slider-button prev"
+                  onClick={() => scroll('prev')}
+                  disabled={scrollPosition === 0}
                 >
-                  Thử lại
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div 
+                  ref={sliderRef}
+                  className="slider-wrapper"
+                  style={{
+                    transform: `translateX(-${scrollPosition}px)`
+                  }}
+                >
+                  {graphics.map(gpu => (
+                    <div key={gpu._id} className="slider-card">
+                      <ProductCard product={gpu} />
+                    </div>
+                  ))}
+                </div>
+                <button 
+                  className="slider-button next"
+                  onClick={() => scroll('next')}
+                  disabled={!graphics.length || scrollPosition >= (graphics.length - 4) * 300}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
-            ) : graphics.length === 0 ? (
-              <div className="text-center w-full py-10">Không có sản phẩm nào.</div>
-            ) : (
-              graphics.map(gpu => (
-                <div key={gpu._id} className="slider-card">
-                  <ProductCard product={gpu} />
-                </div>
-              ))
-            )}
-          </div>
-          <button 
-            className="slider-button next"
-            onClick={() => scroll('next')}
-            disabled={!graphics.length || scrollPosition >= (graphics.length - 4) * 300}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+            </>
+          )}
         </div>
         <div className="mt-10 text-center">
           <Link to="/products/category/graphicsCard" className="inline-flex items-center text-blue-600 hover:text-blue-800">

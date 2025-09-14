@@ -70,59 +70,75 @@ const LaptopCategories = () => {
           </p>
         </div>
         
-        <div className="mt-10 slider-container">
-          <button 
-            className="slider-button prev"
-            onClick={() => scroll('prev')}
-            disabled={scrollPosition === 0}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <div 
-            ref={sliderRef}
-            className="slider-wrapper"
-            style={{
-              transform: `translateX(-${scrollPosition}px)`
-            }}
-          >
-            {loading ? (
-              <div className="flex justify-center items-center w-full py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                <span className="ml-3">Loading data...</span>
+        <div className="mt-10">
+          {loading ? (
+            <div className="flex justify-center items-center w-full py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              <span className="ml-3">Loading data...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center w-full py-10 text-red-500">
+              <p>{error}</p>
+              <button 
+                onClick={() => fetchLaptops()} 
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Retry
+              </button>
+            </div>
+          ) : laptops.length === 0 ? (
+            <div className="text-center w-full py-10">No products found.</div>
+          ) : (
+            <>
+              {/* Mobile: Horizontal Scroll */}
+              <div className="md:hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide">
+                  {laptops.map((laptop) => (
+                    <div key={laptop._id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                      <ProductCard product={laptop} />
+                    </div>
+                  ))}
+                </div>
               </div>
-            ) : error ? (
-              <div className="text-center w-full py-10 text-red-500">
-                <p>{error}</p>
+
+              {/* Desktop: Slider with Controls */}
+              <div className="hidden md:block slider-container">
                 <button 
-                  onClick={() => fetchLaptops()} 
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="slider-button prev"
+                  onClick={() => scroll('prev')}
+                  disabled={scrollPosition === 0}
                 >
-                  Retry
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <div 
+                  ref={sliderRef}
+                  className="slider-wrapper"
+                  style={{
+                    transform: `translateX(-${scrollPosition}px)`
+                  }}
+                >
+                  {laptops.map(laptop => (
+                    <div key={laptop._id} className="slider-card">
+                      <ProductCard product={laptop} />
+                    </div>
+                  ))}
+                </div>
+                
+                <button 
+                  className="slider-button next"
+                  onClick={() => scroll('next')}
+                  disabled={!laptops.length || scrollPosition >= (laptops.length - 4) * 300}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
-            ) : laptops.length === 0 ? (
-              <div className="text-center w-full py-10">No products found.</div>
-            ) : (
-              laptops.map(laptop => (
-                <div key={laptop._id} className="slider-card">
-                  <ProductCard product={laptop} />
-                </div>
-              ))
-            )}
-          </div>
-          
-          <button 
-            className="slider-button next"
-            onClick={() => scroll('next')}
-            disabled={!laptops.length || scrollPosition >= (laptops.length - 4) * 300}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+            </>
+          )}
         </div>
         
         <div className="mt-10 text-center">

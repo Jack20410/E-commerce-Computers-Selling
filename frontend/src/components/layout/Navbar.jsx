@@ -363,7 +363,7 @@ const Navbar = () => {
           
           {/* Menu Content */}
           <div 
-            className={`fixed top-4 right-4 w-[85%] max-w-sm h-[calc(100vh-2rem)] bg-white border border-gray-200 rounded-2xl overflow-hidden transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`fixed top-0 right-0 w-[95%] max-w-sm h-[calc(100vh-2rem)] bg-white border border-gray-200 rounded-2xl overflow-hidden transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
             {/* Fixed Header */}
             <div className="absolute top-0 left-0 right-0 bg-white px-4 py-4 border-b border-gray-200 rounded-t-2xl z-10">
@@ -419,6 +419,7 @@ const Navbar = () => {
                   <div className="space-y-2">
                     <Link
                       to="/profile"
+                      onClick={() => setIsMenuOpen(false)}
                       className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                     >
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,7 +428,10 @@ const Navbar = () => {
                       <span>My Account</span>
                     </Link>
                     <button
-                      onClick={handleLogout}
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
                       className="flex items-center space-x-2 w-full px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors duration-150"
                     >
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,12 +445,14 @@ const Navbar = () => {
                 <div className="flex flex-col space-y-3">
                   <Link
                     to="/login"
+                    onClick={() => setIsMenuOpen(false)}
                     className="w-full text-center px-4 py-3 text-gray-700 hover:text-blue-600 font-medium rounded-2xl border border-gray-200/50 hover:border-blue-500 transition-all duration-200 hover:bg-blue-50 backdrop-blur-sm"
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
+                    onClick={() => setIsMenuOpen(false)}
                     className="w-full text-center px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 font-medium rounded-2xl transition-all duration-300 transform hover:scale-105"
                   >
                     Register
@@ -461,6 +467,7 @@ const Navbar = () => {
               <div className="space-y-6">
                 <Link
                   to="/"
+                  onClick={() => setIsMenuOpen(false)}
                   className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,6 +481,7 @@ const Navbar = () => {
                   <div className="px-4 text-sm font-semibold text-gray-400 uppercase tracking-wider">Computers</div>
                   <Link
                     to="/products/category/pc"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,6 +491,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/laptop"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -497,6 +506,7 @@ const Navbar = () => {
                   <div className="px-4 text-sm font-semibold text-gray-400 uppercase tracking-wider">Components</div>
                   <Link
                     to="/products/category/cpu"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -506,6 +516,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/graphicsCard"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -515,6 +526,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/motherboard"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -524,6 +536,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/storage"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -533,6 +546,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/memory"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,6 +556,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/monitor"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,6 +566,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/products/category/gears"
+                    onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -564,6 +580,7 @@ const Navbar = () => {
                 {/* Deals */}
                 <Link
                   to="/discounts"
+                  onClick={() => setIsMenuOpen(false)}
                   className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -575,6 +592,7 @@ const Navbar = () => {
                 {/* Cart Link for Mobile */}
                 <Link
                   to="/cart"
+                  onClick={() => setIsMenuOpen(false)}
                   className="flex items-center space-x-2 px-4 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-colors duration-150"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

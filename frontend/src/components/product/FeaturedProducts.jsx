@@ -77,36 +77,50 @@ const FeaturedProducts = () => {
           ) : products.length === 0 ? (
             <div className="text-center w-full py-10">No products available.</div>
           ) : (
-            <div className="slider-container">
-              <button 
-                className="slider-button prev" 
-                onClick={prevSlide}
-                disabled={currentIndex === 0}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div 
-                className="slider-wrapper"
-                style={{ transform: `translateX(-${currentIndex * (100 / 4)}%)` }}
-              >
-                {products.map((product) => (
-                  <div key={product._id} className="slider-card">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
+            <>
+              {/* Mobile: Horizontal Scroll */}
+              <div className="md:hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide">
+                  {products.map((product) => (
+                    <div key={product._id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <button 
-                className="slider-button next" 
-                onClick={nextSlide}
-                disabled={currentIndex + 4 >= products.length}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+
+              {/* Desktop: Slider with Controls */}
+              <div className="hidden md:block slider-container">
+                <button 
+                  className="slider-button prev" 
+                  onClick={prevSlide}
+                  disabled={currentIndex === 0}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div 
+                  className="slider-wrapper"
+                  style={{ transform: `translateX(-${currentIndex * (100 / 4)}%)` }}
+                >
+                  {products.map((product) => (
+                    <div key={product._id} className="slider-card">
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+                <button 
+                  className="slider-button next" 
+                  onClick={nextSlide}
+                  disabled={currentIndex + 4 >= products.length}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -85,17 +85,36 @@ const TopSellingProducts = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {products.map((product) => (
-                <div key={product._id} className="relative">
-                  {/* Add a "Top Seller" badge */}
-                  <div className="absolute top-3 right-3 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                    TOP SELLER
-                  </div>
-                  <ProductCard product={product} />
+            <>
+              {/* Mobile: Horizontal Scroll */}
+              <div className="md:hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide">
+                  {products.map((product) => (
+                    <div key={product._id} className="relative flex-shrink-0 w-[160px] sm:w-[180px]">
+                      {/* Add a "Top Seller" badge */}
+                      <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                        TOP
+                      </div>
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+                
+              </div>
+
+              {/* Desktop: Grid Layout */}
+              <div className="hidden md:grid grid-cols-2 gap-6 lg:grid-cols-4">
+                {products.map((product) => (
+                  <div key={product._id} className="relative">
+                    {/* Add a "Top Seller" badge */}
+                    <div className="absolute top-3 right-3 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                      TOP SELLER
+                    </div>
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
