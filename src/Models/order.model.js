@@ -85,8 +85,16 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['cod', 'banking', 'momo'],
+        enum: ['cod', 'banking', 'momo', 'vnpay'],
         required: true
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'paid', 'failed'],
+        default: 'pending'
+    },
+    vnpayTransactionId: {
+        type: String
     },
     currentStatus: {
         type: String,

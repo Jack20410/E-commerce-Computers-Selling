@@ -1,9 +1,9 @@
-name: deploy 2
+name: deploy 3
 
 on:
   push:
     branches:
-      - deploy_2
+      - deploy_3
 
 jobs:
   deploy:
@@ -25,7 +25,84 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ~/Projects/E-commerce-Computers-Selling
+            
+            # Pull latest code
             git pull origin deploy_2
-            docker-compose pull
-            docker-compose up -d --build
+            
+            # Stop current containers
+            docker-compose -f docker-compose.production.yml down
+            
+            # Create production environment file if not exists
+            if [ ! -f .env.production ]; then
+              cp .env .env.production
+            fi
+            
+            # Update production environment variables
+            sed -i 's|FRONTEND_URL=.*|FRONTEND_URL=https://jabick.site|g' .env.production
+            sed -i 's|BACKEND_URL=.*|BACKEND_URL=https://api.jabick.site|g' .env.production
+            sed -i 's|GOOGLE_CALLBACK_URL=.*|GOOGLE_CALLBACK_URL=https://api.jabick.site/auth/google/callback|g' .env.production
+            sed -i 's|VNP_RETURN_URL=.*|VNP_RETURN_URL=https://jabick.site/payment/vnpay-return|g' .env.production
+            sed -i 's|VNP_URL=.*|VNP_URL=https://vnpayment.vn/paymentv2/vpcpay.html|g' .env.production
+            sed -i 's|VNP_API=.*|VNP_API=https://vnpayment.vn/merchant_webapi/api/transaction|g' .env.production
+            
+            # Verify critical environment variables
+            echo "Verifying production environment variables..."
+            if ! grep -q "MONGODB_URI=" .env.production; then
+              echo "❌ MONGODB_URI not found in .env.production"
+              exit 1
+            fi
+            
+            if ! grep -q "VNP_TMN_CODE=" .env.production; then
+              echo "❌ VNP_TMN_CODE not found in .env.production"
+              exit 1
+            fi
+            
+            echo "✅ Environment variables verified"
+            
+            # Build and start production containers
+            docker-compose -f docker-compose.production.yml build --no-cache
+            docker-compose -f docker-compose.production.yml up -d
+            
+            # Clean up unused Docker resources
+            docker system prune -f
+            
+            # Wait for services to be ready
+            sleep 30
+            
+            # Check if services are running
+            docker-compose -f docker-compose.production.yml ps
+            
+            # Health check
+            echo "Performing health checks..."
+            
+            # Check backend health
+            if curl -f http://localhost:3001/health; then
+              echo "✅ Backend health check passed"
+            else
+              echo "❌ Backend health check failed"
+              exit 1
+            fi
+            
+            # Check frontend availability
+            if curl -f http://localhost:3000; then
+              echo "✅ Frontend health check passed"
+            else
+              echo "❌ Frontend health check failed"
+              exit 1
+            fi
+            
+            echo "🚀 Deployment completed successfully!"
           EOF
+
+      - name: Deployment Status
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ Deployment to jabick.site completed successfully!"
+            echo "🌐 Frontend: https://jabick.site"
+            echo "🔧 Backend API: https://api.jabick.site"
+            echo "💳 VNPay integration: Production ready"
+          else
+            echo "❌ Deployment failed. Check logs above for details."
+            exit 1
+          fi

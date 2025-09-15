@@ -6,6 +6,7 @@ const bcrypt = require('../utils/bcryptWrapper');
 const { sendWelcomeEmail, sendOrderConfirmationEmail } = require('../services/email.service');
 const websocketService = require('../services/websocket.service');
 const Discount = require('../Models/discount.model');
+const vnpayService = require('../services/vnpayService');
 
 // Get orders by user
 exports.getOrdersByUser = async (req, res) => {
@@ -319,15 +320,60 @@ exports.createOrder = async (req, res) => {
             }
         ]);
 
-        // Send order confirmation email
-        await sendOrderConfirmationEmail({
-            ...order.toObject(),
-            user: {
-                fullName: user.fullName,
-                email: user.email
-            },
-            shippingAddress: shippingAddress
-        });
+        // Handle payment method specific logic
+        if (paymentMethod === 'vnpay') {
+            // For VNPay, create payment URL and return it instead of sending confirmation email immediately
+            try {
+                const paymentUrl = vnpayService.createPaymentUrl({
+                    orderId: order._id.toString(),
+                    amount: order.totalAmount,
+                    orderInfo: `Payment for order ${order._id}`,
+                    ipAddr: req.ip || req.connection.remoteAddress || '127.0.0.1'
+                });
+
+                return res.status(201).json({
+                    message: 'Order created successfully. Redirecting to VNPay...',
+                    order: {
+                        _id: order._id,
+                        user: {
+                            _id: user._id,
+                            fullName: user.fullName,
+                            email: user.email
+                        },
+                        shippingAddress: shippingAddress,
+                        totalAmount: order.totalAmount,
+                        loyaltyPointsEarned: order.loyaltyPointsEarned,
+                        currentStatus: order.currentStatus,
+                        statusHistory: order.statusHistory,
+                        items: order.items,
+                        createdAt: order.createdAt,
+                        paymentMethod: order.paymentMethod,
+                        discount: discount ? {
+                            code: discount.code,
+                            discountValue: discount.discountValue,
+                            discountAmount: order.discountAmount
+                        } : null
+                    },
+                    paymentUrl: paymentUrl
+                });
+            } catch (error) {
+                console.error('VNPay payment URL creation error:', error);
+                return res.status(500).json({
+                    message: 'Error creating VNPay payment URL',
+                    error: error.message
+                });
+            }
+        } else {
+            // For other payment methods, send confirmation email as usual
+            await sendOrderConfirmationEmail({
+                ...order.toObject(),
+                user: {
+                    fullName: user.fullName,
+                    email: user.email
+                },
+                shippingAddress: shippingAddress
+            });
+        }
 
         res.status(201).json({
             message: 'Order created successfully',
@@ -668,15 +714,58 @@ exports.createGuestOrder = async (req, res) => {
             }
         ]);
 
-        // Send order confirmation email
-        await sendOrderConfirmationEmail({
-            ...order.toObject(),
-            user: {
-                fullName: user.fullName,
-                email: user.email
-            },
-            shippingAddress
-        });
+        // Handle payment method specific logic
+        if (paymentMethod === 'vnpay') {
+            // For VNPay, create payment URL and return it instead of sending confirmation email immediately
+            try {
+                const paymentUrl = vnpayService.createPaymentUrl({
+                    orderId: order._id.toString(),
+                    amount: order.totalAmount,
+                    orderInfo: `Payment for order ${order._id}`,
+                    ipAddr: req.ip || req.connection.remoteAddress || '127.0.0.1'
+                });
+
+                return res.status(201).json({
+                    message: isNewUser 
+                        ? 'Order created successfully. Please check your email for account details. Redirecting to VNPay...' 
+                        : 'Order created successfully. Redirecting to VNPay...',
+                    order: {
+                        _id: order._id,
+                        user: {
+                            _id: user._id,
+                            email: user.email,
+                            fullName: user.fullName,
+                            isGuest: user.isGuest
+                        },
+                        shippingAddress,
+                        totalAmount: order.totalAmount,
+                        loyaltyPointsEarned: order.loyaltyPointsEarned,
+                        currentStatus: order.currentStatus,
+                        statusHistory: order.statusHistory,
+                        items: order.items,
+                        createdAt: order.createdAt,
+                        paymentMethod: order.paymentMethod
+                    },
+                    paymentUrl: paymentUrl
+                });
+            } catch (error) {
+                console.error('VNPay payment URL creation error:', error);
+                return res.status(500).json({
+                    message: 'Error creating VNPay payment URL',
+                    error: error.message
+                });
+            }
+        } else {
+            // For other payment methods, send confirmation email as usual
+            await sendOrderConfirmationEmail({
+                ...order.toObject(),
+                user: {
+                    fullName: user.fullName,
+                    email: user.email
+                },
+                shippingAddress
+            });
+        }
 
         res.status(201).json({
             message: isNewUser 
@@ -944,6 +1033,164 @@ exports.getPublicTopSellingProducts = async (req, res) => {
         res.status(500).json({ 
             message: 'Error fetching top selling products', 
             error: error.message 
+        });
+    }
+};
+
+// Handle VNPay payment return
+exports.handleVNPayReturn = async (req, res) => {
+    try {
+        const vnpayData = req.query;
+        
+        // Verify VNPay return data
+        const verifyResult = vnpayService.verifyReturnUrl(vnpayData);
+        
+        if (!verifyResult.isValid) {
+            return res.status(400).json({
+                message: 'Invalid VNPay response signature',
+                success: false
+            });
+        }
+
+        const orderId = verifyResult.data.orderId;
+        const order = await Order.findById(orderId)
+            .populate('user', 'fullName email')
+            .populate({
+                path: 'user',
+                populate: {
+                    path: 'addresses'
+                }
+            });
+
+        if (!order) {
+            return res.status(404).json({
+                message: 'Order not found',
+                success: false
+            });
+        }
+
+        if (verifyResult.isSuccess) {
+            // Payment successful
+            order.currentStatus = 'confirmed';
+            order.paymentStatus = 'paid';
+            order.vnpayTransactionId = verifyResult.data.transactionId;
+            order.statusHistory.push({
+                status: 'confirmed',
+                timestamp: new Date(),
+                note: `Payment completed via VNPay. Transaction ID: ${verifyResult.data.transactionId}`
+            });
+
+            await order.save();
+
+            // Send order confirmation email now that payment is confirmed
+            const shippingAddress = order.user.addresses.id(order.shippingAddress);
+            await sendOrderConfirmationEmail({
+                ...order.toObject(),
+                user: {
+                    fullName: order.user.fullName,
+                    email: order.user.email
+                },
+                shippingAddress: shippingAddress
+            });
+
+            res.json({
+                success: true,
+                message: 'Payment successful',
+                order: {
+                    _id: order._id,
+                    currentStatus: order.currentStatus,
+                    paymentStatus: order.paymentStatus,
+                    vnpayTransactionId: order.vnpayTransactionId
+                }
+            });
+        } else {
+            // Payment failed
+            order.currentStatus = 'cancelled';
+            order.paymentStatus = 'failed';
+            order.statusHistory.push({
+                status: 'cancelled',
+                timestamp: new Date(),
+                note: `Payment failed via VNPay. Reason: ${verifyResult.message}`
+            });
+
+            await order.save();
+
+            // Restore product stock quantities
+            for (const item of order.items) {
+                const product = await Product.findById(item.product);
+                if (product) {
+                    product.stockQuantity += item.quantity;
+                    await product.save();
+                }
+            }
+
+            res.json({
+                success: false,
+                message: `Payment failed: ${verifyResult.message}`,
+                order: {
+                    _id: order._id,
+                    currentStatus: order.currentStatus,
+                    paymentStatus: order.paymentStatus
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('Error handling VNPay return:', error);
+        res.status(500).json({
+            message: 'Error processing VNPay return',
+            error: error.message,
+            success: false
+        });
+    }
+};
+
+// Query VNPay transaction status
+exports.queryVNPayTransaction = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({
+                message: 'Order not found'
+            });
+        }
+
+        if (order.paymentMethod !== 'vnpay') {
+            return res.status(400).json({
+                message: 'Order is not paid via VNPay'
+            });
+        }
+
+        // Format transaction date for VNPay query
+        const transactionDate = order.createdAt.toISOString()
+            .replace(/[-:]/g, '')
+            .replace(/\.\d{3}Z$/, '');
+
+        const queryResult = await vnpayService.queryTransaction({
+            orderId: orderId,
+            transactionDate: transactionDate,
+            ipAddr: req.ip || req.connection.remoteAddress || '127.0.0.1'
+        });
+
+        res.json({
+            success: queryResult.isSuccess,
+            message: queryResult.message,
+            data: queryResult.data,
+            order: {
+                _id: order._id,
+                currentStatus: order.currentStatus,
+                paymentStatus: order.paymentStatus || 'pending',
+                vnpayTransactionId: order.vnpayTransactionId
+            }
+        });
+
+    } catch (error) {
+        console.error('Error querying VNPay transaction:', error);
+        res.status(500).json({
+            message: 'Error querying VNPay transaction',
+            error: error.message
         });
     }
 };

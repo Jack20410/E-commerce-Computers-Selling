@@ -34,11 +34,10 @@ services:
       restart_policy:
         condition: on-failure
     env_file:
-      - .env
+      - .env.production
     environment:
       - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
-      - DEBUG=*  # Add debugging
     volumes:
       - ./src/uploads:/usr/src/app/src/uploads
     ports:
@@ -65,10 +64,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
     container_name: frontend
     restart: always
     environment:
+      # Production - use external domain
       - VITE_BACKEND_API_URL=https://api.jabick.site
+      - VITE_NODE_ENV=production
     ports:
       - "3000:3000"  # Expose directly for jabick.site
     healthcheck:

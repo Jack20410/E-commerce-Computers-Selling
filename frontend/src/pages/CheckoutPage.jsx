@@ -281,6 +281,13 @@ const CheckoutPage = () => {
         });
       }
 
+      // Handle VNPay payment redirection
+      if (response.data.paymentUrl) {
+        // For VNPay, redirect to payment gateway
+        window.location.href = response.data.paymentUrl;
+        return;
+      }
+
       // Clear cart after successful order
       clearCart();
       
@@ -565,7 +572,7 @@ const CheckoutPage = () => {
                   <span className="ml-2">Cash on Delivery</span>
                 </label>
               </div>
-              <div>
+              {/* <div>
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
@@ -576,8 +583,8 @@ const CheckoutPage = () => {
                   />
                   <span className="ml-2">Bank Transfer</span>
                 </label>
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
@@ -587,6 +594,18 @@ const CheckoutPage = () => {
                     className="form-radio"
                   />
                   <span className="ml-2">MoMo</span>
+                </label>
+              </div> */}
+              <div>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    value="vnpay"
+                    checked={paymentMethod === 'vnpay'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="form-radio"
+                  />
+                  <span className="ml-2">VNPay</span>
                 </label>
               </div>
             </div>

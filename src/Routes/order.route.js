@@ -7,6 +7,10 @@ const { authenticateToken, requireAdmin } = require('../Middlewares/auth.middlew
 router.post('/guest', orderController.createGuestOrder);
 router.get('/top-selling', orderController.getPublicTopSellingProducts);
 
+// VNPay payment routes
+router.get('/vnpay-return', orderController.handleVNPayReturn);
+router.get('/vnpay-query/:orderId', orderController.queryVNPayTransaction);
+
 // Admin routes - đặt trước để tránh conflict với route params
 router.get('/admin/orders', authenticateToken, requireAdmin, orderController.getAllOrders);
 router.get('/admin/revenue', authenticateToken, requireAdmin, orderController.getRevenue);

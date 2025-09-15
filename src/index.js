@@ -1,6 +1,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
-
+const cors = require('cors');
 const express = require('express');
 const morgan = require('morgan');
 const http = require('http');
@@ -33,7 +33,16 @@ app.use(passport.initialize());
 connectDB();
 
 // Just use basic CORS for backup
-// app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
+
 
 // Keep the security headers
 app.use((req, res, next) => {

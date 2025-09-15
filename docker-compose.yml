@@ -65,10 +65,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=docker
     container_name: frontend
     restart: always
     environment:
-      - VITE_BACKEND_API_URL=https://api.jabick.site
+      # For Docker development - use service name for internal communication
+      - VITE_BACKEND_API_URL=http://backend:3001
+      - VITE_NODE_ENV=docker
+
     ports:
       - "3000:3000"  # Expose directly for jabick.site
     healthcheck:

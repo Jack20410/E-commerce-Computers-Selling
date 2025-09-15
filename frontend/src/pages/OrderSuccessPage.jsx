@@ -121,6 +121,23 @@ const OrderSuccessPage = () => {
               <p className="text-gray-600">Payment Method</p>
               <p className="font-medium uppercase">{order.paymentMethod}</p>
             </div>
+            {order.paymentMethod === 'vnpay' && order.paymentStatus && (
+              <div>
+                <p className="text-gray-600">Payment Status</p>
+                <p className={`font-medium capitalize ${
+                  order.paymentStatus === 'paid' ? 'text-green-600' : 
+                  order.paymentStatus === 'failed' ? 'text-red-600' : 'text-yellow-600'
+                }`}>
+                  {order.paymentStatus}
+                </p>
+              </div>
+            )}
+            {order.vnpayTransactionId && (
+              <div>
+                <p className="text-gray-600">Transaction ID</p>
+                <p className="font-medium text-sm">{order.vnpayTransactionId}</p>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-gray-200 pt-4">

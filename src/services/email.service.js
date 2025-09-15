@@ -216,6 +216,12 @@ const sendOrderConfirmationEmail = async (orderData) => {
                 Reference: ORDER ${orderData._id}
                 - Your donation would mean a lot to me. -
               </p>
+            ` : orderData.paymentMethod === 'vnpay' ? `
+              <p style="color: #28a745;">✅ Payment completed successfully via VNPay!</p>
+              ${orderData.vnpayTransactionId ? `
+                <p>Transaction ID: <strong>${orderData.vnpayTransactionId}</strong></p>
+              ` : ''}
+              <p>Your order has been confirmed and will be processed shortly.</p>
             ` : `
               <p>Please complete your payment via MoMo to:</p>
               <p>

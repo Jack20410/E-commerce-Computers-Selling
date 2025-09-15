@@ -22,6 +22,7 @@ import ProfilePage from './pages/ProfilePage';
 import OAuth2Redirect from './pages/auth/OAuth2Redirect';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import VNPayReturnPage from './pages/VNPayReturnPage';
 import Discounts from './pages/Discounts';
 
 // Admin pages
@@ -93,6 +94,7 @@ function App() {
                   <Route path="/oauth2-redirect" element={<OAuth2Redirect />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+                  <Route path="/payment/vnpay-return" element={<VNPayReturnPage />} />
                   <Route path="/discounts" element={<Discounts />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
